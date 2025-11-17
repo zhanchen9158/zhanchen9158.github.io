@@ -176,7 +176,6 @@ export default function ProjectHighlights({ refProps }) {
           display: 'flex',
           flexDirection: { xs: 'column', md: 'row-reverse' },
           gap: 2,
-
         }}
       >
         <div>
@@ -239,12 +238,13 @@ export default function ProjectHighlights({ refProps }) {
           />
         </div>
         <Card
-          sx={{
+          sx={(theme) => ({
             height: items[selectedItemIndex].image?.height ?? 500,
             width: '100%',
             display: { xs: 'none', sm: 'flex' },
             pointerEvents: 'none',
-          }}
+            backgroundColor: `rgba(${(theme.vars || theme).palette.background.defaultChannel} / 0.5)`,
+          })}
         >
           <img
             src={items[selectedItemIndex].image ?? ''}

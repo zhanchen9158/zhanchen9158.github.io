@@ -13,7 +13,6 @@ import sudokusolver from '../pics/sodukusolver.png';
 import artexplorer from '../pics/artexplorer.png';
 import researchdigest from '../pics/researchdigest.png';
 import mealplanner from '../pics/mealplanner.png';
-import { useInView } from "framer-motion";
 
 
 const projectInfo = [
@@ -45,20 +44,20 @@ const projectInfo = [
 
 export default function Projects({ refProps }) {
   const { mode, systemMode } = useColorScheme();
-/*
-  let logos;
-  if (mode === 'system') {
-    if (systemMode === 'light') {
+  /*
+    let logos;
+    if (mode === 'system') {
+      if (systemMode === 'light') {
+        logos = lightModeLogos;
+      } else {
+        logos = darkModeLogos;
+      }
+    } else if (mode === 'light') {
       logos = lightModeLogos;
     } else {
       logos = darkModeLogos;
     }
-  } else if (mode === 'light') {
-    logos = lightModeLogos;
-  } else {
-    logos = darkModeLogos;
-  }
-*/
+  */
   return (
     <Container
       ref={el => refProps.current = { ...refProps.current, projects: el }}
@@ -93,7 +92,15 @@ export default function Projects({ refProps }) {
       </Box>
       <Grid container spacing={2}>
         {projectInfo.map((info, index) => (
-          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index} sx={{ display: 'flex', }}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index} 
+            sx={(theme) => ({
+              display:'flex',
+              //backgroundColor: `${(theme.vars || theme).palette.background.default}`,
+              '& .MuiPaper-root': {
+                backgroundColor: `rgba(${(theme.vars || theme).palette.background.defaultChannel} / 0.75)`,
+              },
+            })}
+          >
             <Card
               variant="outlined"
               sx={{

@@ -75,7 +75,7 @@ const StyledBox = styled(Box)(({ theme }) => ({
 export default function SplashScreen() {
     return (
         <Box sx={(theme) => ({
-            backgroundColor: `${(theme.vars || theme).palette.background.default}`,
+            backgroundColor: `rgba(100, 100, 100, 1)`,
             width: '100dvw',
             height: '100dvh',
         })}>

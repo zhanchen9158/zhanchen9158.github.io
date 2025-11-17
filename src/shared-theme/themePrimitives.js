@@ -228,7 +228,7 @@ export const colorSchemes = {
         light: brand[200],
         main: brand[400],
         dark: brand[700],
-        contrastText: brand[50],
+        contrastText: gray[700],
         contrast: 'rgba(50,50,50,1)',
       },
       info: {
@@ -257,9 +257,9 @@ export const colorSchemes = {
       },
       divider: alpha(gray[300], 0.4),
       background: {
-        default: 'rgba(175, 175, 175, 1)',
+        default: 'rgba(240, 240, 240,1)',
         paper: 'hsl(220, 35%, 97%)',
-        image: `linear-gradient(rgba(175, 175, 175, 0.5), rgba(175, 175, 175, 0.5)), url(${backgroundlight})`,
+        image: `linear-gradient(rgba(200, 200, 200, 0.75), rgba(200, 200, 200, 0.75)), url(${backgroundlight})`,
       },
       text: {
         primary: gray[800],
@@ -278,7 +278,7 @@ export const colorSchemes = {
   dark: {
     palette: {
       primary: {
-        contrastText: brand[50],
+        contrastText: gray[50],
         light: brand[300],
         main: brand[400],
         dark: brand[700],

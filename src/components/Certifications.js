@@ -73,13 +73,25 @@ export default function Certifications({ refProps }) {
             textAlign: { sm: 'left', md: 'center' },
           }}
         >
-          <Typography component="h2" variant="h4" gutterBottom>
+          <Typography
+            component="h2"
+            variant="h4"
+            gutterBottom
+            sx={{ color: 'text.primary' }}
+          >
             Certifications
           </Typography>
         </Box>
         <Grid container spacing={2} sx={{ width: '100%' }}>
           {items.map((item, index) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}
+              sx={(theme) => ({
+                //backgroundColor: `${(theme.vars || theme).palette.background.default}`,
+                '& .MuiPaper-root': {
+                  backgroundColor: `rgba(25,25,25,0.90)`,
+                },
+              })}
+            >
               <Stack
                 direction="column"
                 component={Card}
@@ -116,7 +128,7 @@ export default function Certifications({ refProps }) {
                     {item.title}
                   </Typography>
                 </Stack>
-                <Typography variant="body2" sx={{ color: 'grey.400', }}>
+                <Typography variant="body1" sx={{ color: 'grey.300', }}>
                   {item.description.map((item, index) => (
                     <ExpandableList key={index} text={item} />
                   ))}

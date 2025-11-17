@@ -10,7 +10,7 @@ import { styled, useTheme } from '@mui/material/styles';
 
 const StyledTypography = styled(Typography)(({ theme }) => ({
   whiteSpace: "pre-wrap",
-  color: `${theme.palette.primary.contrastText}`,
+  color: `${(theme.vars || theme).palette.primary.contrastText}`,
   fontFamily: 'Charm',
   fontSize: '24px',
   cursor: 'pointer',

@@ -19,11 +19,10 @@ const AnimatedButton = styled(Button)(({ theme }) => ({
 }));
 
 export default function StyledButton(props) {
-    const { children } = props;
 
-    return (
-        <AnimatedButton>
-            {children}
-        </AnimatedButton>
-    );
+  return (
+    <AnimatedButton {...props}>
+      {props.children}
+    </AnimatedButton>
+  );
 }
