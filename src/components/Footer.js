@@ -51,7 +51,7 @@ export default function Footer() {
           <IconButton
             color="inherit"
             size="small"
-            href="https://github.com/zhanchen9158/Portfolio"
+            href="https://github.com/zhanchen9158/zhanchen9158.github.io"
             target='_blank'
             aria-label="GitHub"
             sx={{ alignSelf: 'center' }}
