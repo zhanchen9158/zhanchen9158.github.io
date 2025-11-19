@@ -35,6 +35,15 @@ const items = [
   },
   {
     icon: FreecodecampIcon,
+    title: 'JavaScript Algorithms and Data Structures',
+    description: [
+      'Complete fundamental and advanced knowledge of JavaScript algorithms and data structures.',
+      'Design solutions utilizing multiple paradigms such as functional and object-oriented programming.',
+      'Apply advanced algorithms toward producing optimized solutions.',
+    ],
+  },
+  {
+    icon: FreecodecampIcon,
     title: 'Responsive Web Design Developer',
     description: [
       'Thorough foundational knowledge in HTML, CSS, and responsive web design.',
