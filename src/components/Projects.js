@@ -17,6 +17,12 @@ import mealplanner from '../pics/mealplanner.png';
 
 const projectInfo = [
   {
+    img: researchdigest,
+    header: 'Research Surveyor',
+    subheader: 'Research paper provider with query search and web-based AI summarization functionalities.',
+    link: 'https://researchdigest0.s3.us-east-2.amazonaws.com/index.html',
+  },
+  {
     img: mealplanner,
     header: 'Meal Planner',
     subheader: 'Meal planner complete with recipe instructions and nutritional guidelines.',
@@ -27,12 +33,6 @@ const projectInfo = [
     header: 'Art Explorer',
     subheader: 'Artwork search engine presenting information on artists, art descriptions, and comprehensive historical details.',
     link: 'https://artexplorer0.s3.us-east-2.amazonaws.com/index.html'
-  },
-  {
-    img: researchdigest,
-    header: 'Research Surveyor',
-    subheader: 'Research paper provider with query search and web-based AI summarization functionalities.',
-    link: 'https://researchdigest0.s3.us-east-2.amazonaws.com/index.html',
   },
   {
     img: sudokusolver,
@@ -92,9 +92,9 @@ export default function Projects({ refProps }) {
       </Box>
       <Grid container spacing={2}>
         {projectInfo.map((info, index) => (
-          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index} 
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}
             sx={(theme) => ({
-              display:'flex',
+              display: 'flex',
               //backgroundColor: `${(theme.vars || theme).palette.background.default}`,
               '& .MuiPaper-root': {
                 backgroundColor: `rgba(${(theme.vars || theme).palette.background.defaultChannel} / 0.75)`,
