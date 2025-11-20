@@ -89,11 +89,11 @@ export default function AppAppBar({ scrollCallback, appbarshow }) {
             }}
           >
             <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-              <StyledButton onClick={() => scrollCallback('projecthighlights')} variant="text" color="info" size="small">
-                Project Highlights
-              </StyledButton>
               <StyledButton onClick={() => scrollCallback('projects')} variant="text" color="info" size="small">
                 Projects
+              </StyledButton>
+              <StyledButton onClick={() => scrollCallback('projecthighlights')} variant="text" color="info" size="small">
+                Project Highlights
               </StyledButton>
               <StyledButton onClick={() => scrollCallback('certifications')} variant="text" color="info" size="small">
                 Certifications

@@ -27,9 +27,9 @@ export default function PortfolioPage({ appbarshow, toggleAppbaron, showscrollto
       <Hero refProps={sectionRef} scrollCallback={scrollCallback} />
       <Divider />
       <div>
-        <ProjectHighlights refProps={sectionRef} />
-        <Divider />
         <Projects refProps={sectionRef} />
+        <Divider />
+        <ProjectHighlights refProps={sectionRef} />
         <Divider />
         <Certifications refProps={sectionRef} />
         <Footer />

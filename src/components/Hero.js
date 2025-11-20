@@ -93,11 +93,11 @@ export default function Hero({ refProps, scrollCallback }) {
           </Typography>
         </Stack>
         <Stack direction={'row'} spacing={2} sx={{ display: { xs: 'none', md: 'flex' } }}>
-          <StyledTypography onClick={() => scrollCallback('projecthighlights')}>
-            Project Highlights
-          </StyledTypography>
           <StyledTypography onClick={() => scrollCallback('projects')}>
             Projects
+          </StyledTypography>
+          <StyledTypography onClick={() => scrollCallback('projecthighlights')}>
+            Project Highlights
           </StyledTypography>
           <StyledTypography onClick={() => scrollCallback('certifications')}>
             Certifications
