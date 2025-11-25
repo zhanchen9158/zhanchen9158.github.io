@@ -9,13 +9,19 @@ import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import { useColorScheme } from '@mui/material/styles';
-import sudokusolver from '../pics/sodukusolver.png';
+import stockinsight from '../pics/stockinsight.png';
 import artexplorer from '../pics/artexplorer.png';
 import researchdigest from '../pics/researchdigest.png';
 import mealplanner from '../pics/mealplanner.png';
 
 
 const projectInfo = [
+  {
+    img: stockinsight,
+    header: 'Stock Insight',
+    subheader: 'Stock data visualizer, leveraging a deep learning time series forecasting model trained on Multivariate Quantile Function Forecaster Loss for price predictions.',
+    link: 'https://stockinsight0.s3.us-east-2.amazonaws.com/index.html',
+  },
   {
     img: researchdigest,
     header: 'Research Surveyor',
@@ -33,12 +39,6 @@ const projectInfo = [
     header: 'Art Explorer',
     subheader: 'Artwork search engine presenting information on artists, art descriptions, and comprehensive historical details.',
     link: 'https://artexplorer0.s3.us-east-2.amazonaws.com/index.html'
-  },
-  {
-    img: sudokusolver,
-    header: 'Sudoku Solver',
-    subheader: 'Sudoku solver hosted on AWS.',
-    link: 'https://sudokusolver-0.s3.us-east-2.amazonaws.com/index.html',
   },
 ];
 

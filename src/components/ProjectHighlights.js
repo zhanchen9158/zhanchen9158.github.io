@@ -9,40 +9,40 @@ import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
 
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import TakeoutDiningIcon from '@mui/icons-material/TakeoutDining';
-import MedicationLiquidIcon from '@mui/icons-material/MedicationLiquid';
-import mealplanner from '../pics/mealplanner.png';
-import mealplanner1 from '../pics/mealplanner1.png';
-import mealplanner2 from '../pics/mealplanner2.png';
+import AreaChartIcon from '@mui/icons-material/AreaChart';
+import NewspaperIcon from '@mui/icons-material/Newspaper';
+import QueryStatsIcon from '@mui/icons-material/QueryStats';
+import stockinsight from '../pics/stockinsight.png';
+import stockinsight2 from '../pics/stockinsight2.png';
+import stockinsight3 from '../pics/stockinsight3.png';
 import { preload } from 'react-dom';
 
-preload(mealplanner, { as: "image" });
-preload(mealplanner1, { as: "image" });
-preload(mealplanner2, { as: "image" });
+preload(stockinsight, { as: "image" });
+preload(stockinsight2, { as: "image" });
+preload(stockinsight3, { as: "image" });
 
 
 const items = [
   {
-    icon: <MenuBookIcon />,
-    title: 'Meal Search',
+    icon: <AreaChartIcon />,
+    title: 'Stock Data Visualizer',
     description:
       '',
-    image: mealplanner,
+    image: stockinsight,
   },
   {
-    icon: <TakeoutDiningIcon />,
-    title: 'Recipe Ingredients & Directions',
+    icon: <NewspaperIcon />,
+    title: 'Market Trends and News',
     description:
       '',
-    image: mealplanner1,
+    image: stockinsight2,
   },
   {
-    icon: <MedicationLiquidIcon />,
-    title: 'Full Nutritional Information',
+    icon: <QueryStatsIcon />,
+    title: 'Stock Price Prediction',
     description:
       '',
-    image: mealplanner2,
+    image: stockinsight3,
   },
 ];
 
