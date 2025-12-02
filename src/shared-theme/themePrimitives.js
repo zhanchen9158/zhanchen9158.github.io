@@ -259,13 +259,13 @@ export const colorSchemes = {
       background: {
         default: 'rgba(240, 240, 240,1)',
         paper: 'hsl(220, 35%, 97%)',
-        image: `linear-gradient(rgba(200, 200, 200, 0.75), rgba(200, 200, 200, 0.75)), url(${backgroundlight})`,
+        image: `linear-gradient(rgba(200, 200, 200, 0.85), rgba(200, 200, 200, 0.85)), url(${backgroundlight})`,
       },
       text: {
         primary: gray[800],
         secondary: gray[600],
         warning: orange[400],
-        shadow: 'rgba(50,50,50,1)',
+        shadow: 'rgba(250,250,250,1)',
       },
       action: {
         hover: alpha(gray[200], 0.2),
@@ -312,12 +312,12 @@ export const colorSchemes = {
       background: {
         default: 'rgba(50,50,50,1)',
         paper: 'hsl(220, 30%, 7%)',
-        image: `linear-gradient(rgba(50, 50, 50, 0.5), rgba(50, 50, 50, 0.5)), url(${backgrounddark})`,
+        image: `linear-gradient(rgba(50, 50, 50, 0.85), rgba(50, 50, 50, 0.85)), url(${backgrounddark})`,
       },
       text: {
         primary: 'hsl(0, 0%, 100%)',
         secondary: gray[400],
-        shadow: 'rgba(225,225,225,1)',
+        shadow: 'rgba(50,50,50,1)',
       },
       action: {
         hover: alpha(gray[600], 0.2),

@@ -53,6 +53,7 @@ export default function App(props) {
           backgroundSize: 'cover',
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
+          backdropFilter: 'blur(20px)',
           filter: loading ? "blur(20px)" : 'none',
           opacity: loading ? 0 : 1,
           transition: "filter 0.5s, opacity 0.2s",

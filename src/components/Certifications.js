@@ -59,12 +59,13 @@ export default function Certifications({ refProps }) {
       ref={el => refProps.current = { ...refProps.current, certifications: el }}
       id="certifications"
       sx={{
-        pt: { xs: 4, md: 12 },
-        pb: { xs: 8, md: 16 },
+        pt: 8,
+        pb: 8,
         color: 'white',
         bgcolor: 'grey.900',
         maxWidth: { lg: '100%' },
         backgroundColor: 'transparent',
+        minHeight: '100dvh',
       }}
     >
       <Container

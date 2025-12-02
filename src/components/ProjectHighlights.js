@@ -12,12 +12,15 @@ import { styled } from '@mui/material/styles';
 import AreaChartIcon from '@mui/icons-material/AreaChart';
 import NewspaperIcon from '@mui/icons-material/Newspaper';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
+import TroubleshootIcon from '@mui/icons-material/Troubleshoot';
 import stockinsight from '../pics/stockinsight.png';
+import stockinsight1 from '../pics/stockinsight1.png';
 import stockinsight2 from '../pics/stockinsight2.png';
 import stockinsight3 from '../pics/stockinsight3.png';
 import { preload } from 'react-dom';
 
 preload(stockinsight, { as: "image" });
+preload(stockinsight1, { as: "image" });
 preload(stockinsight2, { as: "image" });
 preload(stockinsight3, { as: "image" });
 
@@ -25,21 +28,28 @@ preload(stockinsight3, { as: "image" });
 const items = [
   {
     icon: <AreaChartIcon />,
-    title: 'Stock Data Visualizer',
+    title: 'Financial Data Visualization',
     description:
       '',
     image: stockinsight,
   },
   {
+    icon: <QueryStatsIcon />,
+    title: 'Multivariate Quantile function based Forecasting',
+    description:
+      '',
+    image: stockinsight1,
+  },
+  {
     icon: <NewspaperIcon />,
-    title: 'Market Trends and News',
+    title: 'Technical Analysis Platform',
     description:
       '',
     image: stockinsight2,
   },
   {
-    icon: <QueryStatsIcon />,
-    title: 'Stock Price Prediction',
+    icon: <TroubleshootIcon />,
+    title: 'Financial Quote Retrieval',
     description:
       '',
     image: stockinsight3,
@@ -115,7 +125,7 @@ function MobileLayout({ selectedItemIndex, handleItemClick, selectedFeature }) {
           />
         </Card>
         <Box sx={{ px: 2, pb: 2 }}>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', }}>
             {selectedFeature.description}
           </Typography>
         </Box>
@@ -152,9 +162,10 @@ export default function ProjectHighlights({ refProps }) {
       id="projecthighlights"
       maxWidth="lg"
       sx={{
-        pt: { xs: 4, md: 12 },
-        pb: { xs: 8, md: 16 },
+        pt: 8,
+        pb: 8,
         alignItems: 'center',
+        minHeight: '100dvh',
       }}
     >
       <Box sx={{
@@ -224,7 +235,6 @@ export default function ProjectHighlights({ refProps }) {
                   ]}
                 >
                   {icon}
-
                   <Typography variant="h6">{title}</Typography>
                   <Typography variant="body2">{description}</Typography>
                 </Box>

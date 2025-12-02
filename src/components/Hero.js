@@ -13,6 +13,7 @@ const StyledTypography = styled(Typography)(({ theme }) => ({
   color: `${(theme.vars || theme).palette.primary.contrastText}`,
   fontFamily: 'Charm',
   fontSize: '24px',
+  fontWeight: 'bold',
   cursor: 'pointer',
   '&:hover': {
     transform: 'scale(1.05)',
@@ -38,7 +39,7 @@ export default function Hero({ refProps, scrollCallback }) {
             'radial-gradient(ellipse 80% 50% at 50% -20%, hsl(210, 100%, 16%), transparent)',
         }),
         maxWidth: { lg: '100%' },
-        height: { sm: '80dvh', md: '90dvh' },
+        minHeight: '100dvh',
         justifyContent: 'center',
         display: 'flex',
         alignItems: 'center',
