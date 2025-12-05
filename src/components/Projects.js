@@ -8,7 +8,7 @@ import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import { useColorScheme } from '@mui/material/styles';
-import stockinsight from '../pics/stockinsight.png';
+import marketintelligence from '../pics/marketintelligence1.png';
 import artexplorer from '../pics/artexplorer.png';
 import researchdigest from '../pics/researchdigest.png';
 import mealplanner from '../pics/mealplanner.png';
@@ -20,13 +20,13 @@ import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 
 const projectInfo = [
   {
-    img: stockinsight,
-    header: 'Stock Insight',
+    img: marketintelligence,
+    header: 'Market Intelligence',
     description: [
       'Full-stack financial analytics application that ingests real-time market data to forecast trends.',
       'Predictive AI model trained using PyTorch, achieving less than 10% Multivariate Quantile function forecaster loss, leading to well-calibrated and narrow predicted probabilities of trends.',
     ],
-    link: 'https://stockinsight0.s3.us-east-2.amazonaws.com/index.html',
+    link: 'https://marketintelligence0.s3.us-east-2.amazonaws.com/index.html',
   },
   {
     img: researchdigest,

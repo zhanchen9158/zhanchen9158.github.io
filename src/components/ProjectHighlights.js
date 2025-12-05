@@ -13,16 +13,16 @@ import AreaChartIcon from '@mui/icons-material/AreaChart';
 import NewspaperIcon from '@mui/icons-material/Newspaper';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import TroubleshootIcon from '@mui/icons-material/Troubleshoot';
-import stockinsight from '../pics/stockinsight.png';
-import stockinsight1 from '../pics/stockinsight1.png';
-import stockinsight2 from '../pics/stockinsight2.png';
-import stockinsight3 from '../pics/stockinsight3.png';
+import marketintelligence from '../pics/marketintelligence.png';
+import marketintelligence1 from '../pics/marketintelligence1.png';
+import marketintelligence2 from '../pics/marketintelligence2.png';
+import marketintelligence3 from '../pics/marketintelligence3.png';
 import { preload } from 'react-dom';
 
-preload(stockinsight, { as: "image" });
-preload(stockinsight1, { as: "image" });
-preload(stockinsight2, { as: "image" });
-preload(stockinsight3, { as: "image" });
+preload(marketintelligence, { as: "image" });
+preload(marketintelligence1, { as: "image" });
+preload(marketintelligence2, { as: "image" });
+preload(marketintelligence3, { as: "image" });
 
 
 const items = [
@@ -31,28 +31,28 @@ const items = [
     title: 'Financial Data Visualization',
     description:
       '',
-    image: stockinsight,
+    image: marketintelligence,
   },
   {
     icon: <QueryStatsIcon />,
     title: 'Multivariate Quantile function based Forecasting',
     description:
       '',
-    image: stockinsight1,
+    image: marketintelligence1,
   },
   {
     icon: <NewspaperIcon />,
     title: 'Technical Analysis Platform',
     description:
       '',
-    image: stockinsight2,
+    image: marketintelligence2,
   },
   {
     icon: <TroubleshootIcon />,
     title: 'Financial Quote Retrieval',
     description:
       '',
-    image: stockinsight3,
+    image: marketintelligence3,
   },
 ];
 

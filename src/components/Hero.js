@@ -104,9 +104,11 @@ export default function Hero({ refProps, scrollCallback }) {
             Certifications
           </StyledTypography>
         </Stack>
-        <ScrollDown sx={{
-          transform: greaterThansm ? 'scale(1.0)' : 'scale(0.5)',
-        }} />
+        <ScrollDown
+          sx={{
+            transform: greaterThansm ? 'scale(1.0)' : 'scale(0.5)',
+          }}
+        />
       </Container>
     </Box>
   );

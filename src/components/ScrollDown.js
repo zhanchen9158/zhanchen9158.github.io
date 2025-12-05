@@ -2,43 +2,75 @@ import * as React from 'react';
 import { styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 
+const base = 0.6;
+
 const StyledBox = styled(Box)(({ theme }) => ({
-    '& #mouse-btn': {
-        margin: '10px auto',
-        width: '40px',
-        height: '80px',
-        border: `3px solid ${(theme.vars || theme).palette.primary.contrast}`,
-        borderRadius: '20px',
-        display: 'flex',
+    position: 'relative',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'end',
+    width: '100%',
+    height: '40dvh',
+    '& .chevron': {
+        position: 'absolute',
+        width: `${base * 3.5}rem`,
+        height: `${base * 0.8}rem`,
+        opacity: 0,
+        transform: 'scale(0.3)',
+        animation: 'move-chevron 3s ease-out infinite',
     },
-    '& #mouse-scroll': {
-        display: 'block',
-        width: '20px',
-        height: '20px',
-        background: `linear-gradient(170deg, ${(theme.vars || theme).palette.primary.contrast}, ${(theme.vars || theme).palette.primary.contrast})`,
-        borderRadius: '50%',
-        margin: 'auto',
-        animation: 'scrolling13 1s linear infinite',
+    '& .chevron:first-child': {
+        animation: 'move-chevron 3s ease-out 1s infinite',
     },
-    '@keyframes scrolling13': {
-        '0%': {
-            opacity: 0,
-            transform: 'translateY(-20px)',
+    '& .chevron:nth-child(2)': {
+        animation: 'move-chevron 3s ease-out 2s infinite',
+    },
+    '& .chevron::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        height: '100%',
+        width: '50%',
+        background: (theme.vars || theme).palette.text.primary,
+        left: 0,
+        transform: 'skewY(30deg)',
+    },
+    '& .chevron::after': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        height: '100%',
+        width: '50%',
+        background: (theme.vars || theme).palette.text.primary,
+        right: 0,
+        width: '50%',
+        transform: 'skewY(-30deg)',
+    },
+    '@keyframes move-chevron': {
+        '25%': {
+            opacity: 1,
+        },
+        '33.3%': {
+            opacity: 1,
+            transform: `translateY(${base * 3.8}rem)`,
+        },
+        '66.6%': {
+            opacity: 1,
+            transform: `translateY(${base * 5.2}rem)`,
         },
         '100%': {
-            opacity: 1,
-            transform: 'translateY(20px)',
+            opacity: 0,
+            transform: `translateY(${base * 8}rem) scale(0.5)`,
         },
     },
 }));
 
 export default function ScrollDown() {
     return (
-        <StyledBox>
-            <span id="mouse-btn">
-                <span id="mouse-scroll"></span>
-            </span>
-            <span>Scroll Down</span>
+        <StyledBox id='scrolldown'>
+            <div class="chevron"></div>
+            <div class="chevron"></div>
+            <div class="chevron"></div>
         </StyledBox>
     );
 }

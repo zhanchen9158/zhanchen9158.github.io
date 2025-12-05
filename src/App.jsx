@@ -46,20 +46,17 @@ export default function App(props) {
     : (
       <AppTheme {...props}>
         <CssBaseline enableColorScheme />
-        <Box onWheel={toggleAppbar} sx={(theme) => ({
-          //position: 'relative',
-          overflowY: 'scroll',
-          backgroundImage: `${(theme.vars || theme).palette.background.image}`,
-          backgroundSize: 'cover',
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          backdropFilter: 'blur(20px)',
-          filter: loading ? "blur(20px)" : 'none',
-          opacity: loading ? 0 : 1,
-          transition: "filter 0.5s, opacity 0.2s",
-          height: '100dvh',
-          width: '100dvw',
-        })}>
+        <Box onWheel={toggleAppbar}
+          sx={(theme) => ({
+            //position: 'relative',
+            overflowY: 'scroll',
+            backgroundImage: `${(theme.vars || theme).palette.background.image}`,
+            backgroundSize: 'cover',
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            height: '100dvh',
+            width: '100dvw',
+          })}>
           <Container maxWidth="lg">
             <PortfolioPage appbarshow={appbarshow} toggleAppbaron={toggleAppbaron}
               showscrolltop={showscrolltop} toggleScrolltop={toggleScrolltop} />
