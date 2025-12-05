@@ -30,7 +30,7 @@ const projectInfo = [
   },
   {
     img: researchdigest,
-    header: 'Research Surveyor',
+    header: 'Research Digest',
     description: [
       'Knowledge retrieval portal for searching academic papers.',
       'Client-side inferencing by leveraging a web-based Transformer model for real-time Question-and-Answering of papers.',
