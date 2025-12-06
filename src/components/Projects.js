@@ -33,7 +33,7 @@ const projectInfo = [
     header: 'Research Digest',
     description: [
       'Knowledge retrieval portal for searching academic papers.',
-      'Client-side inferencing by leveraging a web-based Transformer model for real-time Question-and-Answering of papers.',
+      'Client-side Search and Retrieval-Augmented Generation (RAG) of papers by leveraging web-based Transformer models for real-time question and answering of papers.',
       'Optimized performances using multi-threading to offload heavy model inference computations, preserving UI responsiveness on the main execution thread.',
     ],
     link: 'https://researchdigest0.s3.us-east-2.amazonaws.com/index.html',
