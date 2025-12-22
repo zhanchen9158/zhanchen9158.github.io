@@ -8,6 +8,7 @@ import MuiChip from '@mui/material/Chip';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
+import { motion } from "framer-motion";
 
 import AreaChartIcon from '@mui/icons-material/AreaChart';
 import NewspaperIcon from '@mui/icons-material/Newspaper';
@@ -105,31 +106,26 @@ function MobileLayout({ selectedItemIndex, handleItemClick, selectedFeature }) {
           />
         ))}
       </Stack>
-      <Card variant="outlined">
-        <Card
-          id='mobileprojimg'
-          sx={{
-            height: imgheight ?? 200,
+      <Card
+        id='mobileprojimg'
+        sx={{
+          height: imgheight ?? 200,
+          width: '100%',
+          pointerEvents: 'none',
+          padding: 0,
+        }}
+      >
+        <img
+          src={selectedFeature.image ?? ''}
+          loading='lazy'
+          style={{
+            m: 'auto',
             width: '100%',
-            pointerEvents: 'none',
+            height: '100%',
           }}
-        >
-          <img
-            src={selectedFeature.image ?? ''}
-            loading='lazy'
-            style={{
-              m: 'auto',
-              width: '100%',
-              height: '100%',
-            }}
-          />
-        </Card>
-        <Box sx={{ px: 2, pb: 2 }}>
-          <Typography variant="body2" sx={{ color: 'text.secondary', }}>
-            {selectedFeature.description}
-          </Typography>
-        </Box>
+        />
       </Card>
+
     </Box>
   );
 }
@@ -147,7 +143,7 @@ MobileLayout.propTypes = {
 
 export { MobileLayout };
 
-export default function ProjectHighlights({ refProps }) {
+export default function ProjectHighlights({ refProps, handleViewport }) {
   const [selectedItemIndex, setSelectedItemIndex] = useState(0);
 
   const handleItemClick = (index) => {
@@ -158,34 +154,27 @@ export default function ProjectHighlights({ refProps }) {
 
   return (
     <Container
-      ref={el => refProps.current = { ...refProps.current, projecthighlights: el }}
-      id="projecthighlights"
+      component={motion.div}
+      ref={el => refProps.current['highlights'] = el}
+      onViewportEnter={() => handleViewport('highlights', true)}
+      onViewportLeave={() => handleViewport('highlights', false)}
+      viewport={{ amount: 0.5 }}
+      id="highlights"
       maxWidth="lg"
       sx={{
-        pt: 8,
-        pb: 8,
-        alignItems: 'center',
-        minHeight: '100dvh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: { xs: 'flex-start', md: 'center' },
+        paddingTop: { xs: 10, md: 0 },
+        height: '100dvh',
       }}
     >
-      <Box sx={{
-        margin: 'auto',
-        width: { sm: '100%', md: '100%' },
-        textAlign: { sm: 'left', md: 'center' },
-      }}>
-        <Typography
-          component="h2"
-          variant="h4"
-          gutterBottom
-          sx={{ color: 'text.primary' }}
-        >
-          Project Highlights
-        </Typography>
-      </Box>
       <Box
         sx={{
           display: 'flex',
           flexDirection: { xs: 'column', md: 'row-reverse' },
+          justifyContent: 'center',
+          alignItems: 'center',
           gap: 2,
         }}
       >
@@ -254,6 +243,7 @@ export default function ProjectHighlights({ refProps }) {
             display: { xs: 'none', sm: 'flex' },
             pointerEvents: 'none',
             backgroundColor: `rgba(${(theme.vars || theme).palette.background.defaultChannel} / 0.5)`,
+            padding: 0,
           })}
         >
           <img

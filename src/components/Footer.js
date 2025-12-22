@@ -1,11 +1,81 @@
 import * as React from 'react';
-import Container from '@mui/material/Container';
-import IconButton from '@mui/material/IconButton';
+import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import { styled, useTheme } from '@mui/material/styles';
+import IconButton from '@mui/material/IconButton';
+import getActivesection from '../functions/getActivesection';
+import { motion, AnimatePresence } from 'framer-motion';
 
+
+const StyledButton = styled(IconButton)(({ theme }) => ({
+  background: (theme.vars || theme).palette.text.primary,
+  color: (theme.vars || theme).palette.background.default,
+  alignSelf: 'center',
+  ...theme.applyStyles('dark', {
+    background: (theme.vars || theme).palette.text.primary,
+  }),
+  '&:hover': {
+    background: (theme.vars || theme).palette.text.secondary,
+  },
+}));
+
+export default function Footer({ activesection }) {
+
+  const section = getActivesection(activesection);
+
+  return (
+    <AnimatePresence>
+      {section == 'introduction' && (
+        <Box
+          component={motion.div}
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -50 }}
+          sx={{
+            pb: { xs: 1, md: 2 },
+            pl: { xs: 1, md: 2 },
+            display: 'flex',
+            position: 'fixed',
+            left: 0,
+            bottom: 0,
+          }}
+        >
+          <Stack
+            direction={'column'}
+            sx={{
+              display: 'flex',
+              width: '100%',
+              borderTop: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
+            <Stack
+              direction="row"
+              spacing={1}
+              useFlexGap
+              sx={{ justifyContent: 'left', color: 'text.secondary' }}
+            >
+              <StyledButton
+                size="small"
+                href="https://github.com/zhanchen9158/zhanchen9158.github.io"
+                target='_blank'
+                aria-label="GitHub"
+              >
+                <GitHubIcon />
+              </StyledButton>
+            </Stack>
+            <div>
+              <Copyright />
+            </div>
+          </Stack>
+        </Box>
+      )}
+    </AnimatePresence>
+  );
+}
 
 function Copyright() {
   return (
@@ -17,52 +87,5 @@ function Copyright() {
       &nbsp;
       {new Date().getFullYear()}
     </Typography>
-  );
-}
-
-export default function Footer() {
-  return (
-    <Container
-      sx={{
-        pb: { xs: 4, sm: 12 },
-        display: 'flex',
-        justifyContent: 'center',
-        textAlign: { sm: 'center', md: 'left' },
-      }}
-    >
-      <Stack
-        direction={'column'}
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          pt: { xs: 1, sm: 2 },
-          width: '100%',
-          borderTop: '1px solid',
-          borderColor: 'divider',
-        }}
-      >
-        <Stack
-          direction="row"
-          spacing={1}
-          useFlexGap
-          sx={{ justifyContent: 'left', color: 'text.secondary' }}
-        >
-          <IconButton
-            color="inherit"
-            size="small"
-            href="https://github.com/zhanchen9158/zhanchen9158.github.io"
-            target='_blank'
-            aria-label="GitHub"
-            sx={{ alignSelf: 'center' }}
-          >
-            <GitHubIcon />
-          </IconButton>
-        </Stack>
-        <div>
-          <Copyright />
-        </div>
-      </Stack>
-    </Container>
   );
 }

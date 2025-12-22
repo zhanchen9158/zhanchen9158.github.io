@@ -65,9 +65,9 @@ const StyledBox = styled(Box)(({ theme }) => ({
     },
 }));
 
-export default function ScrollDown() {
+export default function ScrollDown({ ...props }) {
     return (
-        <StyledBox id='scrolldown'>
+        <StyledBox id='scrolldown' {...props}>
             <div class="chevron"></div>
             <div class="chevron"></div>
             <div class="chevron"></div>

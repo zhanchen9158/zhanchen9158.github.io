@@ -1,10 +1,8 @@
 import { createTheme, alpha } from '@mui/material/styles';
-import backgroundlight from '../pics/backgroundlight.jpg';
-import backgrounddark from '../pics/backgrounddark.jpg';
+import background1 from '../pics/background1.jpg';
 import { preload } from 'react-dom';
 
-preload(backgroundlight, { as: "image" });
-preload(backgrounddark, { as: "image" });
+preload(background1, { as: "image" });
 
 const defaultTheme = createTheme();
 
@@ -257,9 +255,19 @@ export const colorSchemes = {
       },
       divider: alpha(gray[300], 0.4),
       background: {
-        default: 'rgba(240, 240, 240,1)',
+        default: 'rgba(225, 225, 225,1)',
+        contrast: 'rgba(30,30,30,1)',
         paper: 'hsl(220, 35%, 97%)',
-        image: `linear-gradient(rgba(200, 200, 200, 0.85), rgba(200, 200, 200, 0.85)), url(${backgroundlight})`,
+        image: `linear-gradient(rgba(250,250,250,0.8), rgba(250,250,250,0.8)), url(${background1})`,
+        appbar: 'linear-gradient(to right, #ffffff 0%, #f8fafc 100%)',
+        skillcard: `linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)), linear-gradient(
+          135deg, 
+        rgba(214, 235, 255, 1) 0%, 
+        rgba(77, 166, 255, 1) 0% 50%, 
+        rgba(77, 166, 255, 1) 100%
+        )`,
+        projcard: 'linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), linear-gradient(135deg, #00dbde 0%, #fc00ff 100%)',
+        certcard: 'linear-gradient(45deg, #e0f2f1 0%, #fcebf0ff 100%)',
       },
       text: {
         primary: gray[800],
@@ -310,9 +318,19 @@ export const colorSchemes = {
       },
       divider: alpha(gray[700], 0.6),
       background: {
-        default: 'rgba(50,50,50,1)',
+        default: 'rgba(30,30,30,1)',
+        contrast: 'rgba(225,225,225,1)',
         paper: 'hsl(220, 30%, 7%)',
-        image: `linear-gradient(rgba(50, 50, 50, 0.85), rgba(50, 50, 50, 0.85)), url(${backgrounddark})`,
+        image: `linear-gradient(rgba(5, 5, 5, 0.8), rgba(5, 5, 5, 0.8)), url(${background1})`,
+        appbar: 'linear-gradient(to bottom, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.7) 100%)',
+        skillcard: `linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), linear-gradient(
+          135deg, 
+        rgba(214, 235, 255, 1) 0%, 
+        rgba(77, 166, 255, 1) 0% 50%, 
+        rgba(77, 166, 255, 1) 100%
+        )`,
+        projcard: 'linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), linear-gradient(135deg, #00dbde 0%, #fc00ff 100%)',
+        certcard: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
       },
       text: {
         primary: 'hsl(0, 0%, 100%)',

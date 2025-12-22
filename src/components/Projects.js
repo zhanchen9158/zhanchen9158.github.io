@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useState } from 'react';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
 import CardMedia from '@mui/material/CardMedia';
@@ -7,7 +7,6 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
-import { useColorScheme } from '@mui/material/styles';
 import marketintelligence from '../pics/marketintelligence1.png';
 import artexplorer from '../pics/artexplorer.png';
 import researchdigest from '../pics/researchdigest.png';
@@ -16,6 +15,10 @@ import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
+import Pagination from '@mui/material/Pagination';
+import { motion } from "framer-motion";
+import { styled, useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 
 const projectInfo = [
@@ -32,8 +35,8 @@ const projectInfo = [
     img: researchdigest,
     header: 'Research Digest',
     description: [
-      'Knowledge retrieval portal for searching academic papers.',
-      'Client-side Retrieval-Augmented Generation (RAG)-based Question Answering of papers by leveraging web-based Transformer models.',
+      'Knowledge retrieval portal for searching scientific literature.',
+      'Client-side Retrieval-Augmented Generation (RAG)-based real-time Question Answering of papers.',
       'Optimized performances using multi-threading to offload heavy model inference computations, preserving UI responsiveness on the main execution thread.',
     ],
     link: 'https://researchdigest0.s3.us-east-2.amazonaws.com/index.html',
@@ -43,6 +46,7 @@ const projectInfo = [
     header: 'Meal Planner',
     description: [
       'Elastically scalable meal planning solution utilizing AWS cloud infrastructure, aggregating data sources to provide a holistic user experience for recipe and nutritional retrieval.',
+      'Quantized, web-based Grouped-Query Attention Transformer to deliver a low-latency, stateful chat-driven interface for recipe and nutritional retrieval.'
     ],
     link: 'https://mealplanner0.s3.us-east-2.amazonaws.com/index.html',
   },
@@ -56,62 +60,52 @@ const projectInfo = [
   },
 ];
 
-export default function Projects({ refProps }) {
-  const { mode, systemMode } = useColorScheme();
-  /*
-    let logos;
-    if (mode === 'system') {
-      if (systemMode === 'light') {
-        logos = lightModeLogos;
-      } else {
-        logos = darkModeLogos;
-      }
-    } else if (mode === 'light') {
-      logos = lightModeLogos;
-    } else {
-      logos = darkModeLogos;
-    }
-  */
+export default function Projects({ refProps, handleViewport }) {
+  const [page, setPage] = useState(1);
+
+  const theme = useTheme();
+  const lesserThanMd = useMediaQuery(theme.breakpoints.down('md'));
+
+  const perpage = lesserThanMd ? 1 : 3;
+  const maxpage = Math.ceil(projectInfo.length / perpage);
+
+  const handlePageChange = (e, v) => {
+    setPage(v);
+  }
+
   return (
     <Container
-      ref={el => refProps.current = { ...refProps.current, projects: el }}
+      component={motion.div}
+      ref={el => refProps.current['projects'] = el}
+      onViewportEnter={() => handleViewport('projects', true)}
+      onViewportLeave={() => handleViewport('projects', false)}
+      viewport={{ amount: 0.5 }}
       id="projects"
       maxWidth="lg"
       sx={{
-        pt:8,
-        pb: 8,
+        pt: { xs: 8, md: 0 },
+        pb: { xs: 2, md: 8 },
         position: 'relative',
-        display: { md: 'flex' },
-        flexDirection: { md: 'column' },
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
         alignItems: 'center',
-        gap: { xs: 3, md: 6 },
-        minHeight: '100dvh',
+        gap: { xs: 1, md: 6 },
+        height: '100dvh',
       }}
     >
-      <Box
+      <Pagination count={maxpage} page={page} onChange={handlePageChange} />
+      <Grid container spacing={2}
         sx={{
-          margin: 'auto',
-          width: { sm: '100%', md: '60%' },
-          textAlign: { sm: 'left', md: 'center' },
-        }}
-      >
-        <Typography
-          component="h2"
-          variant="h4"
-          gutterBottom
-          sx={{ color: 'text.primary' }}
-        >
-          Projects
-        </Typography>
-      </Box>
-      <Grid container spacing={2}>
-        {projectInfo.map((info, index) => (
-          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}
+          width: '100%',
+          height: { xs: '90%', md: '50%' }
+        }}>
+        {projectInfo.slice((page - 1) * perpage, page * perpage).map((v, i) => (
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}
             sx={(theme) => ({
               display: 'flex',
-              //backgroundColor: `${(theme.vars || theme).palette.background.default}`,
               '& .MuiPaper-root': {
-                backgroundColor: `rgba(${(theme.vars || theme).palette.background.defaultChannel} / 0.75)`,
+                background: (theme.vars || theme).palette.background.projcard,
               },
             })}
           >
@@ -122,20 +116,22 @@ export default function Projects({ refProps }) {
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 flexGrow: 1,
+                //width: '100%',
+                padding: { xs: 1, md: 2 },
               }}
             >
-              <CardActionArea href={info.link} target="_blank">
+              <CardActionArea href={v.link} target="_blank">
                 <CardMedia
                   component="img"
                   height="150"
-                  image={info.img}
+                  image={v.img}
                   sx={{ objectFit: "contain" }}
                 />
                 <CardHeader sx={{ p: '4px 0 0 8px' }}
-                  title={info.header}
+                  title={v.header}
                 />
                 <List>
-                  {info.description.map((v, i) => (
+                  {v.description.map((v, i) => (
                     <ListItem disablePadding sx={{ alignItems: 'start' }}>
                       <ArrowRightIcon sx={{ mt: '5px' }} /><ListItemText primary={v} />
                     </ListItem>
