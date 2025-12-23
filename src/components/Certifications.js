@@ -42,9 +42,9 @@ const items = [
     icon: FreecodecampIcon,
     title: 'JavaScript Algorithms and Data Structures',
     description: [
-      'Complete fundamental and advanced knowledge of JavaScript algorithms and data structures.',
-      'Design solutions utilizing multiple paradigms such as functional and object-oriented programming.',
-      'Apply advanced algorithms toward producing optimized solutions.',
+      'Fundamental and advanced knowledge focused on ES6+, Object-Oriented Programming (OOP), and Functional Programming paradigms.',
+      'Develope algorithmic solutions for data manipulation, including regular expression, recursion, and complex state logic.',
+      'Produce optimized solutions utilizing algorithmic efficiency, memoization and dynamic programming, and mathematical optimization.',
     ],
   },
   {
@@ -53,8 +53,8 @@ const items = [
     title: 'Responsive Web Design Developer',
     description: [
       'Thorough foundational knowledge in HTML, CSS, and responsive web design.',
-      'Create responsive and adaptive websites.',
-      'Implement advanced CSS techniques for website layout and design.',
+      'Implemente modern layout techniques including mobile-first responsive strategy, fluid grids, and responsive UI to create complex, fluid user interfaces.',
+      'Apply Web Content Accessibility Guidelines (WCAG) standards, utilizing semantic HTML to ensure screen-reader compatibility and SEO optimization.',
     ],
   },
 ];
@@ -215,6 +215,7 @@ export default function Certifications({ refProps, handleViewport }) {
                     img: {
                       style: {
                         objectFit: 'contain',
+                        backgroundColor:'rgba(250,250,250,0.9)',
                       },
                     },
                   }}

@@ -36,8 +36,8 @@ const projectInfo = [
     header: 'Research Digest',
     description: [
       'Knowledge retrieval portal for searching scientific literature.',
-      'Client-side Retrieval-Augmented Generation (RAG)-based real-time Question Answering of papers.',
-      'Optimized performances using multi-threading to offload heavy model inference computations, preserving UI responsiveness on the main execution thread.',
+      'Client-side Retrieval-Augmented Generation-based real-time Question Answering of papers.',
+      'Optimized performances using multi-threading to offload heavy model inference computations, preserving UI responsiveness.',
     ],
     link: 'https://researchdigest0.s3.us-east-2.amazonaws.com/index.html',
   },
@@ -98,7 +98,8 @@ export default function Projects({ refProps, handleViewport }) {
       <Grid container spacing={2}
         sx={{
           width: '100%',
-          height: { xs: '90%', md: '50%' }
+          height: { xs: '90%', md: '50%' },
+          justifyContent:'center',
         }}>
         {projectInfo.slice((page - 1) * perpage, page * perpage).map((v, i) => (
           <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}

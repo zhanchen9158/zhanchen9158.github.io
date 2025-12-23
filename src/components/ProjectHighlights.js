@@ -90,7 +90,7 @@ function MobileLayout({ selectedItemIndex, handleItemClick, selectedFeature }) {
     <Box
       id="projecthighlights"
       sx={{
-        display: { xs: 'flex', sm: 'none' },
+        display: { xs: 'flex', md: 'none' },
         flexDirection: 'column',
         gap: 1,
       }}
@@ -181,7 +181,7 @@ export default function ProjectHighlights({ refProps, handleViewport }) {
         <div>
           <Box
             sx={{
-              display: { xs: 'none', sm: 'flex' },
+              display: { xs: 'none', md: 'flex' },
               flexDirection: 'column',
               gap: 2,
               height: '100%',
@@ -240,7 +240,7 @@ export default function ProjectHighlights({ refProps, handleViewport }) {
           sx={(theme) => ({
             height: items[selectedItemIndex].image?.height ?? 500,
             width: '100%',
-            display: { xs: 'none', sm: 'flex' },
+            display: { xs: 'none', md: 'flex' },
             pointerEvents: 'none',
             backgroundColor: `rgba(${(theme.vars || theme).palette.background.defaultChannel} / 0.5)`,
             padding: 0,
