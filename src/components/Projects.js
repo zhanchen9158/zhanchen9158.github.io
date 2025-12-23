@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
+import Stack from '@mui/material/Stack';
 import marketintelligence from '../pics/marketintelligence1.png';
 import artexplorer from '../pics/artexplorer.png';
 import researchdigest from '../pics/researchdigest.png';
@@ -65,6 +66,11 @@ export default function Projects({ refProps, handleViewport }) {
 
   const theme = useTheme();
   const lesserThanMd = useMediaQuery(theme.breakpoints.down('md'));
+  const smheight = useMediaQuery('(max-height:600px)');
+
+
+  const header = 140;
+  const cardbox = smheight ? 400 : 500;
 
   const perpage = lesserThanMd ? 1 : 3;
   const maxpage = Math.ceil(projectInfo.length / perpage);
@@ -83,66 +89,76 @@ export default function Projects({ refProps, handleViewport }) {
       id="projects"
       maxWidth="lg"
       sx={{
-        pt: { xs: 8, md: 0 },
-        pb: { xs: 2, md: 8 },
-        position: 'relative',
+        position: 'fixed',
+        //bottom: '5px',
+        marginTop: '140px',
         display: 'flex',
-        flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        gap: { xs: 1, md: 6 },
+        gap: { xs: 1, md: 3 },
         height: '100dvh',
+        overflow: 'hidden',
       }}
     >
-      <Pagination count={maxpage} page={page} onChange={handlePageChange} />
-      <Grid container spacing={2}
+      <Box
         sx={{
-          width: '100%',
-          height: { xs: '90%', md: '50%' },
-          justifyContent:'center',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'column',
+          gap: 1,
+          //marginTop: `calc((100dvh-${header}))`,
         }}>
-        {projectInfo.slice((page - 1) * perpage, page * perpage).map((v, i) => (
-          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}
-            sx={(theme) => ({
-              display: 'flex',
-              '& .MuiPaper-root': {
-                background: (theme.vars || theme).palette.background.projcard,
-              },
-            })}
-          >
-            <Card
-              variant="outlined"
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                flexGrow: 1,
-                //width: '100%',
-                padding: { xs: 1, md: 2 },
-              }}
+        <Pagination count={maxpage} page={page} onChange={handlePageChange}
+          sx={{ display: 'flex', justifyContent: 'center', }} />
+        <Grid container spacing={2}>
+          {projectInfo.slice((page - 1) * perpage, page * perpage).map((v, i) => (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}
+              sx={(theme) => ({
+                marginBottom: { xs: 1, md: 2 },
+                '& .MuiPaper-root': {
+                  background: (theme.vars || theme).palette.background.projcard,
+                },
+              })}
             >
-              <CardActionArea href={v.link} target="_blank">
-                <CardMedia
-                  component="img"
-                  height="150"
-                  image={v.img}
-                  sx={{ objectFit: "contain" }}
-                />
-                <CardHeader sx={{ p: '4px 0 0 8px' }}
-                  title={v.header}
-                />
-                <List>
-                  {v.description.map((v, i) => (
-                    <ListItem disablePadding sx={{ alignItems: 'start' }}>
-                      <ArrowRightIcon sx={{ mt: '5px' }} /><ListItemText primary={v} />
-                    </ListItem>
-                  ))}
-                </List>
-              </CardActionArea>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    </Container>
+              <Card
+                variant="outlined"
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  padding: { xs: 1, md: 2 },
+                  width: '100%',
+                  height: 450,
+                  '@media (max-height: 600px)': {
+                    height: 350,
+                  },
+                  overflow: 'auto',
+                }}
+              >
+                <CardActionArea href={v.link} target="_blank">
+                  <CardMedia
+                    component="img"
+                    height="150"
+                    image={v.img}
+                    sx={{ objectFit: "contain" }}
+                  />
+                  <CardHeader sx={{ p: '4px 0 0 8px' }}
+                    title={v.header}
+                  />
+                  <List>
+                    {v.description.map((v, i) => (
+                      <ListItem disablePadding sx={{ alignItems: 'start', }}>
+                        <ArrowRightIcon sx={{ mt: '5px' }} /><ListItemText primary={v} />
+                      </ListItem>
+                    ))}
+                  </List>
+                </CardActionArea>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+    </Container >
   );
 }

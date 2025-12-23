@@ -165,7 +165,7 @@ export default function Certifications({ refProps, handleViewport }) {
         display: 'flex',
         justifyContent: { xs: 'flex-start', sm: 'center' },
         alignItems: { xs: 'flex-start', sm: 'center' },
-        paddingTop: { xs: 10, md: 0 },
+        paddingTop: { xs: 10, md: 10 },
         height: '100dvh',
         color: 'white',
         backgroundColor: 'transparent',

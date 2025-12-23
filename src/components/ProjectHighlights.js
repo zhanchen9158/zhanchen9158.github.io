@@ -165,7 +165,7 @@ export default function ProjectHighlights({ refProps, handleViewport }) {
         display: 'flex',
         justifyContent: 'center',
         alignItems: { xs: 'flex-start', md: 'center' },
-        paddingTop: { xs: 10, md: 0 },
+        paddingTop: { xs: 10, md: 10 },
         height: '100dvh',
       }}
     >
@@ -183,8 +183,8 @@ export default function ProjectHighlights({ refProps, handleViewport }) {
             sx={{
               display: { xs: 'none', md: 'flex' },
               flexDirection: 'column',
-              gap: 2,
-              height: '100%',
+              gap: { xs: 1, lg: 2 },
+              //height: '100%',
             }}
           >
             {items.map(({ icon, title, description }, index) => (
@@ -225,7 +225,6 @@ export default function ProjectHighlights({ refProps, handleViewport }) {
                 >
                   {icon}
                   <Typography variant="h6">{title}</Typography>
-                  <Typography variant="body2">{description}</Typography>
                 </Box>
               </Box>
             ))}
@@ -238,7 +237,7 @@ export default function ProjectHighlights({ refProps, handleViewport }) {
         </div>
         <Card
           sx={(theme) => ({
-            height: items[selectedItemIndex].image?.height ?? 500,
+            height: 500,
             width: '100%',
             display: { xs: 'none', md: 'flex' },
             pointerEvents: 'none',
@@ -253,6 +252,7 @@ export default function ProjectHighlights({ refProps, handleViewport }) {
               m: 'auto',
               width: '100%',
               height: '100%',
+              objectFit: 'contain',
             }}
           />
         </Card>
