@@ -145,14 +145,21 @@ export default function SkillsCard() {
 
     const theme = useTheme();
     const lesserThanMd = useMediaQuery(theme.breakpoints.down('md'));
+    const smheight = useMediaQuery('(max-height:600px)');
 
     const handleChange = (e, nv) => {
         setTabvalue(nv);
     };
 
-    if (lesserThanMd) {
+    if (lesserThanMd || smheight) {
         return (
-            <Box sx={{ pb: 2 }}>
+            <Box sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexDirection: 'column',
+                width: '100%',
+            }}>
                 <StyledTabs value={tabvalue} onChange={handleChange}
                     variant="scrollable"
                     scrollButtons={true}

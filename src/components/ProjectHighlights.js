@@ -146,6 +146,8 @@ export { MobileLayout };
 export default function ProjectHighlights({ refProps, handleViewport }) {
   const [selectedItemIndex, setSelectedItemIndex] = useState(0);
 
+  const header = '70px';
+
   const handleItemClick = (index) => {
     setSelectedItemIndex(index);
   };
@@ -162,11 +164,13 @@ export default function ProjectHighlights({ refProps, handleViewport }) {
       id="highlights"
       maxWidth="lg"
       sx={{
+        position: 'fixed',
+        marginTop: header,
         display: 'flex',
         justifyContent: 'center',
         alignItems: { xs: 'flex-start', md: 'center' },
-        paddingTop: { xs: 10, md: 10 },
-        height: '100dvh',
+        height: `calc(100dvh - ${header})`,
+        overflow: 'hidden',
       }}
     >
       <Box

@@ -69,8 +69,7 @@ export default function Projects({ refProps, handleViewport }) {
   const smheight = useMediaQuery('(max-height:600px)');
 
 
-  const header = 140;
-  const cardbox = smheight ? 400 : 500;
+  const header = '70px';
 
   const perpage = lesserThanMd ? 1 : 3;
   const maxpage = Math.ceil(projectInfo.length / perpage);
@@ -90,13 +89,12 @@ export default function Projects({ refProps, handleViewport }) {
       maxWidth="lg"
       sx={{
         position: 'fixed',
-        //bottom: '5px',
-        marginTop: '140px',
+        marginTop: header,
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         gap: { xs: 1, md: 3 },
-        height: '100dvh',
+        height: `calc(100dvh - ${header})`,
         overflow: 'hidden',
       }}
     >
@@ -107,7 +105,6 @@ export default function Projects({ refProps, handleViewport }) {
           alignItems: 'center',
           flexDirection: 'column',
           gap: 1,
-          //marginTop: `calc((100dvh-${header}))`,
         }}>
         <Pagination count={maxpage} page={page} onChange={handlePageChange}
           sx={{ display: 'flex', justifyContent: 'center', }} />

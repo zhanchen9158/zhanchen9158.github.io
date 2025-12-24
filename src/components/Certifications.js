@@ -108,6 +108,8 @@ export default function Certifications({ refProps, handleViewport }) {
   const greaterThanMd = useMediaQuery(theme.breakpoints.up('md'));
   const greaterThanSm = useMediaQuery(theme.breakpoints.up('sm'));
 
+  const header = '70px';
+
   const stack = greaterThanMd
     ? 60
     : greaterThanSm
@@ -162,13 +164,13 @@ export default function Certifications({ refProps, handleViewport }) {
       id="certifications"
       maxWidth="lg"
       sx={{
+        position: 'fixed',
+        marginTop: header,
         display: 'flex',
-        justifyContent: { xs: 'flex-start', sm: 'center' },
-        alignItems: { xs: 'flex-start', sm: 'center' },
-        paddingTop: { xs: 10, md: 10 },
-        height: '100dvh',
-        color: 'white',
-        backgroundColor: 'transparent',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: `calc(100dvh - ${header})`,
+        overflow: 'hidden',
       }}
       onClick={handleNext}
     >
@@ -177,8 +179,11 @@ export default function Certifications({ refProps, handleViewport }) {
           component={motion.div}
           sx={{
             position: 'relative',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
             width: containerwidth,
-            height: { xs: 300 + 20 * l, sm: 400 + 20 * l }
+            height: { xs: 300 + 20 * l, sm: 400 + 20 * l },
           }}
           initial='stacked'
           whileHover={'fanned'}
@@ -215,7 +220,7 @@ export default function Certifications({ refProps, handleViewport }) {
                     img: {
                       style: {
                         objectFit: 'contain',
-                        backgroundColor:'rgba(250,250,250,0.9)',
+                        backgroundColor: 'rgba(250,250,250,0.9)',
                       },
                     },
                   }}

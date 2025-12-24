@@ -10,7 +10,6 @@ const StyledBox = styled(Box)(({ theme }) => ({
     justifyContent: 'center',
     alignItems: 'end',
     width: '100%',
-    height: '40dvh',
     '& .chevron': {
         position: 'absolute',
         width: `${base * 3.5}rem`,

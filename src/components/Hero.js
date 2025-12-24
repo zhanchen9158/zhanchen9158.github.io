@@ -28,14 +28,19 @@ export default function Hero({ refProps, handleViewport, handleScrollsection }) 
 
   const theme = useTheme();
 
+  const header = '70px';
+  const scrolldown = 80;
+
+
   return (
-    <Box
+    <Container
       component={motion.div}
       ref={el => refProps.current['introduction'] = el}
       onViewportEnter={() => handleViewport('introduction', true)}
       onViewportLeave={() => handleViewport('introduction', false)}
       viewport={{ amount: 0.5 }}
       id="introduction"
+      maxWidth="lg"
       sx={(theme) => ({
         backgroundRepeat: 'no-repeat',
         backgroundImage:
@@ -44,25 +49,25 @@ export default function Hero({ refProps, handleViewport, handleScrollsection }) 
           backgroundImage:
             'radial-gradient(ellipse 80% 50% at 50% -20%, hsl(210, 100%, 16%), transparent)',
         }),
-        maxWidth: { lg: '100%' },
-        height: '100dvh',
-        justifyContent: 'center',
+        position: 'fixed',
+        marginTop: header,
         display: 'flex',
+        justifyContent: 'center',
         alignItems: 'center',
+        height: `calc(100dvh - ${header})`,
+        overflow: 'hidden',
       })}
     >
-      <Container
+      <Box
         sx={{
           display: 'flex',
-          flexDirection: 'column',
+          justifyContent: 'start',
           alignItems: 'center',
-          pt: { xs: 8, md: 12 },
-          pb: { xs: 8, md: 24 },
-          height: '100%',
-          justifyContent: 'space-between',
-          gap:2,
-        }}
-      >
+          flexDirection: 'column',
+          gap: 1,
+          width: '100%',
+          pb: { xs: `${0.9 * scrolldown}px`, md: `${1.5 * scrolldown}px` }
+        }}>
         <SkillsCard />
         <Box
           sx={{
@@ -71,6 +76,7 @@ export default function Hero({ refProps, handleViewport, handleScrollsection }) 
             justifyContent: 'center',
             alignItems: 'center',
             pt: { xs: 0, md: 2 },
+            pb: { xs: 0, md: 2 },
             gap: { xs: 2, md: 4 },
           }}
         >
@@ -86,10 +92,11 @@ export default function Hero({ refProps, handleViewport, handleScrollsection }) 
         </Box>
         <ScrollDown
           sx={{
+            //height: { xs: `${0.9 * scrolldown}px`, md: `${1.5 * scrolldown}px` },
             transform: { xs: 'scale(0.9)', md: 'scale(1.5)' },
           }}
         />
-      </Container>
-    </Box>
+      </Box>
+    </Container>
   );
 }
