@@ -5,7 +5,7 @@ import AppTheme from './shared-theme/AppTheme';
 import PortfolioPage from './PortfolioPage';
 import Box from '@mui/material/Box';
 import SplashScreen from './components/SplashScreen';
-import Mockup from './components/Mockup';
+
 
 export default function App(props) {
   const [loading, setLoading] = useState(true);
