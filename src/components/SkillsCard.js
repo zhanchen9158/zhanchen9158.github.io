@@ -8,7 +8,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Box from '@mui/material/Box';
-
+import { useAnimateContext } from './AnimateContext';
 
 const icons = import.meta.glob('../icons/skills/*.svg', {
     eager: true,
@@ -83,6 +83,7 @@ const containerVars = {
             staggerChildren: 0.35,
         },
     },
+    static: { opacity: 1, scale: 1, y: 0, transition: { duration: 0 } },
 };
 
 const cardVars = {
@@ -95,11 +96,13 @@ const cardVars = {
             staggerChildren: 0.1
         }
     },
+    static: { opacity: 1, scale: 1, y: 0, transition: { duration: 0 } },
 };
 
 const itemVars = {
     hidden: { opacity: 0, scale: 0.9, y: 10 },
     visible: { opacity: 1, scale: 1, y: 0 },
+    static: { opacity: 1, scale: 1, y: 0, transition: { duration: 0 } },
 };
 
 const skills = {
@@ -151,6 +154,9 @@ export default function SkillsCard() {
         setTabvalue(nv);
     };
 
+    const { manual, system } = useAnimateContext();
+    const mode = system || manual;
+
     if (lesserThanMd || smheight) {
         return (
             <Box sx={{
@@ -182,9 +188,9 @@ export default function SkillsCard() {
                 variants={containerVars}
                 layout
                 initial="hidden"
-                whileInView="visible"
+                whileInView={mode == 'normal' ? "visible" : "static"}
                 viewport={{ once: false }}
-                style={{ display: 'flex', flexDirection: 'column' }}
+                style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}
             >
                 {Object.entries(skills).map(([k, section], i) => (
                     <React.Fragment key={i}>
@@ -241,6 +247,7 @@ function AnimateCard({ children, }) {
 };
 
 function InteractiveIcon({ children }) {
+
     return (
         <motion.div
             variants={itemVars}
@@ -262,6 +269,8 @@ function TabPanel({ value, index }) {
             sx={{
                 width: '100%', padding: '0 8px',
                 display: value != index ? 'none' : 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
             }}
         >
             {value == index &&
@@ -269,7 +278,7 @@ function TabPanel({ value, index }) {
                     variants={cardVars}
                     initial="hidden"
                     whileInView="visible"
-                    style={{ marginTop: '4px', width: '100%' }}
+                    style={{ marginTop: '4px', width: 'fit-content' }}
                 >
                     <StyledCard>
                         {skills[Object.keys(skills)[index]].map((icon, ii) => (

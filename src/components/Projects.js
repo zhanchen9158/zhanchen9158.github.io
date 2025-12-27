@@ -20,7 +20,23 @@ import Pagination from '@mui/material/Pagination';
 import { motion } from "framer-motion";
 import { styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import { useAnimateContext } from './AnimateContext';
+import Tooltip from '@mui/material/Tooltip';
 
+
+const StyledGridItem = styled(Grid)(({ theme }) => ({
+  padding: '15px',
+  '& .MuiPaper-root': {
+    background: `rgba(${(theme.vars || theme).palette.background.defaultChannel}/0.1)`,
+    backdropFilter: 'blur(12px)',
+    borderRadius: '15px',
+    border: `none`,
+    padding: '15px',
+    '&:hover': {
+      //background: `linear-gradient(rgba(${(theme.vars || theme).palette.background.defaultChannel}/0.1), rgba(${(theme.vars || theme).palette.background.defaultChannel}/0.1)) padding-box, ${(theme.vars || theme).palette.background.projcard} border-box`,
+    },
+  },
+}));
 
 const projectInfo = [
   {
@@ -74,9 +90,57 @@ export default function Projects({ refProps, handleViewport }) {
   const perpage = lesserThanMd ? 1 : 3;
   const maxpage = Math.ceil(projectInfo.length / perpage);
 
+  const hoverdistance = 20;
+
   const handlePageChange = (e, v) => {
     setPage(v);
   }
+
+  const { manual, system } = useAnimateContext();
+  const mode = system || manual;
+
+  const containerVars = {
+    hidden: { opacity: 0, scale: 1, y: 0 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: {
+        staggerChildren: 0.35,
+      },
+    },
+    static: { opacity: 1, scale: 1, y: 0, transition: { duration: 0 } },
+  };
+
+  const itemVars = {
+    hidden: {
+      opacity: 0,
+      scale: 1,
+      y: 20,
+      clipPath: "inset(100% 0% 0% 0%)",
+    },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      clipPath: "inset(0% 0% 0% 0%)",
+      transition: {
+        duration: 0.8,
+        ease: [0.4, 0, 0.2, 1],
+      }
+    },
+    static: { opacity: 1, scale: 1, y: 0, clipPath: "inset(0% 0% 0% 0%)", transition: { duration: 0 } },
+  };
+
+  const cardVars = {
+    hover: {
+      scale: 1.02,
+      y: -8,
+      boxShadow: `0 20px 25px -5px rgba(${(theme.vars || theme).palette.text.primaryChannel}/0.1), 0 10px 10px -5px rgba(${(theme.vars || theme).palette.text.primaryChannel}/0.04)`,
+      zIndex: 1200,
+      transition: { type: "spring", stiffness: 160, damping: 20 }
+    },
+  };
 
   return (
     <Container
@@ -105,56 +169,76 @@ export default function Projects({ refProps, handleViewport }) {
           alignItems: 'center',
           flexDirection: 'column',
           gap: 1,
+          width: '100%',
         }}>
-        <Pagination count={maxpage} page={page} onChange={handlePageChange}
-          sx={{ display: 'flex', justifyContent: 'center', }} />
-        <Grid container spacing={2}>
+        <Grid container spacing={0} key={page}
+          component={motion.div}
+          variants={containerVars}
+          initial="hidden"
+          whileInView={mode == 'normal' ? "visible" : "static"}
+          viewport={{ once: false, amount: 0.5 }}
+          sx={{ width: '100%', padding: '2px' }}
+        >
           {projectInfo.slice((page - 1) * perpage, page * perpage).map((v, i) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}
-              sx={(theme) => ({
-                marginBottom: { xs: 1, md: 2 },
-                '& .MuiPaper-root': {
-                  background: (theme.vars || theme).palette.background.projcard,
-                },
-              })}
+            <StyledGridItem item size={{ xs: 12, sm: 6, md: 4 }} key={i}
+              component={motion.div}
+              layout
+              variants={itemVars}
             >
-              <Card
-                variant="outlined"
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  padding: { xs: 1, md: 2 },
-                  width: '100%',
-                  height: 450,
-                  '@media (max-height: 600px)': {
-                    height: 350,
-                  },
-                  overflow: 'auto',
-                }}
-              >
-                <CardActionArea href={v.link} target="_blank">
-                  <CardMedia
-                    component="img"
-                    height="150"
-                    image={v.img}
-                    sx={{ objectFit: "contain" }}
-                  />
-                  <CardHeader sx={{ p: '4px 0 0 8px' }}
-                    title={v.header}
-                  />
-                  <List>
-                    {v.description.map((v, i) => (
-                      <ListItem disablePadding sx={{ alignItems: 'start', }}>
-                        <ArrowRightIcon sx={{ mt: '5px' }} /><ListItemText primary={v} />
-                      </ListItem>
-                    ))}
-                  </List>
-                </CardActionArea>
-              </Card>
-            </Grid>
+              <Tooltip title='Visit Site' placement='top'>
+                <Card
+                  variant="outlined"
+                  component={motion.div}
+                  variants={cardVars}
+                  whileHover={'hover'}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    padding: { xs: 1, md: 2 },
+                    width: '100%',
+                    height: 450,
+                    '@media (max-height: 600px)': {
+                      height: 350,
+                    },
+                    overflow: 'auto',
+                  }}
+                >
+                  <CardActionArea href={v.link} target="_blank"
+                    disableRipple
+                    sx={{
+                      "& .MuiCardActionArea-focusHighlight": {
+                        background: "transparent",
+                      },
+                      "&:hover": {
+                        backgroundColor: "transparent",
+                      }
+                    }}
+                  >
+                    <CardMedia
+                      component="img"
+                      height="150"
+                      image={v.img}
+                      sx={{ objectFit: "contain" }}
+                    />
+                    <CardHeader sx={{ p: '4px 0 0 8px' }}
+                      title={v.header}
+                    />
+                    <List>
+                      {v.description.map((v, i) => (
+                        <ListItem disablePadding sx={{ alignItems: 'start', }}>
+                          <ArrowRightIcon sx={{ mt: '5px' }} /><ListItemText primary={v} />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </CardActionArea>
+                </Card>
+              </Tooltip>
+            </StyledGridItem>
           ))}
         </Grid>
+        <Pagination count={maxpage} page={page} onChange={handlePageChange}
+          sx={{ display: 'flex', justifyContent: 'center', }} />
       </Box>
     </Container >
   );

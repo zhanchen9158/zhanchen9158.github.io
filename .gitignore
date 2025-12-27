@@ -9,3 +9,5 @@ dist
 dist-ssr
 *.local
 src/components/ResumeDialog.js
+src/components/Mockup.js
+src/functions/test.js

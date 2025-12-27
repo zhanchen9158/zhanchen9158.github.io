@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const StyledButton = styled(IconButton)(({ theme }) => ({
   background: (theme.vars || theme).palette.text.primary,
   color: (theme.vars || theme).palette.background.default,
-  alignSelf: 'center',
+  alignSelf: 'flex-start',
   ...theme.applyStyles('dark', {
     background: (theme.vars || theme).palette.text.primary,
   }),
@@ -21,6 +21,17 @@ const StyledButton = styled(IconButton)(({ theme }) => ({
     background: (theme.vars || theme).palette.text.secondary,
   },
 }));
+
+const footVars = {
+  hidden: {
+    opacity: 0, x: -50,
+    transition: { type: "spring", stiffness: 80, damping: 20 },
+  },
+  slide: {
+    opacity: 1, x: 0,
+    transition: { type: "spring", stiffness: 80, damping: 20 },
+  },
+}
 
 export default function Footer({ activesection }) {
 
@@ -31,9 +42,10 @@ export default function Footer({ activesection }) {
       {section == 'introduction' && (
         <Box
           component={motion.div}
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -50 }}
+          variants={footVars}
+          initial='hidden'
+          animate='slide'
+          exit='hidden'
           sx={{
             pb: { xs: 1, md: 2 },
             pl: { xs: 1, md: 2 },
@@ -48,25 +60,16 @@ export default function Footer({ activesection }) {
             sx={{
               display: 'flex',
               width: '100%',
-              borderTop: '1px solid',
-              borderColor: 'divider',
             }}
           >
-            <Stack
-              direction="row"
-              spacing={1}
-              useFlexGap
-              sx={{ justifyContent: 'left', color: 'text.secondary' }}
+            <StyledButton
+              size="small"
+              href="https://github.com/zhanchen9158/zhanchen9158.github.io"
+              target='_blank'
+              aria-label="GitHub"
             >
-              <StyledButton
-                size="small"
-                href="https://github.com/zhanchen9158/zhanchen9158.github.io"
-                target='_blank'
-                aria-label="GitHub"
-              >
-                <GitHubIcon />
-              </StyledButton>
-            </Stack>
+              <GitHubIcon />
+            </StyledButton>
             <div>
               <Copyright />
             </div>

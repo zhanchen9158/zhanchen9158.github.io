@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Avatar from '@mui/material/Avatar';
 import { styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import { useAnimateContext } from './AnimateContext';
 
 
 const items = [
@@ -129,21 +130,48 @@ export default function Certifications({ refProps, handleViewport }) {
       ? 1.2
       : 1.1;
 
+  const containerVars = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.35,
+      },
+    },
+    static: { opacity: 1, transition: { duration: 0 } },
+  };
+
   const cardVars = {
-    stacked: (i) => ({
+    hidden: { opacity: 0, y: 20, },
+    visible: (i) => ({
       scale: 1 - i * 0.05,
       x: i * stack,
       y: i * -20,
       zIndex: items.length - i,
-      opacity: i == 0 ? 1 : 0.5,
+      opacity: 1 - i * 0.1,
+      transition: {
+        type: "spring",
+        stiffness: 90,
+        damping: 20,
+        restDelta: 0.1,
+      }
     }),
-    fanned: (i) => ({
-      //rotate: i * 7.5,
-      x: i * (40 + stack),
-      y: i * -60,
-      transition: { type: "spring", stiffness: 180, damping: 15 }
-    })
+    static: (i) => ({ opacity: 1, zIndex: items.length - i, transition: { duration: 0 } }),
   };
+
+  const itemVars = {
+    hover: {
+      scale: hoverscale,
+      y: -40,
+      transition: {
+        duration: 0.2,
+        type: "spring", stiffness: 160, damping: 15,
+      }
+    },
+  };
+
+  const { manual, system } = useAnimateContext();
+  const mode = system || manual;
 
   const handleNext = () => {
     setCards((prev) => {
@@ -172,7 +200,6 @@ export default function Certifications({ refProps, handleViewport }) {
         height: `calc(100dvh - ${header})`,
         overflow: 'hidden',
       }}
-      onClick={handleNext}
     >
       <AnimatePresence>
         <Box
@@ -185,30 +212,34 @@ export default function Certifications({ refProps, handleViewport }) {
             width: containerwidth,
             height: { xs: 300 + 20 * l, sm: 400 + 20 * l },
           }}
-          initial='stacked'
-          whileHover={'fanned'}
-          animate='stacked'
+          onClick={handleNext}
+          variants={containerVars}
+          initial="hidden"
+          whileInView={mode == 'normal' ? "visible" : "static"}
+          viewport={{ once: false }}
         >
-          {cards.map((v, i) => {
-            const isTop = i == 0;
-            return (
+          {cards.map((v, i) => (
+            <Box
+              component={motion.div}
+              key={i}
+              layout
+              custom={i}
+              variants={cardVars}
+              sx={{
+                position: 'absolute',
+                width: { xs: 250, sm: 350 },
+                height: { xs: 300, sm: 400 }
+              }}
+            >
               <StyledCard
                 component={motion.div}
                 key={i}
                 layout
                 custom={i}
-                variants={cardVars}
-                whileHover={isTop ? {
-                  scale: hoverscale,
-                  //y: -40,
-                  transition: { duration: 0.2 }
-                } : {
-
-                }}
-                transition={{ type: "spring", stiffness: 160, damping: 15 }}
+                variants={itemVars}
+                whileHover={i == 0 && 'hover'}
                 sx={{
                   position: 'absolute',
-                  transformOrigin: "bottom center",
                   width: { xs: 250, sm: 350 },
                   height: { xs: 300, sm: 400 }
                 }}
@@ -238,8 +269,8 @@ export default function Certifications({ refProps, handleViewport }) {
                   </StyledList>
                 ))}
               </StyledCard>
-            )
-          })}
+            </Box>
+          ))}
         </Box>
       </AnimatePresence>
     </Container >

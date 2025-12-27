@@ -1,12 +1,22 @@
 import React, { useState, useRef, useEffect } from 'react';
+import Box from '@mui/material/Box';
 import AppNavBar from './components/AppNavBar';
 import Hero from './components/Hero';
 import Certifications from './components/Certifications';
 import ProjectHighlights from './components/ProjectHighlights';
 import Projects from './components/Projects';
 import Footer from './components/Footer';
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring, cubicBezier } from "framer-motion";
 import CustomizedSpeedDial from './components/CustomizedSpeedDial';
+import { styled, useTheme } from '@mui/material/styles';
+import { AnimateProvider } from './components/AnimateContext';
+import getActivesection from './functions/getActivesection';
+
+const bgimport = import.meta.glob('./pics/background*.jpg', {
+  eager: true,
+  query: '?url'
+});
+const bgimgs = Object.values(bgimport).map((v, i) => (v.default))
 
 
 export default function PortfolioPage({ }) {
@@ -33,29 +43,39 @@ export default function PortfolioPage({ }) {
   ];
 
   return (
-    <React.Fragment>
+    <AnimateProvider>
       <AppNavBar activesection={activesection} />
-      <div
+      <Box
         ref={scrollContainerRef}
-        style={{
+        sx={(theme) => ({
           height: "100dvh",
           overflowY: "scroll",
           scrollSnapType: "y mandatory",
-        }}>
+          //backgroundColor: (theme.vars || theme).palette.text.primary,
+          backgroundImage: (theme.vars || theme).palette.background.image,
+          backgroundSize: 'cover',
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        })}>
         {sections.map((v, i) => (
-          <Page key={i} containerRef={scrollContainerRef}>
+          <Page key={i} containerRef={scrollContainerRef} bgimg={bgimgs[i]} activesection={activesection}>
             {v}
           </Page>
         ))}
-      </div>
-      <Footer activesection={activesection}/>
+      </Box>
+      <Footer activesection={activesection} />
       <CustomizedSpeedDial handleScrollsection={handleScrollsection} activesection={activesection} />
-    </React.Fragment>
+    </AnimateProvider>
   );
 }
 
-function Page({ containerRef, children, ...props }) {
+function Page({ containerRef, bgimg, activesection, children, ...props }) {
+
   const ref = useRef(null);
+
+  const theme = useTheme();
+
+  const section = getActivesection(activesection);
 
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -63,19 +83,31 @@ function Page({ containerRef, children, ...props }) {
     offset: ["start end", "end start"],
   });
 
-  const rotateX = useTransform(scrollYProgress, [0, 0.5, 1], [-90, 0, 90]);
-  const z = useTransform(scrollYProgress, [0, 0.5, 1], [-500, 0, -500]);
-  const opacity = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0, 1, 1, 0]);
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 70,
+    damping: 30,
+    restDelta: 0.005
+  });
+
+  const y = useTransform(smoothProgress, [0, 1], [100, -100],
+    { ease: cubicBezier(0.76, 0, 0.24, 1) });
+
+  const rotateX = useTransform(smoothProgress, [0.1, 0.8, 1], [-10, 0, 10], { ease: (t) => t });
+  const x = useTransform(smoothProgress, [0.1, 0.8, 1], [-50, 0, -50], { ease: (t) => t });
+  const opacity = useTransform(smoothProgress, [0, 0.2, 0.5, 0.8, 1], [0, 0.5, 1, 0.5, 0], { ease: (t) => t });
 
   return (
-    <section
+    <Box
+      component={'section'}
       ref={ref}
       style={{
         height: "100dvh",
         width: "100dvw",
         scrollSnapAlign: "start",
-        perspective: "1200px",
         overflow: "hidden",
+        //perspective: '1200px',
+        //background: 'rgba(250, 250, 250, 0.1)',
+        backdropFilter: 'blur(12px)',
       }}
       {...props}
     >
@@ -86,15 +118,20 @@ function Page({ containerRef, children, ...props }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          rotateX,
-          z,
-          opacity,
+          y,
           //backfaceVisibility: "hidden",
-          transformStyle: "preserve-3d",
+          //transformStyle: "preserve-3d",
+          backgroundImage: section == 'introduction'
+            ? `${(theme.vars || theme).palette.background.header}, ${(theme.vars || theme).palette.background.overlay}, url(${bgimg})`
+            : `${(theme.vars || theme).palette.background.overlay}, url(${bgimg})`,
+          //backdropFilter: 'blur(12px) saturate(180%)',
+          backgroundSize: 'cover',
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
         }}
       >
         {children}
       </motion.div>
-    </section>
+    </Box>
   );
 };

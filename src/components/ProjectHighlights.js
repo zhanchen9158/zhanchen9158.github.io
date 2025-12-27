@@ -7,8 +7,10 @@ import Card from '@mui/material/Card';
 import MuiChip from '@mui/material/Chip';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
-import { styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { motion } from "framer-motion";
+import { useAnimateContext } from './AnimateContext';
 
 import AreaChartIcon from '@mui/icons-material/AreaChart';
 import NewspaperIcon from '@mui/icons-material/Newspaper';
@@ -57,6 +59,16 @@ const items = [
   },
 ];
 
+const ImgCard = styled(Card)(({ theme }) => ({
+  position: 'relative',
+  display: 'flex',
+  width: '100%',
+  pointerEvents: 'none',
+  backgroundColor: `rgba(${(theme.vars || theme).palette.background.defaultChannel} / 0.1)`,
+  border: 'none',
+  padding: 0,
+}));
+
 const Chip = styled(MuiChip)(({ theme }) => ({
   variants: [
     {
@@ -77,76 +89,13 @@ const Chip = styled(MuiChip)(({ theme }) => ({
   ],
 }));
 
-function MobileLayout({ selectedItemIndex, handleItemClick, selectedFeature }) {
-
-  const imgwidth = document.querySelector('#mobileprojimg')?.width;
-  const imgheight = selectedFeature.image?.height * (imgwidth / selectedFeature.image?.width);
-
-  if (!items[selectedItemIndex]) {
-    return null;
-  }
-
-  return (
-    <Box
-      id="projecthighlights"
-      sx={{
-        display: { xs: 'flex', md: 'none' },
-        flexDirection: 'column',
-        gap: 1,
-      }}
-    >
-      <Stack direction='column' gap={1}>
-        {items.map(({ title }, index) => (
-          <Chip
-            size="medium"
-            key={index}
-            label={title}
-            onClick={() => handleItemClick(index)}
-            selected={selectedItemIndex === index}
-          />
-        ))}
-      </Stack>
-      <Card
-        id='mobileprojimg'
-        sx={{
-          height: imgheight ?? 200,
-          width: '100%',
-          pointerEvents: 'none',
-          padding: 0,
-        }}
-      >
-        <img
-          src={selectedFeature.image ?? ''}
-          loading='lazy'
-          style={{
-            m: 'auto',
-            width: '100%',
-            height: '100%',
-          }}
-        />
-      </Card>
-
-    </Box>
-  );
-}
-
-MobileLayout.propTypes = {
-  handleItemClick: PropTypes.func.isRequired,
-  selectedFeature: PropTypes.shape({
-    description: PropTypes.string.isRequired,
-    icon: PropTypes.element,
-    image: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
-  }).isRequired,
-  selectedItemIndex: PropTypes.number.isRequired,
-};
-
-export { MobileLayout };
-
 export default function ProjectHighlights({ refProps, handleViewport }) {
   const [selectedItemIndex, setSelectedItemIndex] = useState(0);
 
   const header = '70px';
+
+  const theme = useTheme();
+  const lesserThanMd = useMediaQuery(theme.breakpoints.down('md'));
 
   const handleItemClick = (index) => {
     setSelectedItemIndex(index);
@@ -182,85 +131,182 @@ export default function ProjectHighlights({ refProps, handleViewport }) {
           gap: 2,
         }}
       >
-        <div>
-          <Box
-            sx={{
-              display: { xs: 'none', md: 'flex' },
-              flexDirection: 'column',
-              gap: { xs: 1, lg: 2 },
-              //height: '100%',
-            }}
-          >
-            {items.map(({ icon, title, description }, index) => (
-              <Box
-                key={index}
-                component={Button}
-                onClick={() => handleItemClick(index)}
-                sx={[
-                  (theme) => ({
-                    p: 2,
-                    height: '100%',
-                    width: '100%',
-                    '&:hover': {
-                      backgroundColor: (theme.vars || theme).palette.action.hover,
-                    },
-                  }),
-                  selectedItemIndex === index && {
-                    backgroundColor: 'action.selected',
-                  },
-                ]}
-              >
-                <Box
-                  sx={[
-                    {
-                      width: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'left',
-                      gap: 1,
-                      textAlign: 'left',
-                      textTransform: 'none',
-                      color: 'text.secondary',
-                    },
-                    selectedItemIndex === index && {
-                      color: 'text.primary',
-                    },
-                  ]}
-                >
-                  {icon}
-                  <Typography variant="h6">{title}</Typography>
-                </Box>
-              </Box>
-            ))}
-          </Box>
+        {lesserThanMd &&
           <MobileLayout
             selectedItemIndex={selectedItemIndex}
             handleItemClick={handleItemClick}
             selectedFeature={selectedFeature}
           />
-        </div>
-        <Card
-          sx={(theme) => ({
-            height: 500,
-            width: '100%',
-            display: { xs: 'none', md: 'flex' },
-            pointerEvents: 'none',
-            backgroundColor: `rgba(${(theme.vars || theme).palette.background.defaultChannel} / 0.5)`,
-            padding: 0,
-          })}
-        >
-          <img
-            src={items[selectedItemIndex].image ?? ''}
-            loading='lazy'
-            style={{
-              m: 'auto',
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-            }}
-          />
-        </Card>
+        }
+        {!lesserThanMd &&
+          <React.Fragment>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: { xs: 1, lg: 2 },
+                height: '100%',
+              }}
+            >
+              {items.map(({ icon, title, description }, index) => (
+                <Box
+                  key={index}
+                  component={Button}
+                  onClick={() => handleItemClick(index)}
+                  sx={[
+                    (theme) => ({
+                      p: 2,
+                      height: '100%',
+                      width: '100%',
+                      '&:hover': {
+                        backgroundColor: (theme.vars || theme).palette.action.hover,
+                      },
+                    }),
+                    selectedItemIndex === index && {
+                      backgroundColor: 'action.selected',
+                    },
+                  ]}
+                >
+                  <Box
+                    sx={[
+                      {
+                        width: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'left',
+                        gap: 1,
+                        textAlign: 'left',
+                        textTransform: 'none',
+                        color: 'text.secondary',
+                      },
+                      selectedItemIndex === index && {
+                        color: 'text.primary',
+                      },
+                    ]}
+                  >
+                    {icon}
+                    <Typography variant="h6">{title}</Typography>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+            <ImgCard
+              sx={{
+                height: 500,
+              }}
+            >
+              <AnimatedBorder key={items[selectedItemIndex].title} />
+              <img
+                src={items[selectedItemIndex].image ?? ''}
+                loading='lazy'
+                style={{
+                  m: 'auto',
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                }}
+              />
+            </ImgCard>
+          </React.Fragment>
+        }
       </Box>
     </Container>
   );
 }
+
+export function MobileLayout({ selectedItemIndex, handleItemClick, selectedFeature }) {
+
+  const imgwidth = document.querySelector('#mobileprojimg')?.width;
+  const imgheight = selectedFeature.image?.height * (imgwidth / selectedFeature.image?.width);
+
+  if (!items[selectedItemIndex]) {
+    return null;
+  }
+
+  return (
+    <Box
+      id="projecthighlights"
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1,
+      }}
+    >
+      <Stack direction='column' gap={1}>
+        {items.map(({ title }, index) => (
+          <Chip
+            size="medium"
+            key={index}
+            label={title}
+            onClick={() => handleItemClick(index)}
+            selected={selectedItemIndex === index}
+          />
+        ))}
+      </Stack>
+      <ImgCard
+        id='mobileprojimg'
+        sx={{
+          height: imgheight ?? 200,
+        }}
+      >
+        <AnimatedBorder key={items[selectedItemIndex].title} />
+        <img
+          src={selectedFeature.image ?? ''}
+          loading='lazy'
+          style={{
+            m: 'auto',
+            width: '100%',
+            height: '100%',
+          }}
+        />
+      </ImgCard>
+    </Box>
+  );
+}
+
+const draw = {
+  hidden: { pathLength: 0, opacity: 0 },
+  visible: {
+    pathLength: 1,
+    opacity: 1,
+    transition: { duration: 1.35, ease: "easeInOut" }
+  },
+  static: { pathLength: 1, opacity: 1, }
+};
+
+function AnimatedBorder({ key }) {
+
+  const { manual, system } = useAnimateContext();
+  const mode = system || manual;
+
+  return (
+    <svg
+      style={{
+        position: 'absolute',
+        width: '100%',
+        height: '100%',
+        pointerEvents: 'none',
+      }}
+    >
+      <defs>
+        <linearGradient id="img-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#00dbde" />
+          <stop offset="100%" stopColor="#fc00ff" />
+        </linearGradient>
+      </defs>
+      <motion.rect
+        key={key}
+        width="100%"
+        height="100%"
+        rx="12"
+        stroke="url(#img-gradient)"
+        strokeWidth="5"
+        fill="transparent"
+        variants={draw}
+        initial="hidden"
+        whileInView={mode == 'normal' ? "visible" : "static"}
+        viewport={{ once: false, amount: 0.5 }}
+      />
+    </svg>
+  );
+};

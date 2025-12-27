@@ -6,10 +6,13 @@ import ForkLeftIcon from '@mui/icons-material/ForkLeft';
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
 import DarkModeIcon from '@mui/icons-material/DarkModeRounded';
 import LightModeIcon from '@mui/icons-material/LightModeRounded';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
 import { styled, useTheme, useColorScheme } from '@mui/material/styles';
 import { motion, AnimatePresence, useMotionValue, useInView } from "framer-motion";
 import Box from '@mui/material/Box';
 import getActivesection from '../functions/getActivesection';
+import { useAnimateContext } from './AnimateContext';
 
 
 const sections = {
@@ -22,6 +25,11 @@ const sections = {
     { name: 'system mode', route: 'system' },
     { name: 'light mode', route: 'light' },
     { name: 'dark mode', route: 'dark' },
+  ],
+  'Animation': [
+    { name: 'system mode', route: 'system' },
+    { name: 'normal mode', route: 'normal' },
+    { name: 'reduce mode', route: 'reduce' },
   ],
 };
 
@@ -36,6 +44,7 @@ export default function CustomizedSpeedDial({ handleScrollsection, activesection
   const [subopen, setSubopen] = useState(null);
 
   const { mode, systemMode, setMode } = useColorScheme();
+  const { manual, system, setAniMode } = useAnimateContext();
 
   const handleSubopen = (sub) => () => {
     if (subopen == sub) setSubopen(null);
@@ -44,7 +53,10 @@ export default function CustomizedSpeedDial({ handleScrollsection, activesection
 
   const handleColormode = (targetMode) => () => {
     setMode(targetMode);
-    //handleSubopen('Color Mode');
+  };
+
+  const handleAnimationmode = (t) => () => {
+    setAniMode(t);
   };
 
   const section = getActivesection(activesection);
@@ -54,6 +66,12 @@ export default function CustomizedSpeedDial({ handleScrollsection, activesection
     light: <LightModeIcon />,
     dark: <DarkModeIcon />,
   }[resolvedMode];
+
+  const animode = system || manual;
+  const aniicon = {
+    normal: <PlayArrowIcon />,
+    reduce: <PauseIcon />,
+  }[animode];
 
   const actions = [
     {
@@ -67,6 +85,12 @@ export default function CustomizedSpeedDial({ handleScrollsection, activesection
         icon={icon} subactions={sections['Color Mode']}
         handleSubaction={handleColormode} name={'Color Mode'} tooltip={`${resolvedMode} Mode`} />,
       name: 'Color Mode'
+    },
+    {
+      icon: <SubMenu open={subopen} handleOpen={handleSubopen}
+        icon={aniicon} subactions={sections['Animation']}
+        handleSubaction={handleAnimationmode} name={'Animation'} tooltip={`${animode} Animation`} />,
+      name: 'Animation'
     },
     {
       icon: <SingleActionMenu open={subopen}
@@ -182,6 +206,7 @@ function SubMenu({ open, handleOpen, icon, subactions, handleSubaction, name, to
               cursor: 'default', whiteSpace: "nowrap", direction: "rtl",
               left: 8, top: 8, textTransform: 'capitalize',
               fontSize: '14px', fontWeight: 'bold', letterSpacing: '0.1em',
+              display: 'flex', alignItems: 'center',
             }}
           >
             {tooltip || name}

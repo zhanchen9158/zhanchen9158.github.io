@@ -5,7 +5,7 @@ import AppTheme from './shared-theme/AppTheme';
 import PortfolioPage from './PortfolioPage';
 import Box from '@mui/material/Box';
 import SplashScreen from './components/SplashScreen';
-
+import Mockup from './components/Mockup';
 
 export default function App(props) {
   const [loading, setLoading] = useState(true);
@@ -13,7 +13,7 @@ export default function App(props) {
   useEffect(() => {
     setTimeout(() => {
       setLoading(false);
-    }, 2000);
+    }, 1000);
   }, []);
 
   if (loading) {
@@ -23,21 +23,16 @@ export default function App(props) {
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      <Box //onWheel={toggleAppbar} 
+      <Box
         sx={(theme) => ({
           //position: 'relative',
-          overflowY: 'scroll',
-          backgroundColor: `#F4F7F6`,
-          backgroundImage: (theme.vars||theme).palette.background.image,
-          backdropFilter: 'blur(12px) saturate(180%)',
-          backgroundSize: 'cover',
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
+          //overflowY: 'scroll',
+          //backdropFilter: 'blur(12px) saturate(180%)',
           height: '100dvh',
           width: '100dvw',
         })}>
-        <PortfolioPage />
-      </Box>
-    </AppTheme>
+      <PortfolioPage />
+    </Box>
+    </AppTheme >
   );
 }
