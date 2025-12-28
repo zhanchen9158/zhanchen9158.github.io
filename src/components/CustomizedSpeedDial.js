@@ -46,7 +46,7 @@ export default function CustomizedSpeedDial({ handleScrollsection, activesection
   const { mode, systemMode, setMode } = useColorScheme();
   const { manual, system, setAniMode } = useAnimateContext();
 
-  const handleSubopen = (sub) => () => {
+  const handleSubopen = (sub) => {
     if (subopen == sub) setSubopen(null);
     else setSubopen(sub);
   };
@@ -75,30 +75,34 @@ export default function CustomizedSpeedDial({ handleScrollsection, activesection
 
   const actions = [
     {
-      icon: <SubMenu open={subopen} handleOpen={handleSubopen}
+      icon: <SubMenu open={subopen} section={section}
         icon={<ForkLeftIcon />} subactions={sections['Go to']}
         handleSubaction={handleScrollsection} name={"Go to"} tooltip={section} />,
       name: 'Go to'
     },
     {
-      icon: <SubMenu open={subopen} handleOpen={handleSubopen}
+      icon: <SubMenu open={subopen} section={section}
         icon={icon} subactions={sections['Color Mode']}
         handleSubaction={handleColormode} name={'Color Mode'} tooltip={`${resolvedMode} Mode`} />,
       name: 'Color Mode'
     },
     {
-      icon: <SubMenu open={subopen} handleOpen={handleSubopen}
+      icon: <SubMenu open={subopen} section={section}
         icon={aniicon} subactions={sections['Animation']}
         handleSubaction={handleAnimationmode} name={'Animation'} tooltip={`${animode} Animation`} />,
       name: 'Animation'
     },
     {
-      icon: <SingleActionMenu open={subopen}
-        icon={<KeyboardDoubleArrowUpIcon />}
-        handleSubaction={handleScrollsection('introduction')} name={'Back to Top'} />,
+      icon: <KeyboardDoubleArrowUpIcon />,
       name: 'Back to Top'
     },
   ];
+
+  const handleAction = (action) => () => {
+    if (action == 'Back to Top') handleScrollsection('introduction')();
+    else handleSubopen(action);
+  }
+
 
   const handleOpen = (e, reason) => {
     if (reason == 'toggle') setOpen(true);
@@ -124,10 +128,11 @@ export default function CustomizedSpeedDial({ handleScrollsection, activesection
         }
       }}
     >
-      {actions.map((action) => (
+      {actions.map((action, i) => (
         <SpeedDialAction
           key={action.name}
           icon={action.icon}
+          onClick={handleAction(action.name)}
           slotProps={{
             fab: {
               sx: (theme) => ({
@@ -135,7 +140,7 @@ export default function CustomizedSpeedDial({ handleScrollsection, activesection
                 height: { xs: 32, sm: 48, },
                 minHeight: { xs: 32, sm: 48, },
                 '&:hover': {
-                  bgcolor: (theme.vars || theme).palette.background.paper,
+                  bgcolor: `rgba(${(theme.vars || theme).palette.background.defaultChannel}/0.8)`,
                   //boxShadow: 'none',
                 },
               }),
@@ -147,22 +152,7 @@ export default function CustomizedSpeedDial({ handleScrollsection, activesection
   );
 }
 
-function SingleActionMenu({ open, icon, handleSubaction, name }) {
-  return (
-    <Box
-      onClick={handleSubaction}
-      sx={{
-        borderRadius: "50%", border: "none",
-        cursor: "pointer",
-        display: "flex", alignItems: "center", justifyContent: "center"
-      }}
-    >
-      {icon}
-    </Box>
-  );
-};
-
-function SubMenu({ open, handleOpen, icon, subactions, handleSubaction, name, tooltip }) {
+function SubMenu({ open, section, icon, subactions, handleSubaction, name, tooltip }) {
 
   const angle = 180;
   const radius = 80;
@@ -172,7 +162,6 @@ function SubMenu({ open, handleOpen, icon, subactions, handleSubaction, name, to
   return (
     <React.Fragment>
       <Box
-        onClick={handleOpen(name)}
         sx={{
           borderRadius: "50%", border: "none",
           cursor: "pointer",
@@ -184,7 +173,6 @@ function SubMenu({ open, handleOpen, icon, subactions, handleSubaction, name, to
       <AnimatePresence>
         {open == null &&
           <Box
-            onClick={handleOpen(name)}
             component={motion.div}
             initial={{
               opacity: 0,
@@ -201,13 +189,14 @@ function SubMenu({ open, handleOpen, icon, subactions, handleSubaction, name, to
               x: x + 32,
               y
             }}
-            sx={{
+            sx={(theme) => ({
               position: "absolute", width: 32, height: 32,
               cursor: 'default', whiteSpace: "nowrap", direction: "rtl",
               left: 8, top: 8, textTransform: 'capitalize',
               fontSize: '14px', fontWeight: 'bold', letterSpacing: '0.1em',
               display: 'flex', alignItems: 'center',
-            }}
+              color: (theme.vars || theme).palette.primary.main,
+            })}
           >
             {tooltip || name}
           </Box>
@@ -232,7 +221,7 @@ function SubMenu({ open, handleOpen, icon, subactions, handleSubaction, name, to
                 left: 8, top: 8,
               }}
             >
-              <MagneticBox>
+              <MagneticBox section={section}>
                 {v.name}
               </MagneticBox>
             </Box>
@@ -243,7 +232,7 @@ function SubMenu({ open, handleOpen, icon, subactions, handleSubaction, name, to
   );
 };
 
-function MagneticBox({ children }) {
+function MagneticBox({ section, children }) {
   const [position, setPosition] = useState({ x: 0, y: 0 });
 
   const ref = useRef(null);
@@ -301,7 +290,7 @@ function MagneticBox({ children }) {
         color: (theme.vars || theme).palette.primary.main,
         textShadow: `2px 2px 4px rgba(${(theme.vars || theme).palette.primary.main}/0.1), 4px 4px 10px rgba(${(theme.vars || theme).palette.primary.main}/0.1), 10px 10px 20px rgba(${(theme.vars || theme).palette.primary.main}/0.2)`,
         '& span': {
-          color: (theme.vars || theme).palette.text.primary,
+          color: section == 'introduction' ? 'white' : (theme.vars || theme).palette.text.primary,
           paddingLeft: '1px',
           width: 'fit-content',
           fontSize: '12px',

@@ -8,15 +8,17 @@ import Projects from './components/Projects';
 import Footer from './components/Footer';
 import { motion, useScroll, useTransform, useSpring, cubicBezier } from "framer-motion";
 import CustomizedSpeedDial from './components/CustomizedSpeedDial';
-import { styled, useTheme } from '@mui/material/styles';
+import { styled, useTheme, useColorScheme } from '@mui/material/styles';
 import { AnimateProvider } from './components/AnimateContext';
 import getActivesection from './functions/getActivesection';
+import { GrainOverlay } from './components/GrainOverlay';
 
-const bgimport = import.meta.glob('./pics/background*.jpg', {
+
+const bgimport = import.meta.glob('./pics/background*.*', {
   eager: true,
   query: '?url'
 });
-const bgimgs = Object.values(bgimport).map((v, i) => (v.default))
+const bgraw = Object.values(bgimport).map((v, i) => (v.default))
 
 
 export default function PortfolioPage({ }) {
@@ -29,8 +31,8 @@ export default function PortfolioPage({ }) {
     setActivesection(prev => ({ ...prev, [section]: inview }));
   };
 
-  const handleScrollsection = (section) => (e) => {
-    e.stopPropagation();
+  const handleScrollsection = (section) => () => {
+    //e.stopPropagation();
     sectionRef.current[section].scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -57,8 +59,9 @@ export default function PortfolioPage({ }) {
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
         })}>
+        <GrainOverlay opacity={0.07} />
         {sections.map((v, i) => (
-          <Page key={i} containerRef={scrollContainerRef} bgimg={bgimgs[i]} activesection={activesection}>
+          <Page key={i} containerRef={scrollContainerRef} i={i} activesection={activesection}>
             {v}
           </Page>
         ))}
@@ -69,11 +72,29 @@ export default function PortfolioPage({ }) {
   );
 }
 
-function Page({ containerRef, bgimg, activesection, children, ...props }) {
+function Page({ containerRef, i, activesection, children, ...props }) {
 
   const ref = useRef(null);
 
   const theme = useTheme();
+  const { mode, systemMode } = useColorScheme();
+
+  const colormode = systemMode || mode;
+
+  const lightoverlay = [0, 0, 0.6, 0.6];
+  const darkoverlay = [0, 0.9, 0.6, 0.8];
+
+  const bglight = bgraw.map((v, i) => (
+    `linear-gradient(rgba(${(theme.vars || theme).palette.background.defaultChannel}/${lightoverlay[i]}), 
+    rgba(${(theme.vars || theme).palette.background.defaultChannel}/${lightoverlay[i]})), 
+    url(${v})`
+  ))
+
+  const bgdark = bgraw.map((v, i) => (
+    `linear-gradient(rgba(${(theme.vars || theme).palette.background.defaultChannel}/${darkoverlay[i]}), 
+    rgba(${(theme.vars || theme).palette.background.defaultChannel}/${darkoverlay[i]})), 
+    url(${v})`
+  ))
 
   const section = getActivesection(activesection);
 
@@ -121,9 +142,7 @@ function Page({ containerRef, bgimg, activesection, children, ...props }) {
           y,
           //backfaceVisibility: "hidden",
           //transformStyle: "preserve-3d",
-          backgroundImage: section == 'introduction'
-            ? `${(theme.vars || theme).palette.background.header}, ${(theme.vars || theme).palette.background.overlay}, url(${bgimg})`
-            : `${(theme.vars || theme).palette.background.overlay}, url(${bgimg})`,
+          backgroundImage: colormode == 'light' ? bglight[i] : bgdark[i],
           //backdropFilter: 'blur(12px) saturate(180%)',
           backgroundSize: 'cover',
           backgroundPosition: "center",

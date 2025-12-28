@@ -32,10 +32,16 @@ const StyledCard = styled(Card)(({ theme }) => ({
 }));
 
 const StyledTabs = styled(Tabs)(({ theme }) => ({
-    width: '100dvw',
+    width: 'fit-content',
     paddingTop: 32,
     '& .MuiTabs-scrollButtons.Mui-disabled': {
         opacity: 0.3,
+    },
+    '& .MuiTabs-scrollButtons': {
+        color: 'white',
+    },
+    '& .MuiTabs-indicator': {
+        backgroundColor: 'white',
     },
 }));
 
@@ -45,12 +51,18 @@ const StyledTab = styled(Tab)(({ theme }) => ({
     letterSpacing: '0.2em',
     fontSize: '0.75rem',
     fontWeight: 600,
-    color: '#6366f1',
+    color: (theme.vars || theme).palette.primary.light,
     opacity: '0.8',
     fontSize: '14px',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
+    '&.Mui-selected': {
+        color: 'white',
+        '&:hover': {
+            color: (theme.vars || theme).palette.text.primary,
+        }
+    },
 }));
 
 const SubHeader = styled(Typography)(({ theme }) => ({
@@ -58,8 +70,9 @@ const SubHeader = styled(Typography)(({ theme }) => ({
     textTransform: 'uppercase',
     letterSpacing: '0.2em',
     fontWeight: 600,
-    color: '#6366f1',
-    opacity: '0.8',
+    color: (theme.vars || theme).palette.primary.light,
+    //backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    opacity: 1,
     fontSize: '16px',
 }));
 

@@ -7,8 +7,8 @@ import getActivesection from '../functions/getActivesection';
 
 
 const StyledAppbar = styled(AppBar)(({ theme }) => ({
-  border: '1px solid',
-  borderColor: (theme.vars || theme).palette.divider,
+  border: 'none',
+  //borderColor: (theme.vars || theme).palette.divider,
   backdropFilter: 'blur(10px)',
   boxShadow: `0 10px 15px -3px rgba(${(theme.vars || theme).palette.background.contrastChannel} / 0.1)`,
   margin: '1rem auto',
@@ -17,7 +17,8 @@ const StyledAppbar = styled(AppBar)(({ theme }) => ({
   left: '50%',
   transform: 'translateX(-50%)',
   //height: 'fit-content',
-  background: (theme.vars || theme).palette.background.appbar,
+  //background: (theme.vars || theme).palette.background.appbar,
+  backgroundColor: `rgba(${(theme.vars || theme).palette.background.defaultChannel}/0.1)`,
 }));
 
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
@@ -25,6 +26,7 @@ const StyledToolbar = styled(Toolbar)(({ theme }) => ({
   alignItems: 'center',
   justifyContent: 'center',
   flexShrink: 0,
+  border: 'none',
   backgroundColor: 'transparent',
   //height: 'fit-content',
   //padding: '8px 12px',
@@ -49,7 +51,7 @@ const StyledTypography = styled(Typography)(({ theme }) => ({
   backgroundClip: 'text',
   color: 'transparent',
   filter: 'drop-shadow(0 10px 20px rgba(99, 102, 241, 0.3))',
-  fontSize:'20px',
+  fontSize: '20px',
   [theme.breakpoints.up('sm')]: {
     fontSize: '32px',
   },
@@ -79,7 +81,7 @@ export default function AppAppBar({ appbarshow = true, activesection }) {
         <StyledTypography
           component="div"
         >
-          {section=='introduction'?`zhan chen's porftfolio`:section}
+          {section == 'introduction' ? `zhan chen's porftfolio` : section}
         </StyledTypography>
       </StyledToolbar>
     </StyledAppbar >

@@ -256,10 +256,9 @@ export const colorSchemes = {
       },
       divider: alpha(gray[300], 0.4),
       background: {
-        default: 'rgba(225, 225, 225,1)',
+        default: 'rgba(250, 250, 250,1)',
         contrast: 'rgba(30,30,30,1)',
         paper: 'hsl(220, 35%, 97%)',
-        overlay: `linear-gradient(rgba(250,250,250,0.9), rgba(250,250,250,0.9))`,
         image: `linear-gradient(rgba(5,5,5,0.25), rgba(5,5,5,0.25)), url(${mainbg})`,
         header: 'radial-gradient(ellipse 80% 50% at 50% -20%, hsl(210, 100%, 90%), transparent)',
         appbar: 'linear-gradient(to right, #ffffff 0%, #f8fafc 100%)',
@@ -276,7 +275,7 @@ export const colorSchemes = {
         primary: gray[800],
         secondary: gray[600],
         warning: orange[400],
-        shadow: 'rgba(250,250,250,1)',
+        contrast: 'rgba(250,250,250,1)',
       },
       action: {
         hover: alpha(gray[200], 0.2),
@@ -321,10 +320,9 @@ export const colorSchemes = {
       },
       divider: alpha(gray[700], 0.6),
       background: {
-        default: 'rgba(30,30,30,1)',
+        default: 'rgba(5,5,5,1)',
         contrast: 'rgba(225,225,225,1)',
         paper: 'hsl(220, 30%, 7%)',
-        overlay: `linear-gradient(rgba(5, 5, 5, 0.9), rgba(5, 5, 5, 0.9))`,
         image: `linear-gradient(rgba(5, 5, 5, 0.25), rgba(5, 5, 5, 0.25)), url(${mainbg})`,
         header: 'radial-gradient(ellipse 80% 50% at 50% -20%, hsl(210, 100%, 16%), transparent)',
         appbar: 'linear-gradient(to bottom, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.7) 100%)',
@@ -340,7 +338,7 @@ export const colorSchemes = {
       text: {
         primary: 'hsl(0, 0%, 100%)',
         secondary: gray[400],
-        shadow: 'rgba(50,50,50,1)',
+        contrast: 'rgba(5,5,5,1)',
       },
       action: {
         hover: alpha(gray[600], 0.2),

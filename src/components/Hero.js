@@ -10,7 +10,7 @@ import SkillsCard from './SkillsCard';
 
 const StyledTypography = styled(Typography)(({ theme }) => ({
   whiteSpace: "pre-wrap",
-  //color: `${(theme.vars || theme).palette.primary.contrastText}`,
+  color: 'white',
   fontFamily: 'Charm',
   fontSize: '24px',
   fontWeight: 'bold',
