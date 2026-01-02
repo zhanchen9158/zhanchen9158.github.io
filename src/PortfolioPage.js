@@ -53,11 +53,7 @@ export default function PortfolioPage({ }) {
           height: "100dvh",
           overflowY: "scroll",
           scrollSnapType: "y mandatory",
-          //backgroundColor: (theme.vars || theme).palette.text.primary,
-          backgroundImage: (theme.vars || theme).palette.background.image,
-          backgroundSize: 'cover',
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
+          backgroundColor: '#0f1011',
         })}>
         <GrainOverlay opacity={0.07} />
         {sections.map((v, i) => (
@@ -80,23 +76,18 @@ function Page({ containerRef, i, activesection, children, ...props }) {
   const { mode, systemMode } = useColorScheme();
 
   const colormode = systemMode || mode;
-
-  const lightoverlay = [0, 0, 0.6, 0.6];
-  const darkoverlay = [0, 0.9, 0.6, 0.8];
-
-  const bglight = bgraw.map((v, i) => (
-    `linear-gradient(rgba(${(theme.vars || theme).palette.background.defaultChannel}/${lightoverlay[i]}), 
-    rgba(${(theme.vars || theme).palette.background.defaultChannel}/${lightoverlay[i]})), 
-    url(${v})`
-  ))
-
-  const bgdark = bgraw.map((v, i) => (
-    `linear-gradient(rgba(${(theme.vars || theme).palette.background.defaultChannel}/${darkoverlay[i]}), 
-    rgba(${(theme.vars || theme).palette.background.defaultChannel}/${darkoverlay[i]})), 
-    url(${v})`
-  ))
-
   const section = getActivesection(activesection);
+
+  const lightoverlay = [0, 0, 0, 0.1];
+  const darkoverlay = [0, 0.85, 0, 0.8];
+
+  const mapBgimg = (overlay) => bgraw.map((v, i) =>
+    `linear-gradient(rgba(${(theme.vars || theme).palette.background.defaultChannel}/${overlay[i]}), 
+    rgba(${(theme.vars || theme).palette.background.defaultChannel}/${overlay[i]})), 
+    url(${v})`
+  );
+  const bglight = mapBgimg(lightoverlay);
+  const bgdark = mapBgimg(darkoverlay);
 
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -121,29 +112,25 @@ function Page({ containerRef, i, activesection, children, ...props }) {
     <Box
       component={'section'}
       ref={ref}
-      style={{
+      sx={{
         height: "100dvh",
         width: "100dvw",
         scrollSnapAlign: "start",
         overflow: "hidden",
-        //perspective: '1200px',
-        //background: 'rgba(250, 250, 250, 0.1)',
-        backdropFilter: 'blur(12px)',
+        backdropFilter: 'blur(1px)',
       }}
       {...props}
     >
       <motion.div
         style={{
+          position: 'relative',
           width: "100dvw",
           height: "100dvh",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           y,
-          //backfaceVisibility: "hidden",
-          //transformStyle: "preserve-3d",
-          backgroundImage: colormode == 'light' ? bglight[i] : bgdark[i],
-          //backdropFilter: 'blur(12px) saturate(180%)',
+          backgroundImage: colormode == 'light' && section != 'highlights' ? bglight[i] : bgdark[i],
           backgroundSize: 'cover',
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",

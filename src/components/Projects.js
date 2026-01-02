@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
 import CardMedia from '@mui/material/CardMedia';
@@ -8,7 +8,7 @@ import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
-import marketintelligence from '../pics/marketintelligence1.png';
+import marketintelligence from '../pics/marketintelligence.png';
 import artexplorer from '../pics/artexplorer.png';
 import researchdigest from '../pics/researchdigest.png';
 import mealplanner from '../pics/mealplanner.png';
@@ -17,24 +17,28 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import Pagination from '@mui/material/Pagination';
-import { motion } from "framer-motion";
+import { delay, motion } from "framer-motion";
 import { styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useAnimateContext } from './AnimateContext';
 import Tooltip from '@mui/material/Tooltip';
 
 
+const GridContainer = styled(Grid)(({ theme }) => ({
+  width: '100%', padding: '2px',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+}));
+
 const StyledGridItem = styled(Grid)(({ theme }) => ({
-  padding: '15px',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  borderRadius: '15px',
+  //overflow: 'hidden',
   '& .MuiPaper-root': {
-    background: `rgba(${(theme.vars || theme).palette.background.defaultChannel}/0.1)`,
-    backdropFilter: 'blur(12px)',
-    borderRadius: '15px',
     border: `none`,
-    padding: '15px',
-    '&:hover': {
-      //background: `linear-gradient(rgba(${(theme.vars || theme).palette.background.defaultChannel}/0.1), rgba(${(theme.vars || theme).palette.background.defaultChannel}/0.1)) padding-box, ${(theme.vars || theme).palette.background.projcard} border-box`,
-    },
   },
 }));
 
@@ -84,8 +88,11 @@ export default function Projects({ refProps, handleViewport }) {
   const lesserThanMd = useMediaQuery(theme.breakpoints.down('md'));
   const smheight = useMediaQuery('(max-height:600px)');
 
-
   const header = '70px';
+
+  const cardh = smheight ? 350 : 450;
+  const wh = window?.innerHeight;
+  const padbot = (wh - parseInt(header, 10) - cardh) / 3;
 
   const perpage = lesserThanMd ? 1 : 3;
   const maxpage = Math.ceil(projectInfo.length / perpage);
@@ -132,16 +139,6 @@ export default function Projects({ refProps, handleViewport }) {
     static: { opacity: 1, scale: 1, y: 0, clipPath: "inset(0% 0% 0% 0%)", transition: { duration: 0 } },
   };
 
-  const cardVars = {
-    hover: {
-      scale: 1.02,
-      y: -8,
-      boxShadow: `0 20px 25px -5px rgba(${(theme.vars || theme).palette.text.primaryChannel}/0.1), 0 10px 10px -5px rgba(${(theme.vars || theme).palette.text.primaryChannel}/0.04)`,
-      zIndex: 1200,
-      transition: { type: "spring", stiffness: 160, damping: 20 }
-    },
-  };
-
   return (
     <Container
       component={motion.div}
@@ -160,6 +157,7 @@ export default function Projects({ refProps, handleViewport }) {
         gap: { xs: 1, md: 3 },
         height: `calc(100dvh - ${header})`,
         overflow: 'hidden',
+        pb: `${padbot}px`,
       }}
     >
       <Box
@@ -171,75 +169,174 @@ export default function Projects({ refProps, handleViewport }) {
           gap: 1,
           width: '100%',
         }}>
-        <Grid container spacing={0} key={page}
+        <GridContainer container key={page} spacing={2}
           component={motion.div}
           variants={containerVars}
           initial="hidden"
           whileInView={mode == 'normal' ? "visible" : "static"}
           viewport={{ once: false, amount: 0.5 }}
-          sx={{ width: '100%', padding: '2px' }}
         >
           {projectInfo.slice((page - 1) * perpage, page * perpage).map((v, i) => (
             <StyledGridItem item size={{ xs: 12, sm: 6, md: 4 }} key={i}
               component={motion.div}
-              layout
               variants={itemVars}
+              sx={{
+                height: `calc(${cardh}px + 50px)`,
+                isolation: 'isolate',
+                WebkitMaskImage: '-webkit-radial-gradient(white, black)',
+              }}
             >
-              <Tooltip title='Visit Site' placement='top'>
-                <Card
-                  variant="outlined"
-                  component={motion.div}
-                  variants={cardVars}
-                  whileHover={'hover'}
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    padding: { xs: 1, md: 2 },
-                    width: '100%',
-                    height: 450,
-                    '@media (max-height: 600px)': {
-                      height: 350,
-                    },
-                    overflow: 'auto',
-                  }}
-                >
-                  <CardActionArea href={v.link} target="_blank"
-                    disableRipple
-                    sx={{
-                      "& .MuiCardActionArea-focusHighlight": {
-                        background: "transparent",
-                      },
-                      "&:hover": {
-                        backgroundColor: "transparent",
-                      }
-                    }}
-                  >
-                    <CardMedia
-                      component="img"
-                      height="150"
-                      image={v.img}
-                      sx={{ objectFit: "contain" }}
-                    />
-                    <CardHeader sx={{ p: '4px 0 0 8px' }}
-                      title={v.header}
-                    />
-                    <List>
-                      {v.description.map((v, i) => (
-                        <ListItem disablePadding sx={{ alignItems: 'start', }}>
-                          <ArrowRightIcon sx={{ mt: '5px' }} /><ListItemText primary={v} />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </CardActionArea>
-                </Card>
-              </Tooltip>
+              <ProjectCard v={v} cardh={cardh} />
             </StyledGridItem>
           ))}
-        </Grid>
+        </GridContainer>
         <Pagination count={maxpage} page={page} onChange={handlePageChange}
           sx={{ display: 'flex', justifyContent: 'center', }} />
       </Box>
     </Container >
   );
+}
+
+const cardVars = {
+  initial: {
+    scale: 1,
+    y: 0,
+  },
+  hover: {
+    scale: 1.02,
+    y: -8,
+    transition: { duration: 0.3, ease: "easeOut", type: "spring", stiffness: 160, damping: 20 }
+  },
+};
+
+const bloomVars = {
+  initial: {
+    opacity: 0, scale: 1, y: 0,
+    "--inner": "0%", "--outer": "0%",
+  },
+  hover: {
+    opacity: 1, scale: 1, y: -8,
+    "--inner": ["0%", "0%", "100%"],
+    "--outer": ["0%", "100%", "100%"],
+    transition: {
+      duration: 1,
+      times: [0, 0.5, 0.85]
+    }
+  },
+};
+
+const shadowVars = {
+  initial: {
+    opacity: 0, scale: 1, y: 0,
+  },
+  hover: {
+    opacity: 1, scale: 1, y: -8,
+    transition: {
+      delay: 0.35,
+      duration: 0.35,
+    }
+  },
+};
+
+const CardContainer = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  width: '90%',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  borderRadius: 'inherit',
+}));
+
+const Bloombackground = styled(Box)(({ theme }) => ({
+  position: "absolute",
+  inset: 0,
+  borderRadius: "inherit",
+  backgroundColor: (theme.vars || theme).palette.primary.light,
+  maskImage: "radial-gradient(circle, transparent var(--inner), black var(--inner), black var(--outer), transparent var(--outer))",
+  WebkitMaskImage: "radial-gradient(circle, transparent var(--inner), black var(--inner), black var(--outer), transparent var(--outer))",
+  zIndex: 0,
+  willChange: "transform, opacity",
+  ...theme.applyStyles('dark', {
+    backgroundColor: (theme.vars || theme).palette.primary.main,
+  }),
+}));
+
+const Shadowbackground = styled(Box)(({ theme }) => ({
+  position: "absolute",
+  inset: 0,
+  borderRadius: "inherit",
+  boxShadow: `0 0 10px 5px ${(theme.vars || theme).palette.primary.main}`,
+  backgroundColor: 'transparent',
+  zIndex: 0,
+  willChange: "transform, opacity",
+}));
+
+const StyledCard = styled(Card)(({ theme }) => ({
+  position: 'relative',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-between',
+  overflow: 'auto',
+  background: `rgba(${(theme.vars || theme).palette.background.defaultChannel}/0.1)`,
+  padding: theme.spacing(2),
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(1),
+  },
+  '&.MuiPaper-root': {
+    background: 'transparent',
+  },
+}));
+
+function ProjectCard({ v, cardh }) {
+
+  return (
+    <CardContainer
+      component={motion.div}
+      initial="initial"
+      whileHover="hover"
+      sx={{ height: cardh }}
+    >
+      <Bloombackground
+        component={motion.div}
+        variants={bloomVars}
+      />
+      <Shadowbackground
+        component={motion.div}
+        variants={shadowVars}
+      />
+      <StyledCard
+        component={motion.div}
+        variants={cardVars}
+      >
+        <CardActionArea href={v.link} target="_blank"
+          disableRipple
+          sx={{
+            "& .MuiCardActionArea-focusHighlight": {
+              background: "transparent",
+            },
+            "&:hover": {
+              backgroundColor: "transparent",
+            }
+          }}
+        >
+          <CardMedia
+            component="img"
+            height="150"
+            image={v.img}
+            sx={{ objectFit: "contain" }}
+          />
+          <CardHeader sx={{ p: '4px 0 0 8px' }}
+            title={v.header}
+          />
+          <List>
+            {v.description.map((v, i) => (
+              <ListItem disablePadding sx={{ alignItems: 'start', }}>
+                <ArrowRightIcon sx={{ mt: '5px' }} /><ListItemText primary={v} />
+              </ListItem>
+            ))}
+          </List>
+        </CardActionArea>
+      </StyledCard>
+    </CardContainer>
+  )
 }

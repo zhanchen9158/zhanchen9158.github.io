@@ -4,6 +4,9 @@ import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import getActivesection from '../functions/getActivesection';
+import { motion } from "framer-motion";
+import Box from '@mui/material/Box';
+import { useAnimateContext } from './AnimateContext';
 
 
 const StyledAppbar = styled(AppBar)(({ theme }) => ({
@@ -57,9 +60,32 @@ const StyledTypography = styled(Typography)(({ theme }) => ({
   },
 }));
 
+const itemVars = {
+  hidden: {
+    opacity: 0,
+    scale: 1,
+    y: -15,
+    clipPath: "inset(0% 0% 100% 0%)",
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    clipPath: "inset(0% 0% 0% 0%)",
+    transition: {
+      duration: 0.8,
+      ease: [0.4, 0, 0.2, 1],
+    }
+  },
+};
+
 export default function AppAppBar({ appbarshow = true, activesection }) {
 
   const section = getActivesection(activesection);
+
+  const { manual, system } = useAnimateContext();
+  const mode = system || manual;
+
   return (
     <StyledAppbar
       position="fixed"
@@ -78,11 +104,26 @@ export default function AppAppBar({ appbarshow = true, activesection }) {
           transition: '1s linear 0.5s',
         }}
       >
-        <StyledTypography
-          component="div"
-        >
-          {section == 'introduction' ? `zhan chen's porftfolio` : section}
-        </StyledTypography>
+        {mode == 'normal' ?
+          <Box
+            component={motion.div}
+            key={section}
+            variants={itemVars}
+            initial="hidden"
+            animate="visible"
+          >
+            <StyledTypography
+              component="div"
+            >
+              {section == 'introduction' ? `zhan chen's porftfolio` : section}
+            </StyledTypography>
+          </Box> :
+          <StyledTypography
+            component="div"
+          >
+            {section == 'introduction' ? `zhan chen's porftfolio` : section}
+          </StyledTypography>
+        }
       </StyledToolbar>
     </StyledAppbar >
   );
