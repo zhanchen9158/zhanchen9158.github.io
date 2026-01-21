@@ -1,8 +1,7 @@
-import React, { useRef, useEffect } from 'react';
-import bg from '../pics/underlightglow.webp';
+import React, { useEffect, useRef } from 'react';
 
 
-const ParticleBackground = ({ }) => {
+const ParticleBackground = () => {
     const canvasRef = useRef(null);
 
     useEffect(() => {
@@ -18,40 +17,46 @@ const ParticleBackground = ({ }) => {
         window.addEventListener('resize', handleResize);
         handleResize();
 
-        const particles = [];
-        const particleCount = 25;
+        const ripples = [];
+        const rippleCount = 5; // Fewer ripples often look cleaner
 
-        for (let i = 0; i < particleCount; i++) {
-            particles.push({
+        // Initialize ripples
+        for (let i = 0; i < rippleCount; i++) {
+            ripples.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,
-                size: Math.random() * 2 + 1,
-                opacity: Math.random(),
-                speed: Math.random() * 0.005 + 0.001,
-                increasing: Math.random() > 0.5
+                radius: Math.random() * 50, // Current size
+                maxRadius: Math.random() * 100 + 50, // Final size
+                speed: Math.random() * 0.05 + 0.05, // Growth speed
+                opacity: 1,
             });
         }
 
         const animate = () => {
+            // Use a slight fill color instead of clearRect for a "trail" effect if desired
+            // Or stick to clearRect for crisp lines
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            particles.forEach(p => {
+            ripples.forEach(r => {
+                // Draw the ripple circle
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
-                ctx.fill();
+                ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+                // Opacity tied to the growth (fades out as it hits maxRadius)
+                const currentOpacity = (1 - r.radius / r.maxRadius) * 0.5;
+                ctx.strokeStyle = `rgba(255, 255, 255, ${currentOpacity})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
 
-                if (p.increasing) {
-                    p.opacity += p.speed;
-                    if (p.opacity >= 1) p.increasing = false;
-                } else {
-                    p.opacity -= p.speed;
-                    if (p.opacity <= 0) {
-                        p.increasing = true;
+                // Logic: Grow the ripple
+                r.radius += r.speed;
 
-                        p.x = Math.random() * canvas.width;
-                        p.y = Math.random() * canvas.height;
-                    }
+                // Reset ripple when it becomes invisible or too large
+                if (r.radius >= r.maxRadius) {
+                    r.x = Math.random() * canvas.width;
+                    r.y = Math.random() * canvas.height;
+                    r.radius = 0;
+                    r.maxRadius = Math.random() * 100 + 50;
+                    r.speed = Math.random() * 0.5 + 0.2;
                 }
             });
 
@@ -75,12 +80,7 @@ const ParticleBackground = ({ }) => {
                 left: 0,
                 width: '100%',
                 height: '100%',
-                backgroundColor: '#0f172a',
                 zIndex: -1,
-                backgroundImage: `url(${bg})`,
-                backgroundSize: 'cover',
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
             }}
         />
     );

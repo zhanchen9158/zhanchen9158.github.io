@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion } from "motion/react";
 
 // 1. Container Variants (The Grid)
 const containerVars = {

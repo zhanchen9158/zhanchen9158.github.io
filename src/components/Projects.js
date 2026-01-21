@@ -17,30 +17,12 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import Pagination from '@mui/material/Pagination';
-import { delay, motion } from "framer-motion";
+import { delay, motion } from "motion/react";
 import { styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useAnimateContext } from './AnimateContext';
 import Tooltip from '@mui/material/Tooltip';
 
-
-const GridContainer = styled(Grid)(({ theme }) => ({
-  width: '100%', padding: '2px',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-}));
-
-const StyledGridItem = styled(Grid)(({ theme }) => ({
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  borderRadius: '15px',
-  //overflow: 'hidden',
-  '& .MuiPaper-root': {
-    border: `none`,
-  },
-}));
 
 const projectInfo = [
   {
@@ -81,11 +63,67 @@ const projectInfo = [
   },
 ];
 
+const GridContainer = styled(Grid)(({ theme }) => ({
+  width: '100%', padding: '2px',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  perspective: '1000px',
+  position: 'relative',
+}));
+
+const StyledGridItem = styled(Grid)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  borderRadius: '15px',
+  overflow: 'hidden',
+  '& .MuiPaper-root': {
+    border: `none`,
+  },
+  transform: "translateZ(60px)",
+  transformStyle: "preserve-3d",
+}));
+
+const containerVars = {
+  hidden: { opacity: 0, scale: 1, y: 0 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: {
+      staggerChildren: 0.35,
+    },
+  },
+  static: { opacity: 1, scale: 1, y: 0, transition: { duration: 0 } },
+};
+
+const itemVars = {
+  hidden: {
+    opacity: 0,
+    scale: 1,
+    y: 20,
+    clipPath: "inset(100% 0% 0% 0%)",
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    clipPath: "inset(0% 0% 0% 0%)",
+    transition: {
+      duration: 0.8,
+      ease: [0.4, 0, 0.2, 1],
+    }
+  },
+  static: { opacity: 1, scale: 1, y: 0, clipPath: "inset(0% 0% 0% 0%)", transition: { duration: 0 } },
+};
+
 export default function Projects({ refProps, handleViewport }) {
   const [page, setPage] = useState(1);
 
   const theme = useTheme();
   const lesserThanMd = useMediaQuery(theme.breakpoints.down('md'));
+  const lesserThanSm = useMediaQuery(theme.breakpoints.down('sm'));
   const smheight = useMediaQuery('(max-height:600px)');
 
   const header = '70px';
@@ -94,7 +132,9 @@ export default function Projects({ refProps, handleViewport }) {
   const wh = window?.innerHeight;
   const padbot = (wh - parseInt(header, 10) - cardh) / 3;
 
-  const perpage = lesserThanMd ? 1 : 3;
+  const perpage = lesserThanSm ? 1
+    : lesserThanMd
+      ? 2 : 3;
   const maxpage = Math.ceil(projectInfo.length / perpage);
 
   const hoverdistance = 20;
@@ -105,39 +145,6 @@ export default function Projects({ refProps, handleViewport }) {
 
   const { manual, system } = useAnimateContext();
   const mode = system || manual;
-
-  const containerVars = {
-    hidden: { opacity: 0, scale: 1, y: 0 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      transition: {
-        staggerChildren: 0.35,
-      },
-    },
-    static: { opacity: 1, scale: 1, y: 0, transition: { duration: 0 } },
-  };
-
-  const itemVars = {
-    hidden: {
-      opacity: 0,
-      scale: 1,
-      y: 20,
-      clipPath: "inset(100% 0% 0% 0%)",
-    },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      clipPath: "inset(0% 0% 0% 0%)",
-      transition: {
-        duration: 0.8,
-        ease: [0.4, 0, 0.2, 1],
-      }
-    },
-    static: { opacity: 1, scale: 1, y: 0, clipPath: "inset(0% 0% 0% 0%)", transition: { duration: 0 } },
-  };
 
   return (
     <Container
@@ -167,9 +174,10 @@ export default function Projects({ refProps, handleViewport }) {
           alignItems: 'center',
           flexDirection: 'column',
           gap: 1,
-          width: '100%',
+          width: '100%', //height: 'auto'
         }}>
         <GridContainer container key={page} spacing={2}
+          layout
           component={motion.div}
           variants={containerVars}
           initial="hidden"
@@ -207,6 +215,10 @@ const cardVars = {
     y: -8,
     transition: { duration: 0.3, ease: "easeOut", type: "spring", stiffness: 160, damping: 20 }
   },
+  static: {
+    opacity: 1, scale: 1, x: 0, y: 0,
+    transition: { duration: 0 }
+  }
 };
 
 const bloomVars = {
@@ -223,6 +235,12 @@ const bloomVars = {
       times: [0, 0.5, 0.85]
     }
   },
+  static: {
+    opacity: 1, scale: 1, x: 0, y: 0,
+    "--inner": ["0%", "0%", "100%"],
+    "--outer": ["0%", "100%", "100%"],
+    transition: { duration: 0 }
+  }
 };
 
 const shadowVars = {
@@ -236,11 +254,15 @@ const shadowVars = {
       duration: 0.35,
     }
   },
+  static: {
+    opacity: 1, scale: 1, x: 0, y: 0,
+    transition: { duration: 0 }
+  }
 };
 
 const CardContainer = styled(Box)(({ theme }) => ({
   position: 'relative',
-  width: '90%',
+  width: '95%', //height: 'auto',
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
@@ -277,6 +299,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
   flexDirection: 'column',
   justifyContent: 'space-between',
   overflow: 'auto',
+  borderRadius: 'inherit',
   background: `rgba(${(theme.vars || theme).palette.background.defaultChannel}/0.1)`,
   padding: theme.spacing(2),
   [theme.breakpoints.down('sm')]: {
@@ -289,11 +312,14 @@ const StyledCard = styled(Card)(({ theme }) => ({
 
 function ProjectCard({ v, cardh }) {
 
+  const { manual, system } = useAnimateContext();
+  const mode = system || manual;
+
   return (
     <CardContainer
       component={motion.div}
       initial="initial"
-      whileHover="hover"
+      whileHover={mode == 'normal' ? "hover" : "static"}
       sx={{ height: cardh }}
     >
       <Bloombackground
@@ -307,6 +333,7 @@ function ProjectCard({ v, cardh }) {
       <StyledCard
         component={motion.div}
         variants={cardVars}
+        sx={{ height: cardh }}
       >
         <CardActionArea href={v.link} target="_blank"
           disableRipple
@@ -325,13 +352,30 @@ function ProjectCard({ v, cardh }) {
             image={v.img}
             sx={{ objectFit: "contain" }}
           />
-          <CardHeader sx={{ p: '4px 0 0 8px' }}
+          <CardHeader sx={{ p: '4px 0 0 8px', }}
             title={v.header}
+            slotProps={{
+              title: {
+                style: {
+                  fontFamily: 'Instrument Serif',
+                  fontSize: '20px',
+                },
+              },
+            }}
           />
           <List>
             {v.description.map((v, i) => (
               <ListItem disablePadding sx={{ alignItems: 'start', }}>
-                <ArrowRightIcon sx={{ mt: '5px' }} /><ListItemText primary={v} />
+                <ArrowRightIcon sx={{ mt: '5px' }} /><ListItemText primary={v}
+                  slotProps={{
+                    primary: {
+                      style: {
+                        fontFamily: 'Instrument Sans',
+                        fontSize: '16px',
+                      },
+                    },
+                  }}
+                />
               </ListItem>
             ))}
           </List>

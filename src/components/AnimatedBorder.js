@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { useAnimateContext } from './AnimateContext';
 
 const draw = {
@@ -6,7 +6,7 @@ const draw = {
     visible: {
         pathLength: 1,
         opacity: 1,
-        transition: { delay: 1, duration: 1.35, ease: "easeInOut" }
+        transition: { delay: 0.35, duration: 1.35, ease: "easeInOut" }
     },
     static: { pathLength: 1, opacity: 1, }
 };
@@ -18,12 +18,14 @@ export default function AnimatedBorder({ key }) {
 
     return (
         <svg
+            key={key}
             style={{
                 position: 'absolute',
                 width: '100%',
                 height: '100%',
                 pointerEvents: 'none',
-                borderRadius: '12px',
+                borderRadius: 'inherit',
+                overflow: 'visible',
             }}
         >
             <defs>
@@ -42,8 +44,8 @@ export default function AnimatedBorder({ key }) {
                 fill="transparent"
                 variants={draw}
                 initial="hidden"
-                whileInView={mode == 'normal' ? "visible" : "static"}
-                viewport={{ once: false, amount: 0.5 }}
+                animate={mode == 'normal' ? "visible" : "static"}
+                exit={'hidden'}
             />
         </svg>
     );

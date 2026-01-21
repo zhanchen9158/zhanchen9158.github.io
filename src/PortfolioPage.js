@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import AppNavBar from './components/AppNavBar';
 import Hero from './components/Hero';
@@ -6,7 +6,7 @@ import Certifications from './components/Certifications';
 import ProjectHighlights from './components/ProjectHighlights';
 import Projects from './components/Projects';
 import Footer from './components/Footer';
-import { motion, useScroll, useTransform, useSpring, cubicBezier } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring, cubicBezier } from "motion/react";
 import CustomizedSpeedDial from './components/CustomizedSpeedDial';
 import { styled, useTheme, useColorScheme } from '@mui/material/styles';
 import { AnimateProvider } from './components/AnimateContext';
@@ -27,14 +27,14 @@ export default function PortfolioPage({ }) {
   const scrollContainerRef = useRef(null);
   const sectionRef = useRef({});
 
-  const handleViewport = (section, inview) => {
+  const handleViewport = useCallback((section, inview) => {
     setActivesection(prev => ({ ...prev, [section]: inview }));
-  };
+  }, []);
 
-  const handleScrollsection = (section) => () => {
+  const handleScrollsection = useCallback((section) => {
     //e.stopPropagation();
     sectionRef.current[section].scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
   const sections = [
     <Hero refProps={sectionRef} handleViewport={handleViewport}
@@ -79,7 +79,7 @@ function Page({ containerRef, i, activesection, children, ...props }) {
   const section = getActivesection(activesection);
 
   const lightoverlay = [0, 0, 0, 0.1];
-  const darkoverlay = [0, 0.85, 0, 0.8];
+  const darkoverlay = [0, 0.8, 0, 0.2];
 
   const mapBgimg = (overlay) => bgraw.map((v, i) =>
     `linear-gradient(rgba(${(theme.vars || theme).palette.background.defaultChannel}/${overlay[i]}), 
@@ -98,10 +98,10 @@ function Page({ containerRef, i, activesection, children, ...props }) {
   const smoothProgress = useSpring(scrollYProgress, {
     stiffness: 70,
     damping: 30,
-    restDelta: 0.005
+    restDelta: 0.01
   });
 
-  const y = useTransform(smoothProgress, [0, 1], [100, -100],
+  const y = useTransform(smoothProgress, [0, 1], [50, -50],
     { ease: cubicBezier(0.76, 0, 0.24, 1) });
 
   const rotateX = useTransform(smoothProgress, [0.1, 0.8, 1], [-10, 0, 10], { ease: (t) => t });

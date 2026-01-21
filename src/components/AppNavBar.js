@@ -4,7 +4,7 @@ import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import getActivesection from '../functions/getActivesection';
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import Box from '@mui/material/Box';
 import { useAnimateContext } from './AnimateContext';
 
@@ -45,7 +45,7 @@ const StyledTypography = styled(Typography)(({ theme }) => ({
   width: 'fit-content',
   //height: 'fit-content',
   textAlign: 'center', textTransform: 'capitalize',
-  fontFamily: `'Inter', sans-serif`,
+  fontFamily: 'Inter',
   fontWeight: 800,
   letterSpacing: '-0.04em',
   lineHeight: 1.5,

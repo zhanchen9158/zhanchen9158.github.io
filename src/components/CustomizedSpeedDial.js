@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import SpeedDial from '@mui/material/SpeedDial';
 import SpeedDialIcon from '@mui/material/SpeedDialIcon';
 import SpeedDialAction from '@mui/material/SpeedDialAction';
@@ -9,7 +9,7 @@ import LightModeIcon from '@mui/icons-material/LightModeRounded';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import { styled, useTheme, useColorScheme } from '@mui/material/styles';
-import { motion, AnimatePresence, useMotionValue, useInView } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useInView } from "motion/react";
 import Box from '@mui/material/Box';
 import getActivesection from '../functions/getActivesection';
 import { useAnimateContext } from './AnimateContext';
@@ -51,13 +51,13 @@ export default function CustomizedSpeedDial({ handleScrollsection, activesection
     else setSubopen(sub);
   };
 
-  const handleColormode = (targetMode) => () => {
+  const handleColormode = useCallback((targetMode) => {
     setMode(targetMode);
-  };
+  }, []);
 
-  const handleAnimationmode = (t) => () => {
+  const handleAnimationmode = useCallback((t) => {
     setAniMode(t);
-  };
+  }, []);
 
   const section = getActivesection(activesection);
 
@@ -98,11 +98,10 @@ export default function CustomizedSpeedDial({ handleScrollsection, activesection
     },
   ];
 
-  const handleAction = (action) => () => {
-    if (action == 'Back to Top') handleScrollsection('introduction')();
+  const handleAction = useCallback((action) => {
+    if (action == 'Back to Top') handleScrollsection('introduction');
     else handleSubopen(action);
-  }
-
+  }, [subopen])
 
   const handleOpen = (e, reason) => {
     if (reason == 'toggle') setOpen(true);
@@ -132,7 +131,7 @@ export default function CustomizedSpeedDial({ handleScrollsection, activesection
         <SpeedDialAction
           key={action.name}
           icon={action.icon}
-          onClick={handleAction(action.name)}
+          onClick={() => handleAction(action.name)}
           slotProps={{
             fab: {
               sx: (theme) => ({
@@ -141,7 +140,6 @@ export default function CustomizedSpeedDial({ handleScrollsection, activesection
                 minHeight: { xs: 32, sm: 48, },
                 '&:hover': {
                   bgcolor: `rgba(${(theme.vars || theme).palette.background.defaultChannel}/0.8)`,
-                  //boxShadow: 'none',
                 },
               }),
             },
@@ -210,7 +208,7 @@ function SubMenu({ open, section, icon, subactions, handleSubaction, name, toolt
           return (
             <Box
               component={motion.div}
-              onClick={handleSubaction(v.route)}
+              onClick={() => handleSubaction(v.route)}
               key={i}
               initial={{ opacity: 0, x, y }}
               animate={{ opacity: 1, x: x + cx, y: y + cy }}

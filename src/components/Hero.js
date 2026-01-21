@@ -4,14 +4,14 @@ import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import ScrollDown from './ScrollDown';
 import { styled, useTheme } from '@mui/material/styles';
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import SkillsCard from './SkillsCard';
 
 
 const StyledTypography = styled(Typography)(({ theme }) => ({
   whiteSpace: "pre-wrap",
   color: 'white',
-  fontFamily: 'Charm',
+  fontFamily: 'Archivo',
   fontSize: '24px',
   fontWeight: 'bold',
   cursor: 'pointer',
@@ -73,20 +73,20 @@ export default function Hero({ refProps, handleViewport, handleScrollsection }) 
             gap: { xs: 2, md: 4 },
           }}
         >
-          <StyledTypography onClick={handleScrollsection('projects')}>
+          <StyledTypography onClick={() => handleScrollsection('projects')}>
             Projects
           </StyledTypography>
-          <StyledTypography onClick={handleScrollsection('highlights')}>
+          <StyledTypography onClick={() => handleScrollsection('highlights')}>
             Project Highlights
           </StyledTypography>
-          <StyledTypography onClick={handleScrollsection('certifications')}>
+          <StyledTypography onClick={() => handleScrollsection('certifications')}>
             Certifications
           </StyledTypography>
         </Box>
         <ScrollDown
           sx={{
             //height: { xs: `${0.9 * scrolldown}px`, md: `${1.5 * scrolldown}px` },
-            transform: { xs: 'scale(0.9)', md: 'scale(1.5)' },
+            transform: { xs: 'scale(0.9)', md: 'scale(1)' },
           }}
         />
       </Box>

@@ -264,7 +264,7 @@ export const colorSchemes = {
         rgba(77, 166, 255, 1) 100%
         )`,
         projcard: 'linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), linear-gradient(135deg, #00dbde 0%, #fc00ff 100%)',
-        certcard: 'linear-gradient(315deg, #E0EDFC 0%, #fcebf0ff 100%)',
+        certcard: 'linear-gradient(90deg, #F3E4CE 0%, #EEE2D3 50%, #D1E0F0 100%)',
       },
       text: {
         primary: gray[800],
@@ -327,7 +327,7 @@ export const colorSchemes = {
         rgba(77, 166, 255, 1) 100%
         )`,
         projcard: 'linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), linear-gradient(135deg, #00dbde 0%, #fc00ff 100%)',
-        certcard: 'linear-gradient(315deg, #030C16 0%, #100206 100%)',
+        certcard: 'linear-gradient(90deg, #1A1814 0%, #1C1B1A 50%, #0D1117 100%)',
       },
       text: {
         primary: 'hsl(0, 0%, 100%)',

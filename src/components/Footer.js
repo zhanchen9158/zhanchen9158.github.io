@@ -7,7 +7,7 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import { styled, useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
 import getActivesection from '../functions/getActivesection';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from "motion/react";
 
 
 const StyledButton = styled(IconButton)(({ theme }) => ({
