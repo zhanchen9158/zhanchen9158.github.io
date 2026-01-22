@@ -20,6 +20,7 @@ import floatingbook2 from '../pics/floatingbook2.webp';
 import floatingpen from '../pics/floatingpen.png';
 import floatingpencap from '../pics/floatingpencap.png';
 import FloatingItem from './FloatingItem';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 
 
 const items = [
@@ -27,7 +28,7 @@ const items = [
     id: 1,
     icon: AWSIcon,
     title: 'Amazon Web Services Certified Solutions Architect - Associate',
-    description: [
+    descriptions: [
       'Identify and design ideal cloud solutions that incorporate AWS services to meet current and future business requirements.',
       'Design architectures with secure accesses and appropriate data security controls.',
       'Design architectures that are scalable, highly-available, and fault-tolerant.',
@@ -39,7 +40,7 @@ const items = [
     id: 2,
     icon: MicrosoftIcon,
     title: 'Foundational C# with Microsoft',
-    description: [
+    descriptions: [
       'Thorough foundational knowledge of the core concepts, syntax, data structures, and algorithms of C#.',
       'Identify and structure code solutions based on reusable and maintainability principles.',
       'Create applications that adhere to exception handling principles.',
@@ -50,7 +51,7 @@ const items = [
     id: 3,
     icon: FreecodecampIcon,
     title: 'JavaScript Algorithms and Data Structures',
-    description: [
+    descriptions: [
       'Fundamental and advanced knowledge focused on ES6+, Object-Oriented Programming (OOP), and Functional Programming paradigms.',
       'Develope algorithmic solutions for data manipulation, including regular expression, recursion, and complex state logic.',
       'Produce optimized solutions utilizing algorithmic efficiency, memoization and dynamic programming, and mathematical optimization.',
@@ -60,7 +61,7 @@ const items = [
     id: 4,
     icon: FreecodecampIcon,
     title: 'Responsive Web Design Developer',
-    description: [
+    descriptions: [
       'Thorough foundational knowledge in HTML, CSS, and responsive web design.',
       'Implemente modern layout techniques including mobile-first responsive strategy, fluid grids, and responsive UI to create complex, fluid user interfaces.',
       'Apply Web Content Accessibility Guidelines (WCAG) standards, utilizing semantic HTML to ensure screen-reader compatibility and SEO optimization.',
@@ -134,7 +135,7 @@ const StyledAvatar = styled(Avatar)(({ theme }) => ({
   width: 48,
   float: 'left',
   marginRight: theme.spacing(2),
-  marginBottom: theme.spacing(1),
+  marginTop: '6px',
   '& img': {
     objectFit: 'contain',
     backgroundColor: 'rgba(250,250,250,0.9)',
@@ -155,9 +156,22 @@ const SubHeader = styled(Typography)(({ theme }) => ({
   }
 }));
 
+const StyledListItem = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'flex-start',
+  marginBottom: theme.spacing(1)
+}));
+
+const StyledPlayArrowIcon = styled(PlayArrowIcon)(({ theme }) => ({
+  marginRight: theme.spacing(2),
+  flexShrink: 0,
+}));
+
 const StyledList = styled(Typography)(({ theme }) => ({
+  display: 'inline',
   fontFamily: 'Archivo',
   fontSize: '16px',
+  lineHeight: 1.5,
   [theme.breakpoints.down('md')]: {
     fontSize: '14px',
   }
@@ -286,10 +300,13 @@ export default function Certifications({ refProps, handleViewport }) {
                       {v.title}
                     </SubHeader>
                   </Box>
-                  {v.description.map((item, i) => (
-                    <StyledList key={i}>
-                      {item}
-                    </StyledList>
+                  {v.descriptions.map((item, i) => (
+                    <StyledListItem key={`desc-${v.title}-${i}`} >
+                      <StyledPlayArrowIcon />
+                      <StyledList>
+                        {item}
+                      </StyledList>
+                    </StyledListItem>
                   ))}
                 </StyledCard>
               </AnimatedCard>
@@ -448,10 +465,13 @@ function ReducedAnimation({ }) {
               <SubHeader>
                 {v.title}
               </SubHeader>
-              {v.description.map((item, i) => (
-                <StyledList key={i}>
-                  {item}
-                </StyledList>
+              {v.descriptions.map((item, i) => (
+                <StyledListItem key={`desc-${v.title}-${i}`} >
+                  <StyledPlayArrowIcon />
+                  <StyledList>
+                    {item}
+                  </StyledList>
+                </StyledListItem>
               ))}
             </ReducedAnimationCard>
           </StyledGridItem>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { styled, alpha } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -6,8 +6,9 @@ import Typography from '@mui/material/Typography';
 import getActivesection from '../functions/getActivesection';
 import { motion } from "motion/react";
 import Box from '@mui/material/Box';
-import { useAnimateContext } from './AnimateContext';
 
+
+const MotionBox = motion(Box);
 
 const StyledAppbar = styled(AppBar)(({ theme }) => ({
   border: 'none',
@@ -39,6 +40,7 @@ const StyledToolbar = styled(Toolbar)(({ theme }) => ({
     fontSize: 20,
     fontFamily: 'Francois One',
   },
+  willChange: 'transition, opacity',
 }));
 
 const StyledTypography = styled(Typography)(({ theme }) => ({
@@ -83,9 +85,6 @@ export default function AppAppBar({ appbarshow = true, activesection }) {
 
   const section = getActivesection(activesection);
 
-  const { manual, system } = useAnimateContext();
-  const mode = system || manual;
-
   return (
     <StyledAppbar
       position="fixed"
@@ -99,31 +98,20 @@ export default function AppAppBar({ appbarshow = true, activesection }) {
         variant="dense"
         disableGutters
         sx={{
-          willChange: 'transition, opacity',
           opacity: appbarshow ? '1.0' : '0',
           transition: '1s linear 0.5s',
         }}
       >
-        {mode == 'normal' ?
-          <Box
-            component={motion.div}
-            key={section}
-            variants={itemVars}
-            initial="hidden"
-            animate="visible"
-          >
-            <StyledTypography
-              component="div"
-            >
-              {section == 'introduction' ? `zhan chen's porftfolio` : section}
-            </StyledTypography>
-          </Box> :
-          <StyledTypography
-            component="div"
-          >
+        <MotionBox
+          key={section}
+          variants={itemVars}
+          initial='hidden'
+          animate="visible"
+        >
+          <StyledTypography>
             {section == 'introduction' ? `zhan chen's porftfolio` : section}
           </StyledTypography>
-        }
+        </MotionBox>
       </StyledToolbar>
     </StyledAppbar >
   );

@@ -127,33 +127,34 @@ const header = '70px';
 const shadowduration = 30;
 const driftduration = 40;
 
+const MotionContainer = motion(Container);
 const MotionBox = motion(Box);
 const MotionImage = motion('img');
+
+const SectionContainer = styled(MotionContainer)(({ theme }) => ({
+  position: 'fixed',
+  marginTop: header,
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  height: `calc(100dvh - ${header})`,
+  overflow: 'hidden',
+}));
 
 export default function ProjectHighlights({ refProps, handleViewport }) {
 
   return (
-    <Container
-      component={motion.div}
+    <SectionContainer
       ref={el => refProps.current['highlights'] = el}
       onViewportEnter={() => handleViewport('highlights', true)}
       onViewportLeave={() => handleViewport('highlights', false)}
       viewport={{ amount: 0.5 }}
       id="highlights"
       maxWidth="lg"
-      sx={{
-        position: 'fixed',
-        top: header,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: `calc(100dvh - ${header})`,
-        overflow: 'hidden',
-      }}
     >
       <WaterBackground shadowDuration={shadowduration} driftDuration={driftduration * 3} />
       <HoverGallery />
-    </Container>
+    </SectionContainer>
   );
 }
 
@@ -427,7 +428,7 @@ const subheaderBlurVars = {
   static: { opacity: 0, transition: { duration: 0 } },
 };
 
-const AnimatedList = React.memo(function AnimatedList({ proj, i, animationConfig,
+const AnimatedList = memo(function AnimatedList({ proj, i, animationConfig,
   activeImage, handleActivatingImage }) {
 
   return (
