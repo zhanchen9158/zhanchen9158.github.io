@@ -2,7 +2,7 @@ import React, { useMemo, memo } from 'react';
 import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
 import { motion } from 'motion/react';
-import hexToRgba from '../functions/hextoRgba';
+import hexToRgba from '../functions/hexToRgba';
 
 
 const SvgContainer = styled(Box)(({ theme }) => ({
