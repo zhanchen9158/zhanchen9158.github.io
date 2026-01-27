@@ -5,7 +5,6 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import {
     motion, AnimatePresence, useMotionValue,
     useSpring, useTransform, useAnimation,
-    scale
 } from "motion/react";
 import Box from '@mui/material/Box';
 import { useAnimateContext } from './AnimateContext';
@@ -14,7 +13,6 @@ import SvgGlow from './SvgGlow';
 import SvgGlassOverlay from './SvgGlassOverlay';
 import SvgSplitColor, { SvgSplitShadow, SvgBorder } from './SvgSplitColor';
 import hexToRgba from '../functions/hextoRgba';
-import { animate } from 'motion';
 
 
 const MotionBox = motion(Box);
