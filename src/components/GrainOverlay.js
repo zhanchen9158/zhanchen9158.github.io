@@ -1,13 +1,13 @@
-export const GrainOverlay = ({ opacity = 0.05, contrast = "150%" }) => {
+const GrainOverlay = ({ opacity = 0.05, contrast = "150%" }) => {
   return (
     <div 
       style={{
-        position: 'fixed',
+        position: 'absolute',
         top: 0,
         left: 0,
         width: '100%',
         height: '100%',
-        pointerEvents: 'none', // Critical: allows clicking through the grain
+        pointerEvents: 'none',
         zIndex: 9999,
         opacity: opacity,
         filter: `contrast(${contrast}) brightness(100%)`,
@@ -28,3 +28,5 @@ export const GrainOverlay = ({ opacity = 0.05, contrast = "150%" }) => {
     </div>
   );
 };
+
+export default GrainOverlay;

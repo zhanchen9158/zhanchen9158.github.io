@@ -52,7 +52,6 @@ export default function FloatingItem({ url, position,
     const Z_START_RAD = useMemo(() => THREE.MathUtils.degToRad(rotate.zStart), [rotate.zStart]);
     const Z_ROT_AMP = useMemo(() => THREE.MathUtils.degToRad(rotate.zAmp), [rotate.zAmp]);
 
-    console.log(height)
     // useMemo ensures we don't re-create this geometry on every frame/render
     const geometry = useMemo(() =>
         new THREE.PlaneGeometry(width, height, 1, 1),

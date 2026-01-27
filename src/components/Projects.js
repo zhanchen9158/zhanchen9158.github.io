@@ -63,7 +63,6 @@ const projectInfo = [
 const MotionContainer = motion(Container);
 const MotionBox = motion(Box);
 const MotionGrid = motion(Grid);
-const MotionCard = motion(Card);
 
 const header = '70px';
 
@@ -93,25 +92,6 @@ export default function Projects({ refProps, handleViewport }) {
   const [page, setPage] = useState(1);
   const [hoveredProj, setHoveredProj] = useState(null);
 
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  const springConfig = { damping: 25, stiffness: 250 };
-  const sx = useSpring(mouseX, springConfig);
-  const sy = useSpring(mouseY, springConfig);
-
-  useEffect(() => {
-    if (!hoveredProj) return;
-
-    const updateMouse = (e) => {
-      mouseX.set(e.clientX);
-      mouseY.set(e.clientY);
-    };
-
-    window.addEventListener('mousemove', updateMouse, { passive: true });
-    return () => window.removeEventListener('mousemove', updateMouse);
-  }, [hoveredProj, mouseX, mouseY]);
-
   const handleHovering = useCallback((v) => {
     setHoveredProj(v);
   }, []);
@@ -128,7 +108,7 @@ export default function Projects({ refProps, handleViewport }) {
       ? 2 : 3;
   const maxpage = Math.ceil(projectInfo.length / perpage);
 
-  const handlePageChange = useCallback((e, v) => {
+  const handlePageChange = useCallback((_, v) => {
     setPage(v);
   }, []);
 
@@ -171,7 +151,7 @@ export default function Projects({ refProps, handleViewport }) {
         <Pagination count={maxpage} page={page} onChange={handlePageChange}
           sx={{ display: 'flex', justifyContent: 'center', }} />
       </ContentBox>
-      <HoveredAnimation sx={sx} sy={sy} hoveredProj={hoveredProj} animationConfig={animationConfig} />
+      <HoveredAnimation hoveredProj={hoveredProj} animationConfig={animationConfig} />
     </SectionContainer >
   );
 }
@@ -231,7 +211,7 @@ const itemVars = {
   static: { opacity: 1, scale: 1, y: 0, clipPath: "inset(0% 0% 0% 0%)", transition: { duration: 0 } },
 };
 
-function ProjectsGrid({ currentPage, page, perpage, cardh, hoveredProj, handleHovering, animationConfig }) {
+const ProjectsGrid = memo(function ProjectsGrid({ currentPage, page, perpage, cardh, hoveredProj, handleHovering, animationConfig }) {
 
   return (
     <GridContainer container key={`${page}-${perpage}`} spacing={2}
@@ -259,7 +239,7 @@ function ProjectsGrid({ currentPage, page, perpage, cardh, hoveredProj, handleHo
       </AnimatePresence>
     </GridContainer>
   );
-}
+});
 
 const CardContainer = styled(MotionBox)(({ theme }) => ({
   position: 'relative',
@@ -278,6 +258,7 @@ const Colorbackground = styled(MotionBox)(({ theme }) => ({
   borderRadius: "inherit",
   backgroundColor: (theme.vars || theme).palette.background.default,
   zIndex: 0,
+  willChange: 'transform,opacity',
 }));
 
 const Bloombackground = styled(MotionBox)(({ theme }) => ({
@@ -290,6 +271,7 @@ const Bloombackground = styled(MotionBox)(({ theme }) => ({
   zIndex: 0,
   "--inner": "0%",
   "--outer": "0%",
+  willChange: 'transform,opacity',
   ...theme.applyStyles('dark', {
     backgroundColor: (theme.vars || theme).palette.primary.main,
   }),
@@ -302,6 +284,7 @@ const Shadowbackground = styled(MotionBox)(({ theme }) => ({
   boxShadow: `0 0 10px 5px ${(theme.vars || theme).palette.primary.main}`,
   backgroundColor: 'transparent',
   zIndex: 0,
+  willChange: 'transform,opacity',
 }));
 
 const StyledCard = styled(MotionBox)(({ theme }) => ({
@@ -464,6 +447,12 @@ const ProjectCard = memo(function ProjectCard({ v, cardh, hoveredProj, handleHov
 
   const activeProj = hoveredProj && hoveredProj.header === v.header;
 
+  const handleClick = useCallback((e) => {
+    e.stopPropagation();
+
+    window.open(v.link, '_blank', 'noopener,noreferrer');
+  }, [v.link])
+
   return (
     <CardContainer
       variants={cardcontainerVars}
@@ -486,10 +475,9 @@ const ProjectCard = memo(function ProjectCard({ v, cardh, hoveredProj, handleHov
         sx={{ height: cardh }}
       >
         <StyledCardContent
-          href={v.link} target="_blank"
-          disableRipple
           onMouseEnter={() => handleHovering(v)}
           onMouseLeave={() => handleHovering(null)}
+          onClick={handleClick}
         >
           <StyledCardMedia
             component="img"
@@ -574,7 +562,27 @@ const imageVars = {
   static: { opacity: 0, scale: 1 },
 };
 
-function HoveredAnimation({ sx, sy, hoveredProj, animationConfig }) {
+const HoveredAnimation = memo(function HoveredAnimation({ hoveredProj, animationConfig }) {
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const springConfig = { damping: 25, stiffness: 250 };
+  const sx = useSpring(mouseX, springConfig);
+  const sy = useSpring(mouseY, springConfig);
+
+  useEffect(() => {
+    if (!hoveredProj) return;
+
+    const updateMouse = (e) => {
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
+    };
+
+    window.addEventListener('mousemove', updateMouse, { passive: true });
+    return () => window.removeEventListener('mousemove', updateMouse);
+  }, [hoveredProj, mouseX, mouseY]);
+
+  if (!hoveredProj) return <AnimatePresence />;
 
   return (
     <AnimatePresence mode='wait'>
@@ -606,4 +614,4 @@ function HoveredAnimation({ sx, sy, hoveredProj, animationConfig }) {
       )}
     </AnimatePresence>
   )
-}
+});

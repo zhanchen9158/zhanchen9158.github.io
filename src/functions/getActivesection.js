@@ -1,5 +1,11 @@
-export default function getActivesection(activesection) {
-    if (!activesection) return '';
-    const active = Object.keys(activesection).find(k => activesection[k] == true);
-    return active ?? '';
-};
+export default function getActiveSection(activeSection) {
+    if (!activeSection) return '';
+
+    for (const key in activeSection) {
+        if (Object.prototype.hasOwnProperty.call(activeSection, key) && activeSection[key] === true) {
+            return key;
+        }
+    }
+
+    return '';
+}

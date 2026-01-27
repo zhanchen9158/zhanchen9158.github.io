@@ -83,12 +83,12 @@ export default function Hero({ refProps, handleViewport, handleScrollsection }) 
             Certifications
           </StyledTypography>
         </Box>
-        <ScrollDown
+        {/*<ScrollDown
           sx={{
             //height: { xs: `${0.9 * scrolldown}px`, md: `${1.5 * scrolldown}px` },
             transform: { xs: 'scale(0.9)', md: 'scale(1)' },
           }}
-        />
+        />*/}
       </Box>
     </Container>
   );

@@ -11,7 +11,7 @@ import CustomizedSpeedDial from './components/CustomizedSpeedDial';
 import { styled, useTheme, useColorScheme } from '@mui/material/styles';
 import { AnimateProvider } from './components/AnimateContext';
 import getActivesection from './functions/getActivesection';
-import { GrainOverlay } from './components/GrainOverlay';
+import GrainOverlay from './components/GrainOverlay';
 
 
 const bgimport = import.meta.glob('./pics/background*.*', {
