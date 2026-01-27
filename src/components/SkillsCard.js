@@ -12,7 +12,7 @@ import Avatar from '@mui/material/Avatar';
 import SvgGlow from './SvgGlow';
 import SvgGlassOverlay from './SvgGlassOverlay';
 import SvgSplitColor, { SvgSplitShadow, SvgBorder } from './SvgSplitColor';
-import hexToRgba from '../functions/hextoRgba';
+import hexToRgba from '../functions/hexToRgba';
 
 
 const MotionBox = motion(Box);
