@@ -23,6 +23,7 @@ import { useAnimateContext } from './AnimateContext';
 
 const projectInfo = [
   {
+    id: 1,
     img: marketintelligence,
     header: 'Market Intelligence',
     descriptions: [
@@ -32,6 +33,7 @@ const projectInfo = [
     link: 'https://marketintelligence0.s3.us-east-2.amazonaws.com/index.html',
   },
   {
+    id: 2,
     img: researchdigest,
     header: 'Research Digest',
     descriptions: [
@@ -42,6 +44,7 @@ const projectInfo = [
     link: 'https://researchdigest0.s3.us-east-2.amazonaws.com/index.html',
   },
   {
+    id: 3,
     img: mealplanner,
     header: 'Meal Planner',
     descriptions: [
@@ -51,6 +54,7 @@ const projectInfo = [
     link: 'https://mealplanner0.s3.us-east-2.amazonaws.com/index.html',
   },
   {
+    id: 4,
     img: artexplorer,
     header: 'Art Explorer',
     descriptions: [
@@ -71,7 +75,7 @@ const SectionContainer = styled(MotionContainer)(({ theme }) => ({
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
-  height: `100dvh`,
+  width: '100dvw', height: `100dvh`,
   overflow: 'hidden',
   gap: theme.spacing(3),
   [theme.breakpoints.down('md')]: {
@@ -222,7 +226,7 @@ const ProjectsGrid = memo(function ProjectsGrid({ currentPage, page, perpage, ca
     >
       <AnimatePresence>
         {currentPage.map((v, i) => (
-          <StyledGridItem item size={{ xs: 12, sm: 6, md: 4 }} key={`griditem-${i}`}
+          <StyledGridItem item size={{ xs: 12, sm: 6, md: 4 }} key={v.id}
             variants={itemVars}
             sx={{
               height: `calc(${cardh}px + 50px)`,
@@ -305,19 +309,26 @@ const StyledCard = styled(MotionBox)(({ theme }) => ({
 const StyledCardContent = styled(Box)(({ theme }) => ({
   background: "transparent",
   cursor: 'none',
+  borderRadius: 'inherit',
 }));
 
 const StyledCardMedia = styled(CardMedia)(({ theme }) => ({
   height: '150px',
-  objectFit: "contain",
+  objectFit: "cover",
+  borderRadius: 'inherit',
 }));
 
 const StyledCardHeader = styled(CardHeader)(({ theme }) => ({
+  color: (theme.vars || theme).palette.primary.dark,
   padding: '4px 0 0 8px',
   '& .MuiCardHeader-title': {
-    fontFamily: 'Instrument Serif',
-    fontSize: '20px',
+    fontFamily: 'Cormorant Garamond',
+    fontSize: '24px',
+    fontWeight: 600,
   },
+  ...theme.applyStyles('dark', {
+    color: (theme.vars || theme).palette.primary.light,
+  }),
 }));
 
 const StyledListItem = styled(ListItem)(({ theme }) => ({
@@ -325,13 +336,15 @@ const StyledListItem = styled(ListItem)(({ theme }) => ({
 }));
 
 const StyledArrowRightIcon = styled(ArrowRightIcon)(({ theme }) => ({
-  marginTop: '6px',
+  marginTop: '7px',
 }));
 
 const StyledListItemText = styled(ListItemText)(({ theme }) => ({
+  color: (theme.vars || theme).palette.text.primary,
   '& .MuiListItemText-primary': {
-    fontFamily: 'Instrument Sans',
-    fontSize: '16px',
+    fontFamily: 'Proza Libre',
+    fontSize: '18px',
+    fontWeight: 500,
   },
 }));
 
@@ -488,7 +501,7 @@ const ProjectCard = memo(function ProjectCard({ v, cardh, hoveredProj, handleHov
           />
           <List>
             {v.descriptions.map((description, i) => (
-              <StyledListItem disablePadding key={`desc-${v.header}-${i}`}>
+              <StyledListItem disablePadding key={i}>
                 <StyledArrowRightIcon />
                 <StyledListItemText primary={description} />
               </StyledListItem>
@@ -602,7 +615,7 @@ const HoveredAnimation = memo(function HoveredAnimation({ hoveredProj, animation
             View <br /> Project
           </AnimatedToolTip>
           <ImageContainer
-            key={hoveredProj.img}
+            //key={hoveredProj.img}
             variants={imageVars}
             initial='initial'
             animate={animationConfig.image}

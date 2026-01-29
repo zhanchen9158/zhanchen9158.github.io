@@ -5,14 +5,20 @@ import { motion } from 'motion/react';
 import hexToRgba from '../functions/hexToRgba';
 
 
-const SvgContainer = styled(Box)(({ theme }) => ({
+const MotionBox = motion(Box);
+
+const SvgContainer = styled(MotionBox)(({ theme }) => ({
     position: 'absolute',
     width: '100%', height: '100%',
     pointerEvents: 'none',
     zIndex: 0,
     borderRadius: 'inherit',
-    willChange: 'transform, opacity',
 }));
+
+const containerVars = {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 }
+};
 
 const borderVars = {
     initial: { opacity: 0 },
@@ -44,6 +50,10 @@ const SvgSplitColor = memo(({ color = 'rgba(255, 255, 255, 1)',
             viewBox={`0 0 ${width} ${height}`}
             preserveAspectRatio="none"
             shapeRendering="geometricPrecision"
+            variants={containerVars}
+            initial='initial'
+            animate='animate'
+            exit='initial'
             sx={{ ...props }}
         >
             <defs>
@@ -161,6 +171,11 @@ const SvgBorder = memo(({ glowColor = '#ffffff',
             component="svg"
             viewBox={`0 0 ${width} ${height}`}
             preserveAspectRatio="none"
+            shapeRendering="geometricPrecision"
+            variants={containerVars}
+            initial='initial'
+            animate='animate'
+            exit='initial'
             sx={{
                 overflow: 'hidden',
                 transform: "translateZ(4px)",

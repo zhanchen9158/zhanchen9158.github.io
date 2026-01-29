@@ -8,7 +8,6 @@ import {
 } from "motion/react";
 import Box from '@mui/material/Box';
 import { useAnimateContext } from './AnimateContext';
-import Avatar from '@mui/material/Avatar';
 import SvgGlow from './SvgGlow';
 import SvgGlassOverlay from './SvgGlassOverlay';
 import SvgSplitColor, { SvgSplitShadow, SvgBorder } from './SvgSplitColor';
@@ -197,7 +196,7 @@ const BentoGrid = memo(function BentoGrid() {
         <AnimatePresence>
             {skills.map((item, _) => (
                 <AnimatedGridItem
-                    key={`animatedgriditem-${item.title}`}
+                    key={item.id}
                     item={item}
                     selectedId={selectedId} lastSelectedId={lastSelectedId}
                     handleItemSelect={handleItemSelect}
@@ -218,11 +217,14 @@ const BentoGrid = memo(function BentoGrid() {
 const gridMap = { 1: 'a', 2: 'b', 3: 'c', 4: 'd' };
 
 const GridItemContainer = styled(MotionBox)(({ theme }) => ({
-    borderRadius: theme.spacing(4),
+    position: 'relative',
+    borderRadius: '32px',
     cursor: 'pointer',
     perspective: '1000px',
     transformStyle: "preserve-3d",
     willChange: 'transform, opacity',
+    isolation: 'isolate',
+    overflow: 'hidden',
 }));
 
 const Header = styled(Typography)(({ theme }) => ({
@@ -313,6 +315,7 @@ const AnimatedGridItem = memo(function AnimatedGridItem({ item, selectedId, last
             variants={itemVars}
             custom={item.id}
             layoutId={`skillgriditem-${item.id}`}
+            layout
             onClick={() => handleItemSelect(item.id)}
             onLayoutAnimationComplete={() => handleGridAnimationComplete(item.id)}
             whileHover={{ scale: 0.98 }}
@@ -325,7 +328,7 @@ const AnimatedGridItem = memo(function AnimatedGridItem({ item, selectedId, last
                 <Header variant="h4">{item.title}</Header>
                 {item.id == 1 && !lesserThanSm && item.icons.map((v, i) => (
                     <SubHeader
-                        key={`languages-${i}`}
+                        key={v.file}
                         variants={textVars}
                         variant="h5"
                     >
@@ -407,11 +410,8 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, children }) 
 
         const { left, top, width, height } = containerRef.current;
 
-        const mouseX = (e.clientX - left) / width - 0.5;
-        const mouseY = (e.clientY - top) / height - 0.5;
-
-        x.set(mouseX);
-        y.set(mouseY);
+        x.set((e.clientX - left) / width - 0.5);
+        y.set((e.clientY - top) / height - 0.5);
     }, [x, y]);
 
     const handleMouseLeave = useCallback(() => {
@@ -465,6 +465,7 @@ const ModalContent = styled(MotionBox)(({ theme }) => ({
     perspective: '1000px',
     transformStyle: "preserve-3d",
     willChange: 'transform, opacity',
+    isolation: 'isolate',
 }));
 
 const ModalTitle = styled(Box)(({ theme }) => ({
@@ -518,7 +519,6 @@ const AnimatedModal = memo(function AnimatedModal({ selectedItem, handleItemSele
     return (
         <Modal
             variants={modalVars}
-            initial='initial'
             animate='animate'
             exit='initial'
             transition={{ layout: { duration: 0.3 } }}
@@ -526,6 +526,7 @@ const AnimatedModal = memo(function AnimatedModal({ selectedItem, handleItemSele
         >
             <ModalContent
                 layoutId={`skillgriditem-${selectedItem.id}`}
+                layout
                 sx={{
                     backgroundColor: selectedItem.cardcolors[1],
                 }}
@@ -648,7 +649,7 @@ const AnimatedCard = memo(function AnimatedCard({ content = {} }) {
                     />
                 }
                 {positionedIcons.map((icon, i) => (
-                    <AnimatedIcon key={`animatedicon-${icon.name}`} icon={icon} i={i}
+                    <AnimatedIcon key={icon.file} icon={icon} i={i}
                         content={content} handleHovered={handleHovered}
                     />
                 ))}
@@ -778,19 +779,25 @@ const IconContainer = styled(MotionBox)(({ theme }) => ({
 }));
 
 const AvatarContainer = styled(MotionBox)(({ theme }) => ({
+    position: 'relative',
     width: 56, height: 56,
     borderRadius: 'inherit',
     [theme.breakpoints.down('sm')]: {
         width: 48, height: 48,
     },
-    display: 'flex', justifyContent: 'center', alignItems: 'center',
+}));
+
+const HoverWrapper = styled(MotionBox)(({ theme }) => ({
     position: 'relative',
+    width: '100%', height: '100%',
+    borderRadius: 'inherit',
+    display: 'flex', justifyContent: 'center', alignItems: 'center',
     background: 'rgba(255,255,255,0.8)',
     boxShadow: '2px 2px 8px rgba(0,0,0,0.2)',
     cursor: 'pointer',
 }));
 
-const StyledAvatar = styled(Avatar)(({ theme }) => ({
+const StyledAvatar = styled('img')(({ theme }) => ({
     width: 48, height: 48,
     background: 'transparent',
     borderRadius: 'inherit',
@@ -798,6 +805,7 @@ const StyledAvatar = styled(Avatar)(({ theme }) => ({
         width: 40, height: 40,
     },
     pointerEvents: 'none',
+    zIndex: 2,
 }));
 
 const IconText = styled(Typography)(({ theme }) => ({
@@ -817,7 +825,7 @@ const IconText = styled(Typography)(({ theme }) => ({
 
 const iconTransition = { type: "spring", stiffness: 160, damping: 10 };
 
-const iconVars = {
+const entranceVars = {
     initial: {
         opacity: 0, scale: 0.4, y: 0,
     },
@@ -832,34 +840,33 @@ const iconVars = {
         opacity: 1, scale: 1, y: 0,
         transition: { delay: 0, duration: 0.15 }
     },
+    static: { opacity: 1, scale: 1, y: 0 },
+};
+
+const hoverVars = {
+    initial: {
+        scale: 1, y: 0,
+        transition: iconTransition
+    },
     hover: {
         scale: 1.1, y: -6,
         transition: iconTransition
     },
-    static: { opacity: 1, scale: 1, y: 0 },
+    static: { scale: 1, y: 0 },
 };
 
 const AnimatedIcon = memo(function AnimatedIcon({ icon, i, content, handleHovered }) {
-    const [entranceDone, setEntranceDone] = useState(false);
 
     const { manual, system } = useAnimateContext();
     const mode = system || manual;
-
-    const controls = useAnimation();
-
-    useEffect(() => {
-        controls.start("animate").then(() => {
-            setEntranceDone(true);
-        });
-    }, []);
 
     const animationConfig = useMemo(() => {
         const isNormal = (mode === 'normal');
 
         return {
-            animate: isNormal ? (entranceDone ? 'visible' : 'animate') : "static",
+            animate: isNormal ? 'animate' : "static",
         };
-    }, [mode, entranceDone, controls]);
+    }, [mode]);
 
     return (
         <IconContainer
@@ -873,32 +880,38 @@ const AnimatedIcon = memo(function AnimatedIcon({ icon, i, content, handleHovere
             }}
         >
             <AvatarContainer
-                variants={iconVars}
+                variants={entranceVars}
                 custom={i}
                 initial='initial'
                 animate={animationConfig.animate}
-                whileHover='hover'
-                whileTap={{ scale: 0.95 }}
+
             >
-                {/*<HoverGlow
+                <HoverWrapper
+                    variants={hoverVars}
+                    initial='initial'
+                    whileHover='hover'
+                    whileTap={{ scale: 0.95 }}
+                >
+                    {/*<HoverGlow
                     initial={{ opacity: 0 }}
                     whileHover={{ opacity: 1 }}
                     sx={{
                         backgroundColor: content.cardcolors[1],
                     }}
                 />*/}
-                <SvgGlassOverlay i={i} />
-                <StyledAvatar
-                    src={icons[`../icons/skills/${icon.file}.svg`]?.default}
-                    alt={icon.name}
-                />
-                <IconText
-                    sx={{
-                        color: content.color,
-                    }}
-                >
-                    {icon.name}
-                </IconText>
+                    <SvgGlassOverlay i={i} />
+                    <StyledAvatar
+                        src={icons[`../icons/skills/${icon.file}.svg`]?.default}
+                        alt={icon.name}
+                    />
+                    <IconText
+                        sx={{
+                            color: content.color,
+                        }}
+                    >
+                        {icon.name}
+                    </IconText>
+                </HoverWrapper>
             </AvatarContainer>
         </IconContainer>
     );

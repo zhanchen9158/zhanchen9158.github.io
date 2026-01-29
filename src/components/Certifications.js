@@ -76,11 +76,9 @@ const header = '70px';
 
 const SectionContainer = styled(MotionContainer)(({ theme }) => ({
   position: 'fixed',
+  width: '100dvw', height: `calc(100dvh - ${header})`,
   marginTop: header,
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  height: `calc(100dvh - ${header})`,
+  display: 'flex', justifyContent: 'center', alignItems: 'center',
   overflow: 'hidden',
 }));
 

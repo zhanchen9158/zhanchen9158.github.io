@@ -22,17 +22,7 @@ export default function App(props) {
 
   return (
     <AppTheme {...props}>
-      <CssBaseline enableColorScheme />
-      <Box
-        sx={(theme) => ({
-          //position: 'relative',
-          //overflowY: 'scroll',
-          //backdropFilter: 'blur(12px) saturate(180%)',
-          height: '100dvh',
-          width: '100dvw',
-        })}>
       <PortfolioPage />
-    </Box>
     </AppTheme >
   );
 }

@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from "
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import { styled, useTheme } from '@mui/material/styles';
-import useMediaQuery from '@mui/material/useMediaQuery';
 import {
   motion, useMotionValue, useSpring,
   useTransform, AnimatePresence
@@ -19,6 +18,7 @@ import { PROJECT_HIGHLIGHTS } from "../pics/assets";
 
 const highlights = {
   marketintelligence: {
+    id: 1,
     projtitle: 'Market Intelligence',
     items:
       [
@@ -53,6 +53,7 @@ const highlights = {
       ],
   },
   researchdigest: {
+    id: 2,
     projtitle: 'Research Digest',
     items:
       [
@@ -87,6 +88,7 @@ const highlights = {
       ],
   },
   mealplanner: {
+    id: 3,
     projtitle: 'Meal Planner',
     items:
       [
@@ -242,8 +244,9 @@ function HoverGallery({ }) {
         initial="inactive"
         animate={animationConfig.active}
       />
-      {Object.values(highlights).map((v, i) => (
-        <AnimatedList proj={v} i={i} animationConfig={animationConfig}
+      {Object.values(highlights).map((v, _) => (
+        <AnimatedList key={v.id}
+          proj={v} animationConfig={animationConfig}
           activeImage={activeImage}
           handleActivatingImage={handleActivatingImage} />
       ))}
@@ -428,11 +431,11 @@ const subheaderBlurVars = {
   static: { opacity: 0, transition: { duration: 0 } },
 };
 
-const AnimatedList = memo(function AnimatedList({ proj, i, animationConfig,
+const AnimatedList = memo(function AnimatedList({ proj, animationConfig,
   activeImage, handleActivatingImage }) {
 
   return (
-    <ListContainer key={`highlights${i}`}
+    <ListContainer
       variants={containerVars}
       initial="hidden"
       whileInView={animationConfig.visible}

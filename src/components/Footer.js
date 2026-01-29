@@ -1,7 +1,6 @@
-import * as React from 'react';
+import React, { memo } from 'react';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
-import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import { styled, useTheme } from '@mui/material/styles';
@@ -9,6 +8,22 @@ import IconButton from '@mui/material/IconButton';
 import getActivesection from '../functions/getActivesection';
 import { motion, AnimatePresence } from "motion/react";
 
+
+const MotionBox = motion(Box);
+
+const FooterContainer = styled(MotionBox)(({ theme }) => ({
+  position: 'fixed',
+  left: 0, bottom: 0,
+  width: 'fit-content', height: 'fit-content',
+  paddingBottom: theme.spacing(2),
+  paddingLeft: theme.spacing(2),
+  display: 'flex', flexDirection: 'column',
+  zIndex: 5,
+  [theme.breakpoints.down('md')]: {
+    paddingBottom: theme.spacing(1),
+    paddingLeft: theme.spacing(1),
+  }
+}));
 
 const StyledButton = styled(IconButton)(({ theme }) => ({
   background: (theme.vars || theme).palette.text.primary,
@@ -22,14 +37,16 @@ const StyledButton = styled(IconButton)(({ theme }) => ({
   },
 }));
 
+const SPRING_CONFIG = { type: "spring", stiffness: 80, damping: 20 };
+
 const footVars = {
-  hidden: {
+  initial: {
     opacity: 0, x: -50,
-    transition: { type: "spring", stiffness: 80, damping: 20 },
+    transition: SPRING_CONFIG,
   },
-  slide: {
+  animate: {
     opacity: 1, x: 0,
-    transition: { type: "spring", stiffness: 80, damping: 20 },
+    transition: SPRING_CONFIG,
   },
 }
 
@@ -40,55 +57,41 @@ export default function Footer({ activesection }) {
   return (
     <AnimatePresence>
       {section == 'introduction' && (
-        <Box
-          component={motion.div}
+        <FooterContainer
           variants={footVars}
-          initial='hidden'
-          animate='slide'
-          exit='hidden'
-          sx={{
-            pb: { xs: 1, md: 2 },
-            pl: { xs: 1, md: 2 },
-            display: 'flex',
-            position: 'fixed',
-            left: 0,
-            bottom: 0,
-          }}
+          initial='initial'
+          animate='animate'
+          exit='initial'
         >
-          <Stack
-            direction={'column'}
-            sx={{
-              display: 'flex',
-              width: '100%',
-            }}
+          <StyledButton
+            size="small"
+            href="https://github.com/zhanchen9158/zhanchen9158.github.io"
+            target='_blank'
+            aria-label="GitHub"
           >
-            <StyledButton
-              size="small"
-              href="https://github.com/zhanchen9158/zhanchen9158.github.io"
-              target='_blank'
-              aria-label="GitHub"
-            >
-              <GitHubIcon />
-            </StyledButton>
-            <div>
-              <Copyright />
-            </div>
-          </Stack>
-        </Box>
+            <GitHubIcon />
+          </StyledButton>
+          <Copyright />
+        </FooterContainer>
       )}
     </AnimatePresence>
   );
 }
 
-function Copyright() {
+const StyledTypography = styled(Typography)(({ theme }) => ({
+  marginTop: theme.spacing(1),
+  color: (theme.vars || theme).palette.text.secondary,
+}));
+
+const Copyright = memo(function Copyright() {
   return (
-    <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
+    <StyledTypography variant="body2">
       {'Copyright © '}
       <Link color="text.secondary">
         Portfolio
       </Link>
       &nbsp;
       {new Date().getFullYear()}
-    </Typography>
+    </StyledTypography>
   );
-}
+});
