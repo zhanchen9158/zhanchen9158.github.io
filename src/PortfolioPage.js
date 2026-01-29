@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
 import Box from '@mui/material/Box';
-import AppNavBar from './components/AppNavBar';
+import AnimatedAppBar from './components/AnimatedAppBar';
 import Hero from './components/Hero';
 import Certifications from './components/Certifications';
 import ProjectHighlights from './components/ProjectHighlights';
@@ -56,7 +56,7 @@ export default function PortfolioPage({ }) {
 
   return (
     <AnimateProvider>
-      <AppNavBar activesection={activesection} />
+      <AnimatedAppBar activesection={activesection} />
       <ScrollContainer
         ref={scrollContainerRef}
       >
@@ -94,16 +94,9 @@ const ScrollPage = styled(MotionBox)(({ theme }) => ({
   width: "100dvw", height: "100dvh",
   transformOrigin: "center center",
   willChange: "transform, opacity",
-}));
-
-const ScrollBackground = styled(MotionBox)(({ theme }) => ({
-  position: 'absolute',
-  inset: 0,
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
-  backgroundRepeat: 'no-repeat',
-  zIndex: -1,
-  willChange: "transform, opacity",
+  transformStyle: "preserve-3d",
+  backfaceVisibility: "hidden",
+  WebkitFontSmoothing: "antialiased",
 }));
 
 const ScrollContent = styled(MotionBox)(({ theme }) => ({
@@ -153,14 +146,14 @@ const Page = memo(function Page({ containerRef, i, activesection, children, ...p
 
   const opacity = useTransform(
     smoothProgress,
-    [0.1, 0.35, 0.65, 0.9],
+    [0.05, 0.35, 0.65, 0.95],
     [0, 1, 1, 0],
     { ease: gradualEase }
   );
 
   const y = useTransform(smoothProgress, [0.55, 0.9], ["0%", "-15%"]);
 
-  const containerScale = useTransform(smoothProgress, [0, 0.4, 0.6, 1], [0.8, 1, 1, 4], { ease: gradualEase });
+  const containerScale = useTransform(smoothProgress, [0, 0.4, 0.6, 1], [0.8, 1, 1, 3], { ease: gradualEase });
 
   const bgScale = useTransform(smoothProgress, [0, 0.4, 0.6, 1], [2, 1, 1, 0.8], { ease: gradualEase });
 
@@ -182,11 +175,9 @@ const Page = memo(function Page({ containerRef, i, activesection, children, ...p
           opacity,
         }}
       >
-        <ScrollBackground
-          style={{
-            backgroundImage: currentBg,
-            scale: bgScale,
-          }}
+        <AnimatedBackground
+          backgroundImage={currentBg}
+          bgScale={bgScale}
         />
         <ScrollContent
           style={{
@@ -197,5 +188,26 @@ const Page = memo(function Page({ containerRef, i, activesection, children, ...p
         </ScrollContent>
       </ScrollPage>
     </PageContainer>
+  );
+});
+
+const ScrollBackground = styled(MotionBox)(({ theme }) => ({
+  position: 'absolute',
+  inset: 0,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  backgroundRepeat: 'no-repeat',
+  zIndex: -1,
+  willChange: "transform, opacity",
+}));
+
+const AnimatedBackground = memo(function AnimatedBackground({ backgroundImage, bgScale }) {
+  return (
+    <ScrollBackground
+      style={{
+        backgroundImage: backgroundImage,
+        scale: bgScale,
+      }}
+    />
   );
 });

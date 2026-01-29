@@ -282,6 +282,7 @@ const itemVars = {
         scale: 1,
         x: 0, y: 0,
         transition: {
+            delay: 0.35,
             duration: 0.5,
             staggerChildren: 0.35,
             delayChildren: 0.6,
@@ -348,7 +349,7 @@ const GridItem3D = styled(MotionBox)(({ theme }) => ({
     width: '100%', height: '100%',
     transformStyle: "preserve-3d",
     willChange: "transform",
-    outline: "1px solid transparent",
+    outline: "2px solid transparent",
     backfaceVisibility: "hidden",
 }));
 
@@ -450,7 +451,6 @@ const Modal = styled(MotionBox)(({ theme }) => ({
     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
     zIndex: 10, display: 'flex',
     alignItems: 'center', justifyContent: 'center',
-    willChange: 'transform, opacity',
 }));
 
 const ModalContent = styled(MotionBox)(({ theme }) => ({
@@ -576,8 +576,6 @@ const StyledCard = styled(Box)(({ theme }) => ({
         width: '100%',
         padding: theme.spacing(0),
     },
-    transformStyle: "preserve-3d",
-    perspective: '1000px',
 }));
 
 const CardContentContainer = styled(MotionBox)(({ theme }) => ({
@@ -585,7 +583,6 @@ const CardContentContainer = styled(MotionBox)(({ theme }) => ({
     width: `${radius * 2}px`,
     height: `${radius * 2}px`,
     borderRadius: 'inherit',
-    transformStyle: "preserve-3d",
 }));
 
 const cardcontentVars = {
@@ -775,7 +772,6 @@ const CenterIcon = memo(function CenterIcon({ icon, content, animationConfig }) 
 const IconContainer = styled(MotionBox)(({ theme }) => ({
     position: 'absolute',
     borderRadius: '50%',
-    transformStyle: "preserve-3d",
 }));
 
 const AvatarContainer = styled(MotionBox)(({ theme }) => ({

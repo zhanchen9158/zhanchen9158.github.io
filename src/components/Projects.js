@@ -342,9 +342,9 @@ const StyledArrowRightIcon = styled(ArrowRightIcon)(({ theme }) => ({
 const StyledListItemText = styled(ListItemText)(({ theme }) => ({
   color: (theme.vars || theme).palette.text.primary,
   '& .MuiListItemText-primary': {
-    fontFamily: 'Proza Libre',
+    fontFamily: 'Roboto Flex',
     fontSize: '18px',
-    fontWeight: 500,
+    fontWeight: 400,
   },
 }));
 

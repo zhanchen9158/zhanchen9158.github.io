@@ -255,7 +255,6 @@ export const colorSchemes = {
         default: 'rgba(250, 250, 250,1)',
         contrast: 'rgba(30,30,30,1)',
         paper: 'hsl(220, 35%, 97%)',
-        header: 'radial-gradient(ellipse 80% 50% at 50% -20%, hsl(210, 100%, 90%), transparent)',
         appbar: 'linear-gradient(to right, #ffffff 0%, #f8fafc 100%)',
         skillcard: `linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)), linear-gradient(
           135deg, 
@@ -318,7 +317,6 @@ export const colorSchemes = {
         default: 'rgba(5,5,5,1)',
         contrast: 'rgba(225,225,225,1)',
         paper: 'hsl(220, 30%, 7%)',
-        header: 'radial-gradient(ellipse 80% 50% at 50% -20%, hsl(210, 100%, 16%), transparent)',
         appbar: 'linear-gradient(to bottom, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.7) 100%)',
         skillcard: `linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), linear-gradient(
           135deg, 
