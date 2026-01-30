@@ -1,7 +1,6 @@
 import React, { useMemo, memo } from 'react';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
-import Typography from '@mui/material/Typography';
 import ScrollDown from './ScrollDown';
 import { styled, useTheme } from '@mui/material/styles';
 import { motion } from "motion/react";
@@ -28,7 +27,6 @@ const NAVIGATION_DATA = [
 
 const MotionContainer = motion(Container);
 const MotionBox = motion(Box);
-const MotionTypography = motion(Typography);
 
 const header = '70px';
 const scrolldown = 80;
@@ -134,7 +132,7 @@ const WordWrapper = styled(MotionBox)(({ theme }) => ({
   display: 'inline-block',
 }));
 
-const StyledTypography = styled(MotionTypography)(({ theme }) => ({
+const HoverWord = styled(MotionBox)(({ theme }) => ({
   whiteSpace: "pre-wrap",
   color: 'white',
   fontFamily: 'Cormorant Garamond',
@@ -192,7 +190,7 @@ const AnimatedWord = memo(function AnimatedWord({ item, offset, handleScrollsect
       variants={wordVars}
       custom={offset}
     >
-      <StyledTypography
+      <HoverWord
         whileHover={{
           scale: 1.1,
           transition: { type: "spring", stiffness: 400, damping: 10 }
@@ -206,7 +204,7 @@ const AnimatedWord = memo(function AnimatedWord({ item, offset, handleScrollsect
             </AnimatedLetter>
           </LetterMask>
         ))}
-      </StyledTypography>
+      </HoverWord>
     </WordWrapper>
   )
 });

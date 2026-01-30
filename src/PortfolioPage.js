@@ -16,12 +16,6 @@ import GrainOverlay from './components/GrainOverlay';
 
 const MotionBox = motion(Box);
 
-const bgimport = import.meta.glob('./pics/background*.*', {
-  eager: true,
-  query: '?url'
-});
-const bgraw = Object.values(bgimport).map((v, i) => (v.default))
-
 const ScrollContainer = styled(Box)(({ theme }) => ({
   width: '100dvw', height: "100dvh",
   overflowY: "auto",
@@ -42,7 +36,7 @@ export default function PortfolioPage({ }) {
   const handleScrollsection = useCallback((section) => {
     sectionRef.current[section].scrollIntoView({
       behavior: 'auto',
-      block: 'start',
+      block: 'end',
     });
   }, []);
 
@@ -73,11 +67,6 @@ export default function PortfolioPage({ }) {
   );
 }
 
-const overlayOpacity = {
-  light: [0, 0, 0, 0.1],
-  dark: [0, 0.8, 0, 0.2]
-};
-
 const PageContainer = styled(Box)(({ theme }) => ({
   position: 'relative',
   width: "100dvw", height: "100dvh",
@@ -107,23 +96,10 @@ const ScrollContent = styled(MotionBox)(({ theme }) => ({
 
 const Page = memo(function Page({ containerRef, i, activesection, children, ...props }) {
 
-  const ref = useRef(null);
-
-  const theme = useTheme();
-  const { mode, systemMode } = useColorScheme();
-
-  const colormode = systemMode || mode;
-  const section = getActivesection(activesection);
-
-  const currentBg = useMemo(() => {
-    const overlay = (colormode === 'light' && section !== 'highlights')
-      ? overlayOpacity.light : overlayOpacity.dark;
-    const channel = (theme.vars || theme).palette.background.defaultChannel;
-    return `linear-gradient(rgba(${channel}/${overlay[i]}), rgba(${channel}/${overlay[i]})), url(${bgraw[i]})`;
-  }, [colormode, section, i]);
+  const pageRef = useRef(null);
 
   const { scrollYProgress } = useScroll({
-    target: ref,
+    target: pageRef,
     container: containerRef,
     offset: ["start end", "end start"],
   });
@@ -151,7 +127,7 @@ const Page = memo(function Page({ containerRef, i, activesection, children, ...p
     { ease: gradualEase }
   );
 
-  const y = useTransform(smoothProgress, [0.55, 0.9], ["0%", "-15%"]);
+  const y = useTransform(smoothProgress, [0.1, 0.45, 0.55, 0.9], ["0%", "0%", "0%", "-15%"]);
 
   const containerScale = useTransform(smoothProgress, [0, 0.4, 0.6, 1], [0.8, 1, 1, 3], { ease: gradualEase });
 
@@ -161,7 +137,7 @@ const Page = memo(function Page({ containerRef, i, activesection, children, ...p
 
   return (
     <PageContainer
-      ref={ref}
+      ref={pageRef}
       sx={{
         zIndex: 4 - i,
       }}
@@ -176,7 +152,7 @@ const Page = memo(function Page({ containerRef, i, activesection, children, ...p
         }}
       >
         <AnimatedBackground
-          backgroundImage={currentBg}
+          i={i}
           bgScale={bgScale}
         />
         <ScrollContent
@@ -201,13 +177,16 @@ const ScrollBackground = styled(MotionBox)(({ theme }) => ({
   willChange: "transform, opacity",
 }));
 
-const AnimatedBackground = memo(function AnimatedBackground({ backgroundImage, bgScale }) {
+const AnimatedBackground = memo(function AnimatedBackground({ i, bgScale }) {
+
   return (
     <ScrollBackground
       style={{
-        backgroundImage: backgroundImage,
         scale: bgScale,
       }}
+      sx={(theme) => ({
+        backgroundImage: (theme.vars || theme).palette.background.images[i],
+      })}
     />
   );
 });

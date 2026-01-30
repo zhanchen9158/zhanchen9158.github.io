@@ -3,6 +3,28 @@ import { createTheme, alpha } from '@mui/material/styles';
 
 const defaultTheme = createTheme();
 
+const bgimport = import.meta.glob('../pics/background*.*', {
+  eager: true,
+  query: '?url'
+});
+const bgraw = Object.values(bgimport).map((v, _) => (v.default));
+
+const bgColor = {
+  light: '250,250,250',
+  dark: '5,5,5',
+};
+
+const bgAlpha = {
+  light: [0, 0, 0, 0.1],
+  dark: [0, 0.8, 0, 0.2]
+};
+
+const generatePageBg = (mode) => {
+  return bgraw.map((img, i) => 
+    `linear-gradient(rgba(${bgColor[mode]}, ${bgAlpha[mode][i]}), rgba(${bgColor[mode]}, ${bgAlpha[mode][i]})), url(${img})`
+  );
+};
+
 const customShadows = [...defaultTheme.shadows];
 
 export const brand = {
@@ -255,14 +277,7 @@ export const colorSchemes = {
         default: 'rgba(250, 250, 250,1)',
         contrast: 'rgba(30,30,30,1)',
         paper: 'hsl(220, 35%, 97%)',
-        appbar: 'linear-gradient(to right, #ffffff 0%, #f8fafc 100%)',
-        skillcard: `linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)), linear-gradient(
-          135deg, 
-        rgba(214, 235, 255, 1) 0%, 
-        rgba(77, 166, 255, 1) 0% 50%, 
-        rgba(77, 166, 255, 1) 100%
-        )`,
-        projcard: 'linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), linear-gradient(135deg, #00dbde 0%, #fc00ff 100%)',
+        images: generatePageBg('light'),
         certcard: 'linear-gradient(90deg, #F3E4CE 0%, #EEE2D3 50%, #D1E0F0 100%)',
       },
       text: {
@@ -317,14 +332,7 @@ export const colorSchemes = {
         default: 'rgba(5,5,5,1)',
         contrast: 'rgba(225,225,225,1)',
         paper: 'hsl(220, 30%, 7%)',
-        appbar: 'linear-gradient(to bottom, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.7) 100%)',
-        skillcard: `linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), linear-gradient(
-          135deg, 
-        rgba(214, 235, 255, 1) 0%, 
-        rgba(77, 166, 255, 1) 0% 50%, 
-        rgba(77, 166, 255, 1) 100%
-        )`,
-        projcard: 'linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), linear-gradient(135deg, #00dbde 0%, #fc00ff 100%)',
+        images: generatePageBg('dark'),
         certcard: 'linear-gradient(90deg, #1A1814 0%, #1C1B1A 50%, #0D1117 100%)',
       },
       text: {

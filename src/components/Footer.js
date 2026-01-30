@@ -86,11 +86,7 @@ const StyledTypography = styled(Typography)(({ theme }) => ({
 const Copyright = memo(function Copyright() {
   return (
     <StyledTypography variant="body2">
-      {'Copyright © '}
-      <Link color="text.secondary">
-        Portfolio
-      </Link>
-      &nbsp;
+      {'Copyright © Portfolio '}
       {new Date().getFullYear()}
     </StyledTypography>
   );
