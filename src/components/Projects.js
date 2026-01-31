@@ -189,7 +189,7 @@ const containerVars = {
     scale: 1,
     y: 0,
     transition: {
-      staggerChildren: 0.35,
+      staggerChildren: 0.45,
     },
   },
   static: { opacity: 1, scale: 1, y: 0, transition: { duration: 0 } },
@@ -215,7 +215,8 @@ const itemVars = {
   static: { opacity: 1, scale: 1, y: 0, clipPath: "inset(0% 0% 0% 0%)", transition: { duration: 0 } },
 };
 
-const ProjectsGrid = memo(function ProjectsGrid({ currentPage, page, perpage, cardh, hoveredProj, handleHovering, animationConfig }) {
+const ProjectsGrid = memo(function ProjectsGrid({ currentPage, page, perpage, cardh, hoveredProj,
+  handleHovering, animationConfig }) {
 
   return (
     <GridContainer container key={`${page}-${perpage}`} spacing={2}

@@ -40,8 +40,8 @@ const DockShadow = styled(MotionBox)(({ theme }) => ({
     content: '""',
     position: 'absolute',
     inset: 0,
-    background: 'rgba(0, 30, 60, 0.6)',
-    filter: 'blur(8px)',
+    background: 'rgba(0, 30, 60, 0.4)',
+    filter: 'blur(4px)',
     willChange: 'transform, opacity',
   },
 }));

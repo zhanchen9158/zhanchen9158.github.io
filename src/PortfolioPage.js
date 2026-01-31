@@ -8,10 +8,10 @@ import Projects from './components/Projects';
 import Footer from './components/Footer';
 import { motion, useScroll, useTransform, useSpring, cubicBezier, animate } from "motion/react";
 import CustomizedSpeedDial from './components/CustomizedSpeedDial';
-import { styled, useTheme, useColorScheme } from '@mui/material/styles';
+import { styled } from '@mui/material/styles';
 import { AnimateProvider } from './components/AnimateContext';
-import getActivesection from './functions/getActivesection';
 import GrainOverlay from './components/GrainOverlay';
+import WaterBackground from "./components/WaterBackground";
 
 
 const MotionBox = motion(Box);
@@ -167,6 +167,9 @@ const Page = memo(function Page({ containerRef, i, activesection, children, ...p
   );
 });
 
+const shadowduration = 30;
+const driftduration = 40;
+
 const ScrollBackground = styled(MotionBox)(({ theme }) => ({
   position: 'absolute',
   inset: 0,
@@ -178,6 +181,18 @@ const ScrollBackground = styled(MotionBox)(({ theme }) => ({
 }));
 
 const AnimatedBackground = memo(function AnimatedBackground({ i, bgScale }) {
+
+  if (i === 2)
+    return (
+      <ScrollBackground
+        style={{
+          scale: bgScale,
+        }}
+      sx={(theme) => ({
+        backgroundImage: 'black',
+      })}
+    />
+    )
 
   return (
     <ScrollBackground

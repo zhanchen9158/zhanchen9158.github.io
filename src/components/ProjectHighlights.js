@@ -3,17 +3,12 @@ import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import { styled, useTheme } from '@mui/material/styles';
 import {
-  motion, useMotionValue, useSpring,
-  useTransform, AnimatePresence
+  motion, useMotionValue, useSpring, useMotionTemplate,
+  useTransform, AnimatePresence, animate
 } from "motion/react";
 import { useAnimateContext } from './AnimateContext';
-import WaterBackground from "./WaterBackground";
-
-import AreaChartIcon from '@mui/icons-material/AreaChart';
-import NewspaperIcon from '@mui/icons-material/Newspaper';
-import QueryStatsIcon from '@mui/icons-material/QueryStats';
-import TroubleshootIcon from '@mui/icons-material/Troubleshoot';
 import { PROJECT_HIGHLIGHTS } from "../pics/assets";
+import getRandom from '../functions/getRandom';
 
 
 const highlights = {
@@ -24,28 +19,24 @@ const highlights = {
       [
         {
           id: 1,
-          icon: <AreaChartIcon />,
           title: 'Multivariate Quantile function based Forecasting',
           description: '',
           image: PROJECT_HIGHLIGHTS.marketintelligence.forecast,
         },
         {
           id: 2,
-          icon: <QueryStatsIcon />,
           title: 'Financial Data Visualization',
           description: '',
           image: PROJECT_HIGHLIGHTS.marketintelligence.chart,
         },
         {
           id: 3,
-          icon: <NewspaperIcon />,
           title: 'Technical Analysis Platform',
           description: '',
           image: PROJECT_HIGHLIGHTS.marketintelligence.analysis,
         },
         {
           id: 4,
-          icon: <TroubleshootIcon />,
           title: 'Financial Quote Retrieval',
           description: '',
           image: PROJECT_HIGHLIGHTS.marketintelligence.ticker,
@@ -59,28 +50,24 @@ const highlights = {
       [
         {
           id: 5,
-          icon: <AreaChartIcon />,
           title: 'A.I. Question Answering',
           description: '',
           image: PROJECT_HIGHLIGHTS.researchdigest.aiqa,
         },
         {
           id: 6,
-          icon: <QueryStatsIcon />,
           title: 'Daily Fresh Research Feed',
           description: '',
           image: PROJECT_HIGHLIGHTS.researchdigest.daily,
         },
         {
           id: 7,
-          icon: <NewspaperIcon />,
           title: 'Topical Clustering',
           description: '',
           image: PROJECT_HIGHLIGHTS.researchdigest.list,
         },
         {
           id: 8,
-          icon: <TroubleshootIcon />,
           title: 'Advanced Research Querying',
           description: '',
           image: PROJECT_HIGHLIGHTS.researchdigest.search,
@@ -94,28 +81,24 @@ const highlights = {
       [
         {
           id: 9,
-          icon: <AreaChartIcon />,
           title: 'A.I. Assistant',
           description: '',
           image: PROJECT_HIGHLIGHTS.mealplanner.aichat,
         },
         {
           id: 10,
-          icon: <QueryStatsIcon />,
           title: 'Interactive Cooking Procedures',
           description: '',
           image: PROJECT_HIGHLIGHTS.mealplanner.recipe,
         },
         {
           id: 11,
-          icon: <NewspaperIcon />,
           title: 'Dynamic Nutrient Aggregation',
           description: '',
           image: PROJECT_HIGHLIGHTS.mealplanner.totalnut,
         },
         {
           id: 12,
-          icon: <TroubleshootIcon />,
           title: 'Advanced Recipe Querying',
           description: '',
           image: PROJECT_HIGHLIGHTS.mealplanner.search,
@@ -131,7 +114,6 @@ const driftduration = 40;
 
 const MotionContainer = motion(Container);
 const MotionBox = motion(Box);
-const MotionImage = motion('img');
 
 const SectionContainer = styled(MotionContainer)(({ theme }) => ({
   position: 'fixed',
@@ -154,7 +136,6 @@ export default function ProjectHighlights({ refProps, handleViewport }) {
       id="highlights"
       maxWidth="lg"
     >
-      <WaterBackground shadowDuration={shadowduration} driftDuration={driftduration * 3} />
       <HoverGallery />
     </SectionContainer>
   );
@@ -277,15 +258,15 @@ const Header = styled(Box)(({ theme }) => ({
   position: 'relative',
   display: 'inline-block',
   width: 'fit-content',
-  cursor: 'pointer',
+  cursor: 'default',
 }));
 
 const SubHeaderContainer = styled(MotionBox)(({ theme }) => ({
   position: 'relative',
   display: 'inline-block',
-  transformStyle: "preserve-3d", willChange: 'transform',
+  willChange: 'transform, opacity',
   cursor: 'pointer',
-  width: 'fit-content',
+  width: 'fit-content'
 }));
 
 const SubHeader = styled(MotionBox)(({ theme }) => ({
@@ -294,8 +275,8 @@ const SubHeader = styled(MotionBox)(({ theme }) => ({
   paddingBottom: theme.spacing(2),
   paddingLeft: theme.spacing(2),
   borderRadius: '8px',
-  fontWeight: 'bold',
-  fontFamily: 'fraunces',
+  fontWeight: 800,
+  fontFamily: 'Fraunces, serif',
   letterSpacing: '2px',
   fontSize: '1.5rem',
   color: 'rgba(255,255,255,1)',
@@ -345,28 +326,45 @@ const SubHeaderBlur = styled(MotionBox)(({ theme }) => ({
   filter: 'blur(4px)',
 }));
 
+const LetterMask = styled(MotionBox)({
+  position: 'relative',
+  display: 'inline-block',
+  overflow: 'hidden',
+  verticalAlign: 'bottom',
+  zIndex: 2,
+});
+
+const AnimatedLetter = styled(MotionBox)({
+  display: 'inline-block',
+  whiteSpace: 'pre',
+  transformOrigin: "bottom left",
+  willChange: 'transform',
+});
+
+const listItemDelay = 0.35;
+
 const containerVars = {
   hidden: { opacity: 0, },
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.35,
+      delayChildren: 0.25,
+      staggerChildren: listItemDelay,
     },
   },
   static: { opacity: 1, transition: { duration: 0 } },
 };
 
 const subheaderContainerVars = {
-  hidden: { opacity: 0, x: 100, },
+  hidden: { opacity: 0, },
   visible: {
     opacity: 1,
-    x: 0,
     transition: {
       duration: 0.5,
       ease: "easeOut"
     }
   },
-  static: { opacity: 1, x: 0, transition: { duration: 0 } },
+  static: { opacity: 1, transition: { duration: 0 } },
 };
 
 const subheaderTextVars = {
@@ -431,6 +429,31 @@ const subheaderBlurVars = {
   static: { opacity: 0, transition: { duration: 0 } },
 };
 
+const lettermaskVars = {
+  hidden: {
+    opacity: 0,
+  },
+  visible: (itemi) => ({
+    opacity: 1,
+    transition: {
+      delayChildren: itemi * listItemDelay,
+      staggerChildren: 0.05
+    }
+  })
+};
+
+const letterVars = {
+  hidden: {
+    y: "110%", rotate: 15,
+  },
+  visible: {
+    y: 0, rotate: 0,
+    transition: {
+      duration: 0.6, ease: [0.33, 1, 0.68, 1],
+    }
+  }
+};
+
 const AnimatedList = memo(function AnimatedList({ proj, animationConfig,
   activeImage, handleActivatingImage }) {
 
@@ -478,9 +501,22 @@ const AnimatedList = memo(function AnimatedList({ proj, animationConfig,
               whileHover={animationConfig.hover}
             >
               <TextShadow variants={subheaderShadowVars} />
-              <span style={{ position: 'relative', zIndex: 2 }}>
-                {item.title}
-              </span>
+              <LetterMask
+                variants={lettermaskVars}
+                custom={itemi}
+                initial='hidden'
+                whileInView='visible'
+                viewport={{ once: false, amount: 0.2 }}
+              >
+                {item.title.split('').map((l, i) => (
+                  <AnimatedLetter
+                    key={i}
+                    variants={letterVars}
+                  >
+                    {l === " " ? "\u00A0" : l}
+                  </AnimatedLetter>
+                ))}
+              </LetterMask>
             </SubHeader>
           </SubHeaderContainer>
         )
@@ -488,6 +524,17 @@ const AnimatedList = memo(function AnimatedList({ proj, animationConfig,
     </ListContainer>
   )
 });
+
+const BackgroundImage = styled(MotionBox)(({ theme }) => ({
+  position: 'fixed',
+  inset: '-5%',
+  originX: 0.5, originY: 0.5,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  filter: 'url(#liquid-ripple)',
+  willChange: 'filter',
+  zIndex: -1,
+}));
 
 const ImageModal = styled(Box)(({ theme }) => ({
   position: "fixed",
@@ -601,6 +648,19 @@ const StyledImage = styled('img')(({ theme }) => ({
   display: 'block',
 }));
 
+const rippleduration = 8;
+
+const bgVars = {
+  initial: {
+    opacity: 0, scale: 1.1
+  },
+  animate: {
+    opacity: 0.4, scale: 1,
+    transition: { duration: rippleduration / 4, ease: "easeOut", }
+  },
+  exit: { opacity: 0 }
+};
+
 const imageVars = {
   initial: {
     opacity: 0,
@@ -649,6 +709,11 @@ function FloatingImage({ image, mouseX, mouseY, animationConfig }) {
   const offsetX = 20;
   const offsetY = 20;
 
+  const rippleParams = useMemo(() => ({
+    randomScale: Math.round(getRandom(20, 50)),
+    randomFreq: getRandom(0.03, 0.06).toFixed(3)
+  }), [image]);
+
   const boundsRef = useRef({ vw: window.innerWidth, vh: window.innerHeight });
   const sizeRef = useRef({ width: 300, height: 169 });
 
@@ -665,8 +730,15 @@ function FloatingImage({ image, mouseX, mouseY, animationConfig }) {
     return () => window.removeEventListener('resize', updateBounds);
   }, []);
 
+  const rippleProgress = useMotionValue(0);
+
   useEffect(() => {
     setIsLoaded(false);
+    rippleProgress.set(0);
+    animate(rippleProgress, 1, {
+      duration: rippleduration,
+      ease: [0.16, 1, 0.3, 1],
+    });
   }, [image]);
 
   const handleImageLoad = (e) => {
@@ -704,7 +776,18 @@ function FloatingImage({ image, mouseX, mouseY, animationConfig }) {
   //const sY = useSpring(shadowY, springConfig);
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence>
+      <LiquidFilter progress={rippleProgress} rippleParams={rippleParams} />
+      {image && (
+        <BackgroundImage
+          key={`bg-${image}`}
+          variants={bgVars}
+          initial='initial'
+          animate='animate'
+          exit='exit'
+          sx={{ backgroundImage: `url(${image})` }}
+        />
+      )}
       {image && (
         <ImageModal
           variants={imageVars}
@@ -751,7 +834,7 @@ function FloatingImage({ image, mouseX, mouseY, animationConfig }) {
             <GlowShadow
               variants={glowVars}
             />
-            <ImageShadow />
+            {/*<ImageShadow />*/}
             <StyledImage
               src={image}
             />
@@ -761,3 +844,31 @@ function FloatingImage({ image, mouseX, mouseY, animationConfig }) {
     </AnimatePresence>
   );
 }
+
+const LiquidFilter = memo(function LiquidFilter({ progress, rippleParams }) {
+
+  const { randomScale, randomFreq } = rippleParams;
+
+  const scale = useTransform(progress, [0, 0.2, 1], [0, randomScale, 0]);
+  const frequency = useTransform(progress, [0, 1], [randomFreq, 0.01]);
+
+  return (
+    <svg style={{ position: 'absolute', width: 0, height: 0 }}>
+      <filter id="liquid-ripple" x="-10%" y="-10%" width="110%" height="110%">
+        <motion.feTurbulence
+          type="fractalNoise"
+          baseFrequency={frequency}
+          numOctaves="1"
+          result="noise"
+        />
+        <motion.feDisplacementMap
+          in="SourceGraphic"
+          in2="noise"
+          scale={scale}
+          xChannelSelector="R"
+          yChannelSelector="G"
+        />
+      </filter>
+    </svg>
+  );
+});
