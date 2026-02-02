@@ -4,7 +4,7 @@ import { styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import {
     motion, AnimatePresence, useMotionValue,
-    useSpring, useTransform, useAnimation,
+    useSpring, useTransform, cubicBezier,
 } from "motion/react";
 import Box from '@mui/material/Box';
 import { useAnimateContext } from './AnimateContext';
@@ -22,11 +22,12 @@ const icons = import.meta.glob('../icons/skills/*.svg', {
     query: '?url'
 });
 
-const skills = [
+const SKILLS_DATA = [
     {
         id: 1,
         title: 'Languages',
-        size: 'large', color: '#2196f3',
+        size: 'large',
+        color: '#2196f3', underlayercolor: '#0A6FC2',
         cardcolors: ['#010B13', '#d8ecfd', '#7fbdf5'],
         circlecolors: ['#f0dc56', '#f5e78e', '#faf3c7'],
         border: '#90CAF9',
@@ -42,7 +43,8 @@ const skills = [
     {
         id: 2,
         title: 'Frontend',
-        size: 'small', color: '#9c27b0',
+        size: 'small',
+        color: '#9c27b0', underlayercolor: '#852197',
         cardcolors: ['#0f0311', '#f4def8', '#9b59b6'],
         circlecolors: ['#7bbfcc', '#a7d5dd', '#d3eaee'],
         border: '#ce93d8',
@@ -60,7 +62,8 @@ const skills = [
     {
         id: 3,
         title: 'Backend',
-        size: 'small', color: '#00897b',
+        size: 'small',
+        color: '#00897b', underlayercolor: '#00665C',
         cardcolors: ['#001412', '#d6fffb', '#79e0ee'],
         circlecolors: ['#f0dc56', '#f5e78e', '#faf3c7'],
         border: '#A5D6A7',
@@ -77,7 +80,8 @@ const skills = [
     {
         id: 4,
         title: 'Tools/Cloud',
-        size: 'medium', color: '#f57c00',
+        size: 'medium',
+        color: '#f57c00', underlayercolor: '#CC6600',
         cardcolors: ['#140b00', '#ffebd6', '#ffd1a3'],
         circlecolors: ['#7bbfcc', '#a7d5dd', '#d3eaee'],
         border: '#FFCC80',
@@ -116,7 +120,7 @@ const GridContainer = styled(MotionBox)(({ theme }) => ({
     gridTemplateAreas: `
         "a a b c"
         "a a d d"
-      `
+      `,
 }));
 
 const containerVars = {
@@ -178,7 +182,7 @@ const BentoGrid = memo(function BentoGrid() {
     const selectedItem = useMemo(() => {
         if (!selectedId) return {};
 
-        return skills.find(i => i.id == selectedId) || {};
+        return SKILLS_DATA.find(i => i.id == selectedId) || {};
     }, [selectedId]);
 
     const handleItemSelect = useCallback((id) => {
@@ -194,7 +198,7 @@ const BentoGrid = memo(function BentoGrid() {
 
     return (
         <AnimatePresence>
-            {skills.map((item, _) => (
+            {SKILLS_DATA.map((item, _) => (
                 <AnimatedGridItem
                     key={item.id}
                     item={item}
@@ -221,53 +225,50 @@ const GridItemContainer = styled(MotionBox)(({ theme }) => ({
     borderRadius: '32px',
     cursor: 'pointer',
     perspective: '1000px',
-    transformStyle: "preserve-3d",
-    willChange: 'transform, opacity',
+    //transformStyle: "preserve-3d",
+    willChange: 'transform',
+    backfaceVisibility: "hidden",
     isolation: 'isolate',
-    overflow: 'hidden',
 }));
 
-const Header = styled(Typography)(({ theme }) => ({
+const Header = styled(Box)(({ theme }) => ({
     position: 'relative',
     fontWeight: 800,
     letterSpacing: `-0.05em`,
     lineHeight: 0.9,
     fontFamily: 'Playfair Display',
+    fontSize: '24px',
     alignSelf: 'self-start',
-    color: 'rgba(0,0,0,1)',
-    '&::after': {
-        content: 'attr(data-text)',
-        position: 'absolute',
-        top: '100%', left: 0,
-        width: '100%', height: '40%',
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        filter: 'blur(12px)',
-        pointerEvents: 'none',
-    }
+    color: 'rgb(0,0,0)',
+    [theme.breakpoints.down('md')]: {
+        fontSize: '22px',
+    },
 }));
 
-const SubHeader = styled(MotionTypography)(({ theme }) => ({
+const SubHeader = styled(MotionBox)(({ theme }) => ({
     position: 'relative',
     textTransform: 'uppercase',
     tracking: '0.1em',
     opacity: 0.6,
     fontFamily: 'Instrument Serif',
-    color: 'rgba(255,255,255,1)',
-    '&::after': {
-        content: 'attr(data-text)',
-        position: 'absolute',
-        top: '90%', left: 0,
-        width: '100%', height: '20%',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        filter: 'blur(8px)',
-        pointerEvents: 'none',
-    }
+    fontSize: '22px',
+    color: 'rgb(255,255,255)',
+}));
+
+const TextShadow = styled(Box)(({ theme, color = '#000000', opacity = 0.5,
+    top = '100%', height = '40%'
+}) => ({
+    position: 'absolute',
+    top: top, left: 0,
+    width: '100%', height: height,
+    backgroundColor: color,
+    filter: 'blur(8px)',
+    opacity: opacity,
+    pointerEvents: 'none',
 }));
 
 const itemVars = {
     hidden: (i) => ({
-        opacity: 0,
-        scale: 1,
         x: i == 1
             ? -120
             : i == 3
@@ -278,17 +279,16 @@ const itemVars = {
                 ? 120 : 0,
     }),
     visible: {
-        opacity: 1,
-        scale: 1,
         x: 0, y: 0,
         transition: {
             delay: 0.35,
-            duration: 0.5,
+            duration: 0.65,
+            ease: cubicBezier(0.45, 0, 0.55, 1),
             staggerChildren: 0.35,
             delayChildren: 0.6,
         }
     },
-    static: { opacity: 1, scale: 1, x: 0, y: 0, transition: { duration: 0 } },
+    static: { x: 0, y: 0, transition: { duration: 0 } },
 };
 
 const textVars = {
@@ -319,20 +319,26 @@ const AnimatedGridItem = memo(function AnimatedGridItem({ item, selectedId, last
             layout
             onClick={() => handleItemSelect(item.id)}
             onLayoutAnimationComplete={() => handleGridAnimationComplete(item.id)}
-            whileHover={{ scale: 0.98 }}
+            //whileHover={{ scale: 0.98 }}
             sx={{
                 gridArea: gridMap[item.id] || 'a',
                 zIndex: (selectedId == item.id || lastSelectedId == item.id) ? 10 : 1,
             }}
         >
             <AnimatedGridItem3D item={item}>
-                <Header variant="h4">{item.title}</Header>
+                <Header>
+                    <TextShadow />
+                    {item.title}
+                </Header>
                 {item.id == 1 && !lesserThanSm && item.icons.map((v, i) => (
                     <SubHeader
-                        key={v.file}
+                        key={i}
                         variants={textVars}
-                        variant="h5"
                     >
+                        <TextShadow
+                            opacity={0.3}
+                            top={'90%'} height={'20%'}
+                        />
                         {v.name}
                     </SubHeader>
                 ))}
@@ -344,13 +350,38 @@ const AnimatedGridItem = memo(function AnimatedGridItem({ item, selectedId, last
 const SPRING3D_CONFIG = { stiffness: 150, damping: 20 };
 
 const GridItem3D = styled(MotionBox)(({ theme }) => ({
+    position: 'relative',
     borderRadius: 'inherit',
     cursor: 'pointer',
     width: '100%', height: '100%',
+    background: 'transparent',
     transformStyle: "preserve-3d",
+    transform: 'translateZ(0)',
     willChange: "transform",
-    outline: "2px solid transparent",
+    outline: "1px solid transparent",
     backfaceVisibility: "hidden",
+}));
+
+const GridItemBg = styled(Box)(({ theme }) => ({
+    position: 'absolute',
+    inset: 0,
+    borderRadius: 'inherit',
+    transform: 'translateZ(0)',
+    outline: "1px solid transparent",
+    backfaceVisibility: "hidden",
+    zIndex: 0,
+    pointerEvents: 'none',
+}));
+
+const GridItemUnderlayer = styled(MotionBox)(({ theme }) => ({
+    position: 'absolute',
+    inset: '-2%',
+    borderRadius: 'inherit',
+    transform: 'translateZ(-30px)',
+    outline: "1px solid transparent",
+    backfaceVisibility: "hidden",
+    zIndex: -1,
+    pointerEvents: 'none',
 }));
 
 const GridItemLight = styled(Box)(({ theme }) => ({
@@ -359,8 +390,7 @@ const GridItemLight = styled(Box)(({ theme }) => ({
     overflow: 'hidden',
     borderRadius: 'inherit',
     pointerEvents: 'none',
-    transform: 'translateZ(0px)',
-    zIndex: 0
+    //zIndex: 1
 }));
 
 const GridItemContent = styled(Box)(({ theme }) => ({
@@ -369,17 +399,21 @@ const GridItemContent = styled(Box)(({ theme }) => ({
     borderRadius: theme.spacing(4),
     padding: theme.spacing(4),
     cursor: 'pointer',
-    display: 'flex',
-    flexDirection: 'column-reverse',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    display: 'flex', flexDirection: 'column-reverse',
+    justifyContent: 'space-between', alignItems: 'center',
     color: (theme.vars || theme).palette.text.primary,
     overflow: 'hidden',
-    transform: "translateZ(60px)",
+    transform: "translateZ(60px) rotate(0.001deg)",
     transformStyle: "preserve-3d",
+    backfaceVisibility: "hidden",
+    WebkitBackfaceVisibility: "hidden",
+    //WebkitFontSmoothing: "antialiased",
+    //zIndex: 2,
     [theme.breakpoints.down('md')]: {
         borderRadius: theme.spacing(3),
-        padding: theme.spacing(4),
+        paddingLeft: theme.spacing(2),
+        paddingRight: theme.spacing(2),
+        paddingBottom: theme.spacing(4),
     },
     [theme.breakpoints.down('sm')]: {
         borderRadius: theme.spacing(2),
@@ -387,6 +421,17 @@ const GridItemContent = styled(Box)(({ theme }) => ({
         paddingLeft: theme.spacing(4),
     },
 }));
+
+const underlayerVars = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            duration: 4, ease: 'easeOut'
+        }
+    },
+    static: { opacity: 1, transition: { duration: 0 } },
+};
 
 const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, children }) {
 
@@ -407,9 +452,10 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, children }) 
     }, []);
 
     const handleMouseMove = useCallback((e) => {
-        if (!containerRef.current) return;
+        const dimension = containerRef.current;
+        if (!dimension) return;
 
-        const { left, top, width, height } = containerRef.current;
+        const { left, top, width, height } = dimension;
 
         x.set((e.clientX - left) / width - 0.5);
         y.set((e.clientY - top) / height - 0.5);
@@ -422,7 +468,6 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, children }) 
 
     return (
         <GridItem3D
-            ref={containerRef}
             onMouseEnter={lesserThanSm ? null : handleMouseEnter}
             onMouseMove={lesserThanSm ? null : handleMouseMove}
             onMouseLeave={lesserThanSm ? null : handleMouseLeave}
@@ -430,11 +475,25 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, children }) 
                 rotateX: lesserThanSm ? 0 : rotateX,
                 rotateY: lesserThanSm ? 0 : rotateY,
             }}
-            sx={{
-                bgcolor: item.color,
-                border: `1px solid ${item.border}`,
-            }}
         >
+            <GridItemBg
+                sx={{
+                    bgcolor: item.color,
+                    //border: `1px solid ${item.border}`,
+                }}
+            />
+            {!lesserThanSm &&
+                <GridItemUnderlayer
+                    variants={underlayerVars}
+                    initial='hidden'
+                    whileInView='visible'
+                    viewport={{ once: false, amount: 0.5 }}
+                    sx={{
+                        bgcolor: item.underlayercolor,
+                        //border: `1px solid ${item.border}`,
+                    }}
+                />
+            }
             {!lesserThanSm &&
                 <GridItemLight>
                     <SvgGlow opacity={0.6} />
@@ -463,7 +522,7 @@ const ModalContent = styled(MotionBox)(({ theme }) => ({
         width: '100%',
     },
     perspective: '1000px',
-    transformStyle: "preserve-3d",
+    //transformStyle: "preserve-3d",
     willChange: 'transform, opacity',
     isolation: 'isolate',
 }));
@@ -478,7 +537,6 @@ const ModalTitle = styled(Box)(({ theme }) => ({
     fontFamily: 'Cormorant Garamond',
     textTransform: 'uppercase',
     fontSize: '30px',
-    transform: "translateZ(30px)",
 }));
 
 const TitleGlow = styled(MotionBox)(({ theme }) => ({
@@ -487,7 +545,7 @@ const TitleGlow = styled(MotionBox)(({ theme }) => ({
     width: '100%', height: '90%',
     filter: 'blur(12px)',
     pointerEvents: 'none',
-    willChange: 'transform, opacity',
+    //willChange: 'transform, opacity',
 }));
 
 const modalVars = {
@@ -503,7 +561,7 @@ const modalVars = {
     },
 };
 
-const titleVars = {
+const titleglowVars = {
     initial: { opacity: 0.4, scale: 0.4 },
     animate: {
         opacity: 1, scale: 1,
@@ -545,7 +603,7 @@ const AnimatedModal = memo(function AnimatedModal({ selectedItem, handleItemSele
                     }}
                 >
                     <TitleGlow
-                        variants={titleVars}
+                        variants={titleglowVars}
                         initial='initial'
                         animate='animate'
                         sx={{
@@ -563,6 +621,21 @@ const AnimatedModal = memo(function AnimatedModal({ selectedItem, handleItemSele
 const radius = 170;
 const centerX = 170;
 const centerY = 170;
+
+const getRadialPositions = (count) => {
+    return Array.from({ length: count }).map((_, i) => {
+        const angle = (i * (360 / count) - 90) * (Math.PI / 180);
+        return {
+            x: centerX + radius * Math.cos(angle),
+            y: centerY + radius * Math.sin(angle),
+        };
+    });
+};
+
+const ICON_LAYOUTS = SKILLS_DATA.reduce((acc, skill) => {
+    acc[skill.title] = getRadialPositions(skill.icons.length);
+    return acc;
+}, {});
 
 const StyledCard = styled(Box)(({ theme }) => ({
     width: '90%', maxWidth: 675, height: 450,
@@ -588,11 +661,9 @@ const CardContentContainer = styled(MotionBox)(({ theme }) => ({
 const cardcontentVars = {
     initial: {
         opacity: 0, scale: 1.2, y: -20,
-        //filter: "blur(8px) brightness(1.2)"
     },
     animate: {
         opacity: 1, scale: 1, y: 0,
-        //filter: "blur(0px) brightness(1)",
         transition: {
             delay: 0.35,
             type: 'spring', stiffness: 80, damping: 10,
@@ -603,6 +674,17 @@ const cardcontentVars = {
 
 const AnimatedCard = memo(function AnimatedCard({ content = {} }) {
     const [hoveredIcon, setHoveredIcon] = useState(null);
+
+    const positions = ICON_LAYOUTS[content.title] || [];
+
+    const positionedIcons = useMemo(() => {
+        if (!content.icons) return [];
+
+        return content.icons.map((icon, i) => ({
+            ...icon,
+            ...positions[i]
+        }));
+    }, [content.title]);
 
     const { manual, system } = useAnimateContext();
     const mode = system || manual;
@@ -619,19 +701,6 @@ const AnimatedCard = memo(function AnimatedCard({ content = {} }) {
     const handleHovered = useCallback((v) => {
         setHoveredIcon(v);
     }, [setHoveredIcon])
-
-    const positionedIcons = useMemo(() => {
-        if (!content.icons) return [];
-
-        return content.icons.map((icon, i) => {
-            const angle = (i * (360 / content.icons.length) - 90) * (Math.PI / 180);
-            return {
-                ...icon,
-                x: centerX + radius * Math.cos(angle),
-                y: centerY + radius * Math.sin(angle),
-            };
-        });
-    }, [content.icons, radius, centerX, centerY]);
 
     return (
         <StyledCard>
@@ -717,7 +786,7 @@ const centerGlowVars = {
 };
 
 const centerAvatarVars = {
-    initial: { opacity: 0, scale: 2, y: -50 },
+    initial: { opacity: 0, scale: 1.5, y: -50 },
     animate: {
         opacity: 1, scale: 1.5, y: 0,
         transition: centerTransition
@@ -726,7 +795,7 @@ const centerAvatarVars = {
 };
 
 const centerTextVars = {
-    initial: { opacity: 0, scale: 2, y: 50 },
+    initial: { opacity: 0, scale: 1.5, y: 50 },
     animate: {
         opacity: 1, scale: 1.5, y: 0,
         transition: centerTransition

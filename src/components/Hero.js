@@ -49,6 +49,7 @@ const PageContainer = styled(Box)(({ theme }) => ({
   flexDirection: 'column',
   gap: theme.spacing(1),
   paddingBottom: `${1.5 * scrolldown}px`,
+  transformStyle: "preserve-3d",
   [theme.breakpoints.down('md')]: {
     paddingBottom: `${0.9 * scrolldown}px`,
   }

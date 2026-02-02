@@ -67,13 +67,14 @@ export default function PortfolioPage({ }) {
   );
 }
 
-const PageContainer = styled(Box)(({ theme }) => ({
+const ScrollPageContainer = styled(Box)(({ theme }) => ({
   position: 'relative',
   width: "100dvw", height: "100dvh",
   scrollSnapAlign: "start",
-  scrollMarginTop: '0px',
   perspective: "1000px",
-  transformStyle: "preserve-3d",
+  transformStyle: "flat",
+  backfaceVisibility: "hidden",
+  WebkitBackfaceVisibility: "hidden",
   overflow: "hidden",
   //backdropFilter: 'blur(1px)',
 }));
@@ -82,16 +83,14 @@ const ScrollPage = styled(MotionBox)(({ theme }) => ({
   position: 'absolute',
   width: "100dvw", height: "100dvh",
   transformOrigin: "center center",
-  willChange: "transform, opacity",
-  transformStyle: "preserve-3d",
-  backfaceVisibility: "hidden",
+  //willChange: "transform, opacity",
   WebkitFontSmoothing: "antialiased",
 }));
 
 const ScrollContent = styled(MotionBox)(({ theme }) => ({
   width: '100%', height: '100%',
   display: "flex", alignItems: "center", justifyContent: "center",
-  willChange: "transform, opacity",
+  //willChange: "transform, opacity",
 }));
 
 const Page = memo(function Page({ containerRef, i, activesection, children, ...props }) {
@@ -136,7 +135,7 @@ const Page = memo(function Page({ containerRef, i, activesection, children, ...p
   const contentY = useTransform(smoothProgress, [0, 0.4, 0.6, 1], [30, 0, 0, -50]);
 
   return (
-    <PageContainer
+    <ScrollPageContainer
       ref={pageRef}
       sx={{
         zIndex: 4 - i,
@@ -163,7 +162,7 @@ const Page = memo(function Page({ containerRef, i, activesection, children, ...p
           {children}
         </ScrollContent>
       </ScrollPage>
-    </PageContainer>
+    </ScrollPageContainer>
   );
 });
 
