@@ -253,6 +253,7 @@ const SubHeader = styled(MotionBox)(({ theme }) => ({
     fontFamily: 'Instrument Serif',
     fontSize: '22px',
     color: 'rgb(255,255,255)',
+    backfaceVisibility: "hidden",
 }));
 
 const TextShadow = styled(Box)(({ theme, color = '#000000', opacity = 0.5,
@@ -510,6 +511,7 @@ const Modal = styled(MotionBox)(({ theme }) => ({
     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
     zIndex: 10, display: 'flex',
     alignItems: 'center', justifyContent: 'center',
+    backfaceVisibility: "hidden",
 }));
 
 const ModalContent = styled(MotionBox)(({ theme }) => ({
@@ -524,6 +526,7 @@ const ModalContent = styled(MotionBox)(({ theme }) => ({
     perspective: '1000px',
     //transformStyle: "preserve-3d",
     willChange: 'transform, opacity',
+    backfaceVisibility: "hidden",
     isolation: 'isolate',
 }));
 
@@ -545,6 +548,7 @@ const TitleGlow = styled(MotionBox)(({ theme }) => ({
     width: '100%', height: '90%',
     filter: 'blur(12px)',
     pointerEvents: 'none',
+    backfaceVisibility: "hidden",
     //willChange: 'transform, opacity',
 }));
 
@@ -656,6 +660,7 @@ const CardContentContainer = styled(MotionBox)(({ theme }) => ({
     width: `${radius * 2}px`,
     height: `${radius * 2}px`,
     borderRadius: 'inherit',
+    backfaceVisibility: "hidden",
 }));
 
 const cardcontentVars = {
@@ -730,6 +735,7 @@ const CenterIconContainer = styled(MotionBox)(({ theme }) => ({
     top: '50%', left: '50%',
     transform: 'translate(-50%, -100%)',
     display: 'flex', justifyContent: 'center', alignItems: 'center',
+    backfaceVisibility: "hidden",
 }));
 
 const HoverGlow = styled(MotionBox)(({ theme }) => ({
@@ -738,6 +744,7 @@ const HoverGlow = styled(MotionBox)(({ theme }) => ({
     width: '100%', height: '100%',
     borderRadius: 'inherit',
     filter: 'blur(12px)',
+    backfaceVisibility: "hidden",
 }));
 
 const CenterAvatarContainer = styled(MotionBox)(({ theme }) => ({
@@ -748,6 +755,7 @@ const CenterAvatarContainer = styled(MotionBox)(({ theme }) => ({
         width: 48, height: 48,
     },
     display: 'flex', justifyContent: 'center', alignItems: 'center',
+    backfaceVisibility: "hidden",
 }));
 
 const AnimatedText = styled(MotionTypography)(({ theme }) => ({
@@ -760,6 +768,7 @@ const AnimatedText = styled(MotionTypography)(({ theme }) => ({
     textTransform: 'uppercase',
     fontFamily: 'DM Serif Display',
     textAlign: 'center',
+    backfaceVisibility: "hidden",
     [theme.breakpoints.down('sm')]: {
         fontSize: '16px',
     },
@@ -841,15 +850,29 @@ const CenterIcon = memo(function CenterIcon({ icon, content, animationConfig }) 
 const IconContainer = styled(MotionBox)(({ theme }) => ({
     position: 'absolute',
     borderRadius: '50%',
+    backfaceVisibility: "hidden",
 }));
 
 const AvatarContainer = styled(MotionBox)(({ theme }) => ({
     position: 'relative',
     width: 56, height: 56,
     borderRadius: 'inherit',
+    backfaceVisibility: "hidden",
     [theme.breakpoints.down('sm')]: {
         width: 48, height: 48,
     },
+}));
+
+const HoverShadow = styled(MotionBox)(({ theme }) => ({
+    position: 'absolute',
+    top: '10%', left: '10%',
+    width: '100%', height: '100%',
+    borderRadius: 'inherit',
+    background: 'radial-gradient(circle, rgb(0,0,0), transparent 70%)',
+    filter: 'blur(8px)',
+    opacity: 'inherit',
+    backfaceVisibility: "hidden",
+    zIndex: -1,
 }));
 
 const HoverWrapper = styled(MotionBox)(({ theme }) => ({
@@ -857,9 +880,10 @@ const HoverWrapper = styled(MotionBox)(({ theme }) => ({
     width: '100%', height: '100%',
     borderRadius: 'inherit',
     display: 'flex', justifyContent: 'center', alignItems: 'center',
-    background: 'rgba(255,255,255,0.8)',
-    boxShadow: '2px 2px 8px rgba(0,0,0,0.2)',
+    background: 'rgb(250,250,250)',
+    backfaceVisibility: "hidden",
     cursor: 'pointer',
+    zIndex: 1,
 }));
 
 const StyledAvatar = styled('img')(({ theme }) => ({
@@ -908,30 +932,31 @@ const entranceVars = {
     static: { opacity: 1, scale: 1, y: 0 },
 };
 
-const hoverVars = {
-    initial: {
-        scale: 1, y: 0,
-        transition: iconTransition
-    },
-    hover: {
-        scale: 1.1, y: -6,
-        transition: iconTransition
-    },
-    static: { scale: 1, y: 0 },
-};
-
 const AnimatedIcon = memo(function AnimatedIcon({ icon, i, content, handleHovered }) {
 
+    const scaleValue = useMotionValue(1);
+
+    const springScale = useSpring(scaleValue, {
+        stiffness: 260,
+        damping: 10,
+        restDelta: 0.001
+    });
+
+    const inverseOpacity = useTransform(springScale, [1, 1.1], [0.8, 0.4]);
+
     const { manual, system } = useAnimateContext();
-    const mode = system || manual;
+    const isNormal = ((system || manual) === 'normal');
+
+    const handleHover = useCallback((scale) => {
+        if (!isNormal) return;
+        scaleValue.set(scale);
+    }, [isNormal]);
 
     const animationConfig = useMemo(() => {
-        const isNormal = (mode === 'normal');
-
         return {
             animate: isNormal ? 'animate' : "static",
         };
-    }, [mode]);
+    }, [isNormal]);
 
     return (
         <IconContainer
@@ -951,11 +976,19 @@ const AnimatedIcon = memo(function AnimatedIcon({ icon, i, content, handleHovere
                 animate={animationConfig.animate}
 
             >
+                <HoverShadow
+                    style={{
+                        scale: springScale,
+                        opacity: inverseOpacity,
+                    }}
+                />
                 <HoverWrapper
-                    variants={hoverVars}
-                    initial='initial'
-                    whileHover='hover'
+                    onHoverStart={() => handleHover(1.1)}
+                    onHoverEnd={() => handleHover(1)}
                     whileTap={{ scale: 0.95 }}
+                    style={{
+                        scale: springScale,
+                    }}
                 >
                     {/*<HoverGlow
                     initial={{ opacity: 0 }}

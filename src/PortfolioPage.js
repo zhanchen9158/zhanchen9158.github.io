@@ -11,7 +11,6 @@ import CustomizedSpeedDial from './components/CustomizedSpeedDial';
 import { styled } from '@mui/material/styles';
 import { AnimateProvider } from './components/AnimateContext';
 import GrainOverlay from './components/GrainOverlay';
-import WaterBackground from "./components/WaterBackground";
 
 
 const MotionBox = motion(Box);
@@ -166,9 +165,6 @@ const Page = memo(function Page({ containerRef, i, activesection, children, ...p
   );
 });
 
-const shadowduration = 30;
-const driftduration = 40;
-
 const ScrollBackground = styled(MotionBox)(({ theme }) => ({
   position: 'absolute',
   inset: 0,
@@ -180,18 +176,6 @@ const ScrollBackground = styled(MotionBox)(({ theme }) => ({
 }));
 
 const AnimatedBackground = memo(function AnimatedBackground({ i, bgScale }) {
-
-  if (i === 2)
-    return (
-      <ScrollBackground
-        style={{
-          scale: bgScale,
-        }}
-      sx={(theme) => ({
-        backgroundImage: 'black',
-      })}
-    />
-    )
 
   return (
     <ScrollBackground

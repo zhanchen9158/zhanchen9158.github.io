@@ -154,7 +154,7 @@ const SvgSplitShadow = memo(({ color = 'rgba(255, 255, 255, 1)',
 const SvgBorder = memo(({ glowColor = '#ffffff',
     width = 675, height = 450, rx = 450, ry = 506.25,
     borderColor = '#ffffff',
-    strokeWidth = 6, borderRadius = 32,
+    strokeWidth = 2, borderRadius = 32,
     ...props }) => {
 
     const borderColors = useMemo(() =>
@@ -162,7 +162,7 @@ const SvgBorder = memo(({ glowColor = '#ffffff',
         , [borderColor]);
 
     const glowColors = useMemo(() =>
-        [hexToRgba(glowColor, 0.4), hexToRgba(glowColor, 0)]
+        [hexToRgba(glowColor, 0.2), hexToRgba(glowColor, 0)]
         , [borderColor]);
     const inset = strokeWidth / 2;
 
@@ -177,8 +177,6 @@ const SvgBorder = memo(({ glowColor = '#ffffff',
             animate='animate'
             exit='initial'
             sx={{
-                overflow: 'hidden',
-                transform: "translateZ(4px)",
                 ...props
             }}
         >
