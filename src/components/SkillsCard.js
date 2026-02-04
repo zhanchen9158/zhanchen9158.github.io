@@ -231,6 +231,16 @@ const GridItemContainer = styled(MotionBox)(({ theme }) => ({
     isolation: 'isolate',
 }));
 
+const GridItemContainerShadow = styled(Box)(({ theme }) => ({
+    position: 'absolute',
+    inset: 0,
+    borderRadius: 'inherit',
+    zIndex: -1,
+    backfaceVisibility: "hidden",
+    boxShadow: '0 10px 20px rgba(0,0,0,0.15), 0 6px 6px rgba(0,0,0,0.24)',
+    pointerEvents: 'none',
+}));
+
 const Header = styled(Box)(({ theme }) => ({
     position: 'relative',
     fontWeight: 800,
@@ -326,6 +336,7 @@ const AnimatedGridItem = memo(function AnimatedGridItem({ item, selectedId, last
                 zIndex: (selectedId == item.id || lastSelectedId == item.id) ? 10 : 1,
             }}
         >
+            <GridItemContainerShadow />
             <AnimatedGridItem3D item={item}>
                 <Header>
                     <TextShadow />

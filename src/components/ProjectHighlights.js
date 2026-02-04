@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
-import { styled, useTheme } from '@mui/material/styles';
+import { duration, styled, useTheme } from '@mui/material/styles';
 import {
   motion, useMotionValue, useSpring,
   useTransform, AnimatePresence, animate
@@ -169,15 +169,12 @@ const HoverOverlay = styled(MotionBox)(({ theme }) => ({
   top: 0, left: 0,
   pointerEvents: 'none',
   zIndex: 5,
-  backgroundColor: 'rgba(225, 225, 225, 0.4)',
-  ...theme.applyStyles('dark', {
-    backgroundColor: 'rgba(30, 30, 30, 0.4)',
-  }),
+  backgroundColor: (theme.vars || theme).palette.background.default,
 }));
 
 const overlayVars = {
   inactive: { opacity: 0, },
-  active: { opacity: 0.5, },
+  active: { opacity: 0.2, },
 };
 
 function HoverGallery({ }) {
@@ -252,11 +249,11 @@ const ListContainer = styled(MotionBox)(({ theme }) => ({
 
 const Header = styled(Box)(({ theme }) => ({
   paddingTop: theme.spacing(2),
-  fontFamily: 'cormorant garamond',
-  fontSize: '1.5rem',
+  fontFamily: 'Fraunces, serif',
+  fontSize: '30px',
   fontStyle: 'italic',
   fontWeight: 'bold',
-  color: 'rgb(250,250,250)',
+  color: (theme.vars || theme).palette.text.primary,
   alignSelf: 'center',
   [theme.breakpoints.down('sm')]: {
     fontSize: '1rem',
@@ -283,15 +280,15 @@ const SubHeader = styled(MotionBox)(({ theme }) => ({
   paddingLeft: theme.spacing(2),
   borderRadius: '8px',
   fontWeight: 800,
-  fontFamily: 'Fraunces, serif',
+  fontFamily: 'Playfair Display',
   letterSpacing: '2px',
-  fontSize: '1.5rem',
-  color: 'rgb(250,250,250)',
+  fontSize: '26px',
+  color: 'rgb(255,255,255)',
   WebkitFontSmoothing: 'antialiased',
   MozOsxFontSmoothing: 'grayscale',
   backfaceVisibility: 'hidden',
   [theme.breakpoints.down('sm')]: {
-    fontSize: '1rem',
+    fontSize: '24px',
   },
   display: 'inline-block',
   //willChange: 'transform, opacity',
@@ -299,17 +296,29 @@ const SubHeader = styled(MotionBox)(({ theme }) => ({
   pointerEvents: 'none',
 }));
 
-const TextShadow = styled(MotionBox)(({ theme, top = '70%', height = '30%' }) => ({
+const ShadowContainer = styled(MotionBox)(({ theme, top = '70%', height = '30%' }) => ({
   position: 'absolute',
   width: '100%', height: height,
   top: top, left: theme.spacing(1),
-  background: 'rgba(0, 30, 60, 0.6)',
+  borderRadius: '25%',
+  willChange: 'transform',
+  backfaceVisibility: 'hidden',
+  zIndex: -1,
+}));
+
+const TextShadow = styled(MotionBox)(({ theme }) => ({
+  //position: 'absolute',
+  width: '100%', height: '100%',
+  //top: top, left: theme.spacing(1),
+  backgroundColor: 'rgba(0, 30, 60, 0.6)',
   filter: 'blur(8px)',
-  borderRadius: '50%',
-  willChange: 'transform, opacity',
+  //background: 'linear-gradient(to bottom, rgba(0, 30, 60, 0.6) 0%, rgba(0, 30, 60, 0) 100%)',
+  //boxShadow: '0 0 30px 10px rgba(0, 30, 60, 0.4)',
+  borderRadius: 'inherit',
+  //willChange: 'transform, opacity',
   backfaceVisibility: 'hidden',
   opacity: 'inherit',
-  zIndex: -1,
+  //zIndex: -1,
 }));
 
 const SubHeaderBlur = styled(MotionBox)(({ theme }) => ({
@@ -319,18 +328,17 @@ const SubHeaderBlur = styled(MotionBox)(({ theme }) => ({
   paddingLeft: theme.spacing(2),
   borderRadius: '8px',
   fontWeight: 'bold',
-  fontFamily: 'fraunces',
+  fontFamily: 'Playfair Display',
   letterSpacing: '2px',
-  fontSize: '1.5rem',
-  color: 'rgba(255,255,255,1)',
+  fontSize: '26px',
+  color: 'rgb(255,255,255)',
   WebkitFontSmoothing: 'antialiased',
   MozOsxFontSmoothing: 'grayscale',
   backfaceVisibility: 'hidden',
   [theme.breakpoints.down('sm')]: {
-    fontSize: '1rem',
+    fontSize: '24px',
   },
   display: 'inline-block',
-  willChange: 'opacity',
   width: 'fit-content',
   filter: 'blur(4px)',
 }));
@@ -391,7 +399,7 @@ const subheaderShadowVars = {
   animate: (itemi) => ({
     x: [0, 25, 50, 25, 0],
     y: [0, -10, 0, 10, 0],
-    opacity: [0.4, 0.3, 0.4, 0.5, 0.4],
+    opacity: [1, 1, 1, 1, 1],
     scale: [1, 0.9, 1, 1.1, 1],
     transition: {
       delay: itemi * -1.37,
@@ -401,14 +409,22 @@ const subheaderShadowVars = {
     }
   }),
   hover: {
-    opacity: 1,
-    x: 0, y: -20,
+    opacity: 0.5,
+    x: 0, y: -10,
     scale: 1.1,
     transition: { duration: 0.2, ease: "easeOut", repeat: 0 }
   },
   hidden: { opacity: 0 },
   static: { opacity: 1, x: 0, y: 0, scale: 1, transition: { duration: 0 } },
 };
+
+const shadowopacityVars = {
+  initial: { opacity: 0 },
+  animate: {
+    opacity: 0.4,
+    transition: { duration: 1.5 }
+  },
+}
 
 const subheaderBlurVars = {
   initial: { opacity: 0 },
@@ -458,13 +474,19 @@ const AnimatedList = memo(function AnimatedList({ proj, animationConfig,
       viewport={{ once: false, amount: 0.2 }}
     >
       <Header>
-        <TextShadow
+        <ShadowContainer
           top={'80%'}
           variants={subheaderShadowVars}
           custom={0}
           initial="animate"
           animate={animationConfig.textshadow}
-        />
+        >
+          <TextShadow
+            variants={shadowopacityVars}
+            initial='initial'
+            whileInView='animate'
+          />
+        </ShadowContainer>
         {proj.projtitle}
       </Header>
       {proj.items.map((item, itemi) => {
@@ -484,20 +506,24 @@ const AnimatedList = memo(function AnimatedList({ proj, animationConfig,
               variants={subheaderBlurVars}
               initial="initial"
               animate={animationConfig.blur}
-              whileHover={{
-                opacity: 0,
-              }}
+              whileHover={{ opacity: 0 }}
             > {item.title}</SubHeaderBlur>
             <SubHeader
               variants={subheaderTextVars}
               animate={isHovered ? 'hover' : animationConfig.subheader}
             >
-              <TextShadow
+              <ShadowContainer
                 variants={subheaderShadowVars}
                 custom={itemi}
                 initial='animate'
                 animate={isHovered ? 'hover' : animationConfig.textshadow}
-              />
+              >
+                <TextShadow
+                  variants={shadowopacityVars}
+                  initial='initial'
+                  whileInView='animate'
+                />
+              </ShadowContainer>
               <LetterMask
                 variants={lettermaskVars}
                 custom={itemi}
@@ -522,6 +548,8 @@ const AnimatedList = memo(function AnimatedList({ proj, animationConfig,
   )
 });
 
+const glowborder = 3;
+
 const BackgroundImage = styled(MotionBox)(({ theme }) => ({
   position: 'fixed',
   inset: '-5%',
@@ -531,6 +559,13 @@ const BackgroundImage = styled(MotionBox)(({ theme }) => ({
   filter: 'url(#liquid-ripple)',
   willChange: 'filter',
   zIndex: 1,
+}));
+
+const BgOverlay = styled(MotionBox)(({ theme }) => ({
+  position: 'fixed',
+  inset: 0,
+  backgroundColor: (theme.vars || theme).palette.highlights.overlay,
+  zIndex: -1,
 }));
 
 const ImageModal = styled(Box)(({ theme }) => ({
@@ -589,28 +624,23 @@ const ImageContainer = styled(MotionBox)(({ theme }) => ({
   },
 }));
 
-const glowborder = 5;
-const glowcolor = '#BE6FFE';
-
 const ImageBorder = styled(MotionBox)(({ theme }) => ({
   position: 'absolute',
-  width: `calc(100% + ${glowborder}px)`, height: `calc(100% + ${glowborder}px)`,
-  inset: `-${glowborder / 2}px`,
+  inset: 0,
   borderRadius: 'inherit',
+  backfaceVisibility: 'hidden',
   zIndex: -1,
-  willChange: 'transform, opacity',
-  background: glowcolor,
+  outline: `${glowborder}px solid ${(theme.vars || theme).palette.highlights.glow}`,
 }));
 
 const ImageGlow = styled(MotionBox)(({ theme }) => ({
   position: 'absolute',
-  width: `calc(100% + ${glowborder * 2}px)`, height: `calc(100% + ${glowborder * 2}px)`,
   inset: `-${glowborder}px`,
   borderRadius: 'inherit',
-  filter: 'blur(15px)',
+  boxShadow: `0 0 15px ${(theme.vars || theme).palette.highlights.glow}`,
   zIndex: -1,
   willChange: 'transform, opacity',
-  background: glowcolor,
+  backfaceVisibility: 'hidden',
   mixBlendMode: 'plus-lighter',
 }));
 
@@ -618,10 +648,11 @@ const GlowShadow = styled(MotionBox)(({ theme }) => ({
   position: 'absolute',
   width: '100%', height: '5px',
   top: 'calc(100% + 30px)', left: theme.spacing(3),
-  background: glowcolor,
+  background: (theme.vars || theme).palette.highlights.glow,
   filter: 'blur(10px)',
   borderRadius: 'inherit',
-  willChange: 'transform, opacity',
+  //willChange: 'transform, opacity',
+  backfaceVisibility: 'hidden',
   zIndex: -1,
 }));
 
@@ -638,8 +669,7 @@ const ImageShadow = styled(Box)(({ theme }) => ({
 }));
 
 const StyledImage = styled('img')(({ theme }) => ({
-  width: '100%',
-  height: '100%',
+  width: '100%', height: '100%',
   borderRadius: 'inherit',
   objectFit: 'cover',
   display: 'block',
@@ -647,12 +677,21 @@ const StyledImage = styled('img')(({ theme }) => ({
 
 const rippleduration = 8;
 
+const bgoverlayVars = {
+  initial: { opacity: 0 },
+  animate: {
+    opacity: 1,
+    transition: { duration: rippleduration / 4 }
+  },
+  exit: { opacity: 0 }
+};
+
 const bgVars = {
   initial: {
     opacity: 0, scale: 1.1
   },
   animate: {
-    opacity: 0.6, scale: 1,
+    opacity: 0.4, scale: 1,
     transition: { duration: rippleduration / 4, ease: "easeOut", }
   },
   exit: { opacity: 0 }
@@ -683,7 +722,7 @@ const glowVars = {
     transition: {
       delay: 0.35,
       duration: 0.8,
-      ease: "easeOut"
+      ease: "easeInOut"
     }
   },
 };
@@ -778,14 +817,22 @@ function FloatingImage({ image, mouseX, mouseY, animationConfig }) {
         <LiquidFilter progress={rippleProgress} rippleParams={rippleParams} />
       )}
       {image && (
-        <BackgroundImage
-          key={`bg-${image}`}
-          variants={bgVars}
-          initial='initial'
-          animate='animate'
-          exit='exit'
-          sx={{ backgroundImage: `url(${image})` }}
-        />
+        <React.Fragment>
+          <BgOverlay
+            variants={bgoverlayVars}
+            initial='initial'
+            animate='animate'
+            exit='exit'
+          />
+          <BackgroundImage
+            //key={`bg-${image}`}
+            variants={bgVars}
+            initial='initial'
+            animate='animate'
+            exit='exit'
+            sx={{ backgroundImage: `url(${image})` }}
+          />
+        </React.Fragment>
       )}
       {image && (
         <ImageModal

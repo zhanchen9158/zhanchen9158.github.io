@@ -294,58 +294,68 @@ const Shadowbackground = styled(MotionBox)(({ theme }) => ({
 
 const StyledCard = styled(MotionBox)(({ theme }) => ({
   position: 'relative',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'space-between',
   overflow: 'auto',
   borderRadius: 'inherit',
   padding: theme.spacing(2),
   opacity: 'inherit',
   willChange: 'transform, opacity',
+  boxShadow: `0 10px 20px rgba(${(theme.vars || theme).palette.text.primaryChannel} / 0.05), 0 6px 6px rgba(${(theme.vars || theme).palette.text.primaryChannel} / 0.08)`,
   [theme.breakpoints.down('sm')]: {
     padding: theme.spacing(1),
   },
 }));
 
-const StyledCardContent = styled(Box)(({ theme }) => ({
-  background: "transparent",
+const CardContent = styled(Box)(({ theme }) => ({
+  width: '100%', height: '100%',
+  borderRadius: 'inherit',
+  paddingBottom: theme.spacing(2),
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-start', alignItems: 'center',
+  gap: theme.spacing(1),
+  boxSizing: 'border-box',
   cursor: 'none',
-  borderRadius: 'inherit',
 }));
 
-const StyledCardMedia = styled(CardMedia)(({ theme }) => ({
+const CardImageContainer = styled(Box)(({ theme }) => ({
+  position: 'relative',
   height: '150px',
-  objectFit: "cover",
+  aspectRatio: 16 / 9,
   borderRadius: 'inherit',
 }));
 
-const StyledCardHeader = styled(CardHeader)(({ theme }) => ({
+const CardImage = styled('img')(({ theme }) => ({
+  width: '100%', height: '100%',
+  borderRadius: 'inherit',
+  objectFit: 'cover',
+  display: 'block',
+  boxShadow: `0 10px 20px rgba(${(theme.vars || theme).palette.text.primaryChannel} / 0.05), 0 6px 6px rgba(${(theme.vars || theme).palette.text.primaryChannel} / 0.08)`,
+}));
+
+const StyledCardHeader = styled(Box)(({ theme }) => ({
   color: (theme.vars || theme).palette.primary.dark,
-  padding: '4px 0 0 8px',
-  '& .MuiCardHeader-title': {
-    fontFamily: 'Cormorant Garamond',
-    fontSize: '24px',
-    fontWeight: 600,
-  },
+  paddingTop: theme.spacing(2), //paddingBottom: theme.spacing(1),
+  fontFamily: 'Cormorant Garamond',
+  fontSize: '28px',
+  fontWeight: 600,
   ...theme.applyStyles('dark', {
     color: (theme.vars || theme).palette.primary.light,
   }),
 }));
 
 const StyledListItem = styled(ListItem)(({ theme }) => ({
-  alignItems: 'start',
-}));
-
-const StyledArrowRightIcon = styled(ArrowRightIcon)(({ theme }) => ({
-  marginTop: '7px',
+  justifyContent: 'center',
+  textAlign: 'center',
 }));
 
 const StyledListItemText = styled(ListItemText)(({ theme }) => ({
   color: (theme.vars || theme).palette.text.primary,
   '& .MuiListItemText-primary': {
-    fontFamily: 'Roboto Flex',
+    fontFamily: 'Geist',
+    lineHeight: 1.5,
     fontSize: '18px',
     fontWeight: 400,
+    textAlign: 'center',
   },
 }));
 
@@ -488,27 +498,21 @@ const ProjectCard = memo(function ProjectCard({ v, cardh, hoveredProj, handleHov
         variants={cardVars}
         sx={{ height: cardh }}
       >
-        <StyledCardContent
+        <CardContent
           onMouseEnter={() => handleHovering(v)}
           onMouseLeave={() => handleHovering(null)}
           onClick={handleClick}
         >
-          <StyledCardMedia
-            component="img"
-            image={v.img}
-          />
-          <StyledCardHeader
-            title={v.header}
-          />
-          <List>
-            {v.descriptions.map((description, i) => (
-              <StyledListItem disablePadding key={i}>
-                <StyledArrowRightIcon />
-                <StyledListItemText primary={description} />
-              </StyledListItem>
-            ))}
-          </List>
-        </StyledCardContent>
+          <CardImageContainer>
+            <CardImage src={v.img} />
+          </CardImageContainer>
+          <StyledCardHeader>{v.header}</StyledCardHeader>
+          {v.descriptions.map((description, i) => (
+            <StyledListItem key={i}>
+              <StyledListItemText primary={description} />
+            </StyledListItem>
+          ))}
+        </CardContent>
       </StyledCard>
     </CardContainer>
   )
