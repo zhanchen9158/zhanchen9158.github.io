@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
-import { duration, styled, useTheme } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import {
   motion, useMotionValue, useSpring,
   useTransform, AnimatePresence, animate
@@ -9,43 +9,11 @@ import {
 import { useAnimateContext } from './AnimateContext';
 import { PROJECT_HIGHLIGHTS } from "../pics/assets";
 import getRandom from '../functions/getRandom';
-import bgImage from '../pics/background2.webp';
 
 
 const highlights = {
-  marketintelligence: {
-    id: 1,
-    projtitle: 'Market Intelligence',
-    items:
-      [
-        {
-          id: 1,
-          title: 'Multivariate Quantile function based Forecasting',
-          description: '',
-          image: PROJECT_HIGHLIGHTS.marketintelligence.forecast,
-        },
-        {
-          id: 2,
-          title: 'Financial Data Visualization',
-          description: '',
-          image: PROJECT_HIGHLIGHTS.marketintelligence.chart,
-        },
-        {
-          id: 3,
-          title: 'Technical Analysis Platform',
-          description: '',
-          image: PROJECT_HIGHLIGHTS.marketintelligence.analysis,
-        },
-        {
-          id: 4,
-          title: 'Financial Quote Retrieval',
-          description: '',
-          image: PROJECT_HIGHLIGHTS.marketintelligence.ticker,
-        },
-      ],
-  },
   researchdigest: {
-    id: 2,
+    id: 1,
     projtitle: 'Research Digest',
     items:
       [
@@ -76,7 +44,7 @@ const highlights = {
       ],
   },
   mealplanner: {
-    id: 3,
+    id: 2,
     projtitle: 'Meal Planner',
     items:
       [
@@ -106,23 +74,52 @@ const highlights = {
         },
       ],
   },
+  marketintelligence: {
+    id: 3,
+    projtitle: 'Market Intelligence',
+    items:
+      [
+        {
+          id: 1,
+          title: 'Multivariate Quantile function based Forecasting',
+          description: '',
+          image: PROJECT_HIGHLIGHTS.marketintelligence.forecast,
+        },
+        {
+          id: 2,
+          title: 'Financial Data Visualization',
+          description: '',
+          image: PROJECT_HIGHLIGHTS.marketintelligence.chart,
+        },
+        {
+          id: 3,
+          title: 'Technical Analysis Platform',
+          description: '',
+          image: PROJECT_HIGHLIGHTS.marketintelligence.analysis,
+        },
+        {
+          id: 4,
+          title: 'Financial Quote Retrieval',
+          description: '',
+          image: PROJECT_HIGHLIGHTS.marketintelligence.ticker,
+        },
+      ],
+  },
 };
 
-const header = '70px';
+const header = 70;
 
 const shadowduration = 30;
-const driftduration = 40;
+const driftduration = 60;
 
 const MotionContainer = motion(Container);
 const MotionBox = motion(Box);
 
 const SectionContainer = styled(MotionContainer)(({ theme }) => ({
   position: 'fixed',
-  marginTop: header,
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  height: `calc(100dvh - ${header})`,
+  //marginTop: header,
+  display: 'flex', justifyContent: 'center', alignItems: 'center',
+  height: '100dvh',
   overflow: 'hidden',
 }));
 
@@ -144,23 +141,19 @@ export default function ProjectHighlights({ refProps, handleViewport }) {
 
 const GalleryContainer = styled(Box)(({ theme }) => ({
   position: 'relative',
-  width: '80%', height: '100dvh',
+  width: '80%', height: `calc(100dvh - ${header * 2}px)`,
+  paddingTop: theme.spacing(4),
   display: 'flex', flexDirection: 'column',
   justifyContent: 'flex-start',
-  paddingBottom: theme.spacing(2),
   //perspective: '1000px',
   overflowY: 'scroll',
-  paddingLeft: '50px',
-  paddingRight: '50px',
-  marginLeft: '-50px',
   [theme.breakpoints.down('sm')]: {
     width: '100%',
-    paddingLeft: '20px',
-    marginLeft: '0',
   },
   '&::-webkit-scrollbar': { display: 'none' },
   msOverflowStyle: 'none',
   scrollbarWidth: 'none',
+  //boxSizing: 'border-box',
 }));
 
 const HoverOverlay = styled(MotionBox)(({ theme }) => ({
@@ -203,6 +196,7 @@ function HoverGallery({ }) {
 
       visible: isNormal ? "visible" : "static",
 
+      header: isNormal ? "animate" : "static",
       subheader: isNormal && activeImage ? "hidden" : "static",
 
       textshadow: !isNormal ? "static" : (activeImage ? "hidden" : "animate"),
@@ -218,18 +212,15 @@ function HoverGallery({ }) {
     <GalleryContainer
       component={'section'}
       onMouseMove={handleMouseMove}
-      sx={{
-        paddingTop: header,
-      }}
     >
       <HoverOverlay
         variants={overlayVars}
         initial="inactive"
         animate={animationConfig.active}
       />
-      {Object.values(highlights).map((v, _) => (
+      {Object.values(highlights).map((v, i) => (
         <AnimatedList key={v.id}
-          proj={v} animationConfig={animationConfig}
+          proj={v} i={i} animationConfig={animationConfig}
           activeImage={activeImage}
           handleActivatingImage={handleActivatingImage} />
       ))}
@@ -240,28 +231,56 @@ function HoverGallery({ }) {
   );
 };
 
-const ListContainer = styled(MotionBox)(({ theme }) => ({
+const ListContainer = styled(MotionBox)(({ theme, i }) => ({
+  position: 'relative',
   width: '100%', //height: '80%',
   display: 'flex', flexDirection: 'column',
-  gap: theme.spacing(2),
+  justifyContent: 'center',
+  alignItems: i % 2 === 0 ? 'flex-start' : 'flex-end',
+  paddingLeft: i % 2 === 0 ? theme.spacing(6) : theme.spacing(2),
+  paddingRight: i % 2 !== 0 ? theme.spacing(6) : theme.spacing(2),
+  gap: theme.spacing(4),
+  marginBottom: theme.spacing(6),
   backfaceVisibility: 'hidden',
 }));
 
-const Header = styled(Box)(({ theme }) => ({
-  paddingTop: theme.spacing(2),
-  fontFamily: 'Fraunces, serif',
-  fontSize: '30px',
-  fontStyle: 'italic',
-  fontWeight: 'bold',
-  color: (theme.vars || theme).palette.text.primary,
-  alignSelf: 'center',
+const ListBorder = styled(MotionBox)(({ theme, i }) => ({
+  position: 'absolute',
+  left: i % 2 === 0 ? 0 : 'auto',
+  right: i % 2 !== 0 ? 0 : 'auto',
+  top: '10%',
+  width: '2px',
+  height: '80%',
+  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  transformOrigin: 'center',
+  //willChange: 'transform',
+  backfaceVisibility: 'hidden',
+}));
+
+const Header = styled(MotionBox)(({ theme, i }) => ({
+  position: 'absolute',
+  left: i % 2 === 0 ? 'auto' : '10%',
+  right: i % 2 === 0 ? '10%' : 'auto',
+  fontFamily: 'Antonio',
+  fontSize: 'clamp(100px, 10vw, 120px)',
+  fontWeight: 800,
+  lineHeight: 0.9, letterSpacing: '-5px',
+  color: '#0F172A',
+  alignSelf: 'center', textAlign: 'center',
+  pointerEvents: 'none', userSelect: 'none',
+  zIndex: -1,
+  opacity: 0.3,
+  mixBlendMode: 'overlay',
+  WebkitFontSmoothing: 'antialiased',
   [theme.breakpoints.down('sm')]: {
-    fontSize: '1rem',
+    fontSize: 'clamp(60px, 20vw, 100px)',
   },
-  position: 'relative',
-  display: 'inline-block',
-  width: 'fit-content',
-  cursor: 'default',
+  willChange: 'transform, opacity',
+  backfaceVisibility: 'hidden',
+}));
+
+const HeaderWord = styled(Box)(({ theme }) => ({
+  alignSelf: 'center',
 }));
 
 const SubHeaderContainer = styled(MotionBox)(({ theme }) => ({
@@ -270,25 +289,30 @@ const SubHeaderContainer = styled(MotionBox)(({ theme }) => ({
   //willChange: 'transform, opacity',
   cursor: 'pointer',
   width: 'fit-content',
-  //backfaceVisibility: 'hidden',
+  backfaceVisibility: 'hidden',
 }));
 
 const SubHeader = styled(MotionBox)(({ theme }) => ({
   position: 'relative',
-  paddingTop: theme.spacing(2),
-  paddingBottom: theme.spacing(2),
-  paddingLeft: theme.spacing(2),
   borderRadius: '8px',
   fontWeight: 800,
   fontFamily: 'Playfair Display',
   letterSpacing: '2px',
-  fontSize: '26px',
-  color: 'rgb(255,255,255)',
+  fontSize: 'clamp(24px, 26px, 26px)',
+  background: `linear-gradient(
+    180deg, 
+    #FFFFFF 0%, 
+    #f1f4f8 50%, 
+    #E2E8F0 100%
+  )`,
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  //color: '#E2E8F0',
   WebkitFontSmoothing: 'antialiased',
   MozOsxFontSmoothing: 'grayscale',
   backfaceVisibility: 'hidden',
   [theme.breakpoints.down('sm')]: {
-    fontSize: '24px',
+    fontSize: 'clamp(20px, 24px, 24px)',
   },
   display: 'inline-block',
   //willChange: 'transform, opacity',
@@ -299,7 +323,7 @@ const SubHeader = styled(MotionBox)(({ theme }) => ({
 const ShadowContainer = styled(MotionBox)(({ theme, top = '70%', height = '30%' }) => ({
   position: 'absolute',
   width: '100%', height: height,
-  top: top, left: theme.spacing(1),
+  top: top,
   borderRadius: '25%',
   willChange: 'transform',
   backfaceVisibility: 'hidden',
@@ -323,20 +347,17 @@ const TextShadow = styled(MotionBox)(({ theme }) => ({
 
 const SubHeaderBlur = styled(MotionBox)(({ theme }) => ({
   position: 'absolute',
-  paddingTop: theme.spacing(2),
-  paddingBottom: theme.spacing(2),
-  paddingLeft: theme.spacing(2),
   borderRadius: '8px',
   fontWeight: 'bold',
   fontFamily: 'Playfair Display',
   letterSpacing: '2px',
-  fontSize: '26px',
-  color: 'rgb(255,255,255)',
+  fontSize: 'clamp(24px, 26px, 26px)',
+  color: '#CBD5E1',
   WebkitFontSmoothing: 'antialiased',
   MozOsxFontSmoothing: 'grayscale',
   backfaceVisibility: 'hidden',
   [theme.breakpoints.down('sm')]: {
-    fontSize: '24px',
+    fontSize: 'clamp(20px, 24px, 24px)',
   },
   display: 'inline-block',
   width: 'fit-content',
@@ -372,6 +393,18 @@ const containerVars = {
   static: { opacity: 1, transition: { duration: 0 } },
 };
 
+const borderVars = {
+  hidden: { scaleY: 0, },
+  visible: {
+    scaleY: 1,
+    transition: {
+      duration: 5,
+      ease: "easeOut",
+    },
+  },
+  static: { opacity: 1, transition: { duration: 0 } },
+};
+
 const subheaderContainerVars = {
   hidden: { opacity: 0, },
   visible: {
@@ -395,15 +428,15 @@ const subheaderTextVars = {
   static: { opacity: 1, x: 0, y: 0, scale: 1, transition: { duration: 0 } },
 };
 
-const subheaderShadowVars = {
-  animate: (itemi) => ({
+const driftVars = {
+  animate: (i) => ({
     x: [0, 25, 50, 25, 0],
     y: [0, -10, 0, 10, 0],
-    opacity: [1, 1, 1, 1, 1],
+    opacity: [0.2, 0.1, 0.2, 0.3, 0.2],
     scale: [1, 0.9, 1, 1.1, 1],
     transition: {
-      delay: itemi * -1.37,
-      duration: shadowduration + ((itemi % 3) / 3 * shadowduration / 2),
+      delay: i * -2.71,
+      duration: driftduration + ((i * 17) % 11),
       repeat: Infinity,
       ease: "easeInOut",
     }
@@ -422,7 +455,7 @@ const shadowopacityVars = {
   initial: { opacity: 0 },
   animate: {
     opacity: 0.4,
-    transition: { duration: 1.5 }
+    transition: { delay: 2.5, duration: 2.5 }
   },
 }
 
@@ -442,11 +475,12 @@ const lettermaskVars = {
   hidden: {
     opacity: 0,
   },
-  visible: (itemi) => ({
+  visible: ({ i, itemi }) => ({
     opacity: 1,
     transition: {
       delayChildren: itemi * listItemDelay,
-      staggerChildren: 0.05
+      staggerChildren: 0.03 + ((itemi * 7) % 5) * 0.01,
+      staggerDirection: (i % 2 === 0) ? 1 : -1,
     }
   })
 };
@@ -455,39 +489,40 @@ const letterVars = {
   hidden: {
     y: "110%", rotate: 15,
   },
-  visible: {
+  visible: (i) => ({
     y: 0, rotate: 0,
     transition: {
-      duration: 0.6, ease: [0.33, 1, 0.68, 1],
+      duration: 0.5 + ((i * 3) % 4) * 0.1,
+      ease: [0.33, 1, 0.68, 1],
     }
-  }
+  })
 };
 
-const AnimatedList = memo(function AnimatedList({ proj, animationConfig,
+const AnimatedList = memo(function AnimatedList({ proj, i, animationConfig,
   activeImage, handleActivatingImage }) {
 
   return (
     <ListContainer
+      i={i}
       variants={containerVars}
       initial="hidden"
       whileInView={animationConfig.visible}
       viewport={{ once: false, amount: 0.2 }}
     >
-      <Header>
-        <ShadowContainer
-          top={'80%'}
-          variants={subheaderShadowVars}
-          custom={0}
-          initial="animate"
-          animate={animationConfig.textshadow}
-        >
-          <TextShadow
-            variants={shadowopacityVars}
-            initial='initial'
-            whileInView='animate'
-          />
-        </ShadowContainer>
-        {proj.projtitle}
+      <ListBorder
+        i={i}
+        variants={borderVars}
+      />
+      <Header
+        i={i}
+        variants={driftVars}
+        custom={i}
+        initial={animationConfig.header}
+        animate={animationConfig.header}
+      >
+        {proj.projtitle.split(' ').map((w, i) => (
+          <HeaderWord key={i}>{w}</HeaderWord>
+        ))}
       </Header>
       {proj.items.map((item, itemi) => {
         const isHovered = activeImage === item.image;
@@ -513,10 +548,10 @@ const AnimatedList = memo(function AnimatedList({ proj, animationConfig,
               animate={isHovered ? 'hover' : animationConfig.subheader}
             >
               <ShadowContainer
-                variants={subheaderShadowVars}
-                custom={itemi}
-                initial='animate'
-                animate={isHovered ? 'hover' : animationConfig.textshadow}
+              //variants={driftVars}
+              //custom={itemi}
+              //initial='animate'
+              //animate={isHovered ? 'hover' : animationConfig.textshadow}
               >
                 <TextShadow
                   variants={shadowopacityVars}
@@ -526,14 +561,15 @@ const AnimatedList = memo(function AnimatedList({ proj, animationConfig,
               </ShadowContainer>
               <LetterMask
                 variants={lettermaskVars}
-                custom={itemi}
+                custom={{ i, itemi }}
                 initial='hidden'
                 whileInView='visible'
                 viewport={{ once: false, amount: 0.2 }}
               >
-                {item.title.split('').map((l, i) => (
+                {item.title.split('').map((l, letteri) => (
                   <AnimatedLetter
-                    key={i}
+                    key={letteri}
+                    custom={i}
                     variants={letterVars}
                   >
                     {l === " " ? "\u00A0" : l}
@@ -637,7 +673,7 @@ const ImageGlow = styled(MotionBox)(({ theme }) => ({
   position: 'absolute',
   inset: `-${glowborder}px`,
   borderRadius: 'inherit',
-  boxShadow: `0 0 15px ${(theme.vars || theme).palette.highlights.glow}`,
+  boxShadow: `0 0 25px ${(theme.vars || theme).palette.highlights.glow}`,
   zIndex: -1,
   willChange: 'transform, opacity',
   backfaceVisibility: 'hidden',
@@ -747,7 +783,7 @@ function FloatingImage({ image, mouseX, mouseY, animationConfig }) {
 
   const rippleParams = useMemo(() => ({
     randomScale: Math.round(getRandom(20, 50)),
-    randomFreq: getRandom(0.03, 0.06).toFixed(3)
+    randomFreq: getRandom(0.02, 0.04).toFixed(3)
   }), [image]);
 
   const boundsRef = useRef({ vw: window.innerWidth, vh: window.innerHeight });

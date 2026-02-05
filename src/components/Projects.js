@@ -24,16 +24,6 @@ import { useAnimateContext } from './AnimateContext';
 const projectInfo = [
   {
     id: 1,
-    img: marketintelligence,
-    header: 'Market Intelligence',
-    descriptions: [
-      'Full-stack financial analytics application that ingests real-time market data to forecast trends.',
-      'Predictive AI model trained using PyTorch, achieving less than 10% Multivariate Quantile function forecaster loss, leading to well-calibrated and narrow predicted probabilities of trends.',
-    ],
-    link: 'https://marketintelligence0.s3.us-east-2.amazonaws.com/index.html',
-  },
-  {
-    id: 2,
     img: researchdigest,
     header: 'Research Digest',
     descriptions: [
@@ -44,7 +34,7 @@ const projectInfo = [
     link: 'https://researchdigest0.s3.us-east-2.amazonaws.com/index.html',
   },
   {
-    id: 3,
+    id: 2,
     img: mealplanner,
     header: 'Meal Planner',
     descriptions: [
@@ -52,6 +42,16 @@ const projectInfo = [
       'Quantized, web-based Grouped-Query Attention Transformer to deliver a low-latency, stateful chat-driven interface for recipe and nutritional retrieval.'
     ],
     link: 'https://mealplanner0.s3.us-east-2.amazonaws.com/index.html',
+  },
+  {
+    id: 3,
+    img: marketintelligence,
+    header: 'Market Intelligence',
+    descriptions: [
+      'Full-stack financial analytics application that ingests real-time market data to forecast trends.',
+      'Predictive AI model trained using PyTorch, achieving less than 10% Multivariate Quantile function forecaster loss, leading to well-calibrated and narrow predicted probabilities of trends.',
+    ],
+    link: 'https://marketintelligence0.s3.us-east-2.amazonaws.com/index.html',
   },
   {
     id: 4,
@@ -180,6 +180,7 @@ const StyledGridItem = styled(MotionGrid)(({ theme }) => ({
   },
   transform: "translateZ(60px)",
   transformStyle: "preserve-3d",
+  isolation: 'isolate',
 }));
 
 const containerVars = {
@@ -231,7 +232,6 @@ const ProjectsGrid = memo(function ProjectsGrid({ currentPage, page, perpage, ca
             variants={itemVars}
             sx={{
               height: `calc(${cardh}px + 50px)`,
-              isolation: 'isolate',
               WebkitMaskImage: '-webkit-radial-gradient(white, black)',
             }}
           >
