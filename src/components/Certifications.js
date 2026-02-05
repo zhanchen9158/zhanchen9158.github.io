@@ -136,7 +136,7 @@ const StyledAvatar = styled(Avatar)(({ theme }) => ({
 const SubHeader = styled(Typography)(({ theme }) => ({
   display: 'inline',
   color: (theme.vars || theme).palette.primary.main,
-  fontFamily: 'fraunces',
+  fontFamily: 'Fraunces',
   textTransform: 'uppercase',
   letterSpacing: '0.2em',
   fontWeight: 600,
