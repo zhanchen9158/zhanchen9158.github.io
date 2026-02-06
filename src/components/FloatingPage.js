@@ -1,7 +1,8 @@
-import { useRef, useMemo, useEffect } from 'react'
-import { useFrame, extend } from '@react-three/fiber'
-import { shaderMaterial } from '@react-three/drei'
-import * as THREE from 'three'
+import { useRef, useMemo, useEffect, memo } from 'react';
+import { useFrame, extend } from '@react-three/fiber';
+import { shaderMaterial } from '@react-three/drei';
+import * as THREE from 'three';
+
 
 const PageMaterial = shaderMaterial(
   {
@@ -45,87 +46,77 @@ const PageMaterial = shaderMaterial(
 
 extend({ PageMaterial })
 
-// Pre-calculate constants outside the component to save memory
+const PAGE_GEOM = new THREE.PlaneGeometry(0.5, 2 / 3, 32, 32);
 const BASE_BEND = 0.35;
+const TARGET_FPS = 1 / 30;
 
-export default function FloatingPage({ url, position, width = 0.75,
+const FloatingPage = memo(function FloatingPage({ url, position,
   rotate = { xCenter: 0, yCenter: 45, yAmp: 15, z: 0 }, ytravel = { speed: 0.8, range: 0.5 },
   bend = { number: 1.4, amp: 0 } }) {
-  const meshRef = useRef()
-  const materialRef = useRef()
 
-  const height = width * (4 / 3);
-  const X_CENTER_RAD = useMemo(() => THREE.MathUtils.degToRad(rotate.xCenter), [rotate.xCenter]);
-  const Y_CENTER_RAD = useMemo(() => THREE.MathUtils.degToRad(rotate.yCenter), [rotate.yCenter]);
-  const Z_START_RAD = useMemo(() => THREE.MathUtils.degToRad(rotate.z), [rotate.z]);
-  const ROT_AMPLITUDE = useMemo(() => THREE.MathUtils.degToRad(rotate.yAmp), [rotate.yAmp]);
+  const meshRef = useRef();
+  const materialRef = useRef();
+  const accumulator = useRef(0);
 
-  // useMemo ensures we don't re-create this geometry on every frame/render
-  const geometry = useMemo(() =>
-    new THREE.PlaneGeometry(width, height, 32, 32),
-    [width, height])
+  const baseY = position[1];
+  const { speed, range } = ytravel;
+  const { xStartRot, yStartRot, zStartRot, yRotAmp } = useMemo(() => ({
+    xStartRot: THREE.MathUtils.degToRad(rotate.xCenter),
+    yStartRot: THREE.MathUtils.degToRad(rotate.yCenter),
+    zStartRot: THREE.MathUtils.degToRad(rotate.z),
+    yRotAmp: THREE.MathUtils.degToRad(rotate.yAmp),
+  }), [rotate.xCenter, rotate.yCenter, rotate.z, rotate.yAmp]);
 
-  // 1. Optimized Texture Loading & Cleanup
   const texture = useMemo(() => {
-    const loader = new THREE.TextureLoader()
-    const tex = loader.load(url)
-    tex.anisotropy = 16
-    return tex
-  }, [url])
+    const loader = new THREE.TextureLoader();
+    const tex = loader.load(url);
+    tex.anisotropy = 8;
+    tex.minFilter = THREE.LinearFilter;
+    return tex;
+  }, [url]);
 
-  // Cleanup texture on unmount to prevent memory leaks
   useEffect(() => {
     return () => texture.dispose()
   }, [texture])
 
-  const accumulator = useRef(0)
-
   useFrame((state, delta) => {
-    // 2. Add the time since the last frame to our bucket
-    accumulator.current += delta
+    accumulator.current += delta;
+    if (accumulator.current < TARGET_FPS) return;
 
-    // 3. Set your desired tick rate (e.g., 1/30 = 30fps)
-    const targetInterval = 1 / 30
+    const time = state.clock.getElapsedTime();
 
-    if (accumulator.current >= targetInterval) {
-      // --- ALL CALCULATIONS GO HERE ---
-      const time = state.clock.getElapsedTime()
-      const moveSpeed = ytravel.speed
+    const sinTime = Math.sin(time * speed);
+    const cosTime = Math.cos(time * speed);
+    const turbulence = Math.sin(time * 4) * 0.02;
 
-      const sinTime = Math.sin(time * moveSpeed)
-      const cosTime = Math.cos(time * moveSpeed)
-      const turbulence = Math.sin(time * 4) * 0.02
+    if (meshRef.current) {
+      const mesh = meshRef.current;
+      mesh.position.y = baseY + sinTime * range;
 
-      if (meshRef.current) {
-        const baseY = position[1]
-        meshRef.current.position.y = baseY + sinTime * ytravel.range
-
-        // The target is now your base X + the dynamic cosTime tilt
-        const targetX = X_CENTER_RAD + (cosTime * 0.2);
-        meshRef.current.rotation.x = THREE.MathUtils.lerp(
-          meshRef.current.rotation.x,
-          targetX,
-          0.1
-        )
-        meshRef.current.rotation.y = Y_CENTER_RAD + Math.sin(time * 0.5) * ROT_AMPLITUDE
-        meshRef.current.rotation.z = Z_START_RAD + (sinTime * 0.05);
-      }
-
-      if (materialRef.current) {
-        // Multiply time by 0.5 to make the ripples move at half speed
-        materialRef.current.uTime = time * 0.25;
-
-        // Also reduce turbulence frequency so it doesn't "shiver" too fast
-        materialRef.current.uAmplitude = BASE_BEND + (cosTime * 0.15) + turbulence;
-      }
-
-      // 4. Reset the accumulator
-      accumulator.current %= targetInterval
+      // The target is base X + the dynamic cosTime tilt
+      const targetX = xStartRot + (cosTime * 0.2);
+      mesh.rotation.x = THREE.MathUtils.lerp(
+        mesh.rotation.x,
+        targetX,
+        0.1
+      );
+      mesh.rotation.y = yStartRot + Math.sin(time * 0.5) * yRotAmp;
+      mesh.rotation.z = zStartRot + (sinTime * 0.05);
     }
+
+    if (materialRef.current) {
+      // make the ripples move at half speed
+      materialRef.current.uTime = time * 0.25;
+
+      // reduce turbulence frequency so it doesn't "shiver" too fast
+      materialRef.current.uAmplitude = BASE_BEND + (cosTime * 0.15) + turbulence;
+    }
+
+    accumulator.current %= TARGET_FPS;
   })
 
   return (
-    <mesh ref={meshRef} position={position} geometry={geometry}>
+    <mesh ref={meshRef} position={position} geometry={PAGE_GEOM}>
       <pageMaterial
         ref={materialRef}
         uTexture={texture}
@@ -138,4 +129,6 @@ export default function FloatingPage({ url, position, width = 0.75,
       />
     </mesh>
   )
-}
+});
+
+export default FloatingPage;

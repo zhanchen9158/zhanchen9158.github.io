@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, memo } from 'react';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
@@ -12,9 +12,10 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { useAnimateContext } from './AnimateContext';
 import Pagination from '@mui/material/Pagination';
 import Grid from '@mui/material/Grid';
-import Floating3DCanvas from './Floating3DCanvas';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 
+
+const Floating3DCanvas = React.lazy(() => import('./Floating3DCanvas'));
 
 const items = [
   {
@@ -65,12 +66,12 @@ const items = [
 const MotionContainer = motion(Container);
 const MotionBox = motion(Box);
 
-const header = '70px';
+const header = 70;
 
 const SectionContainer = styled(MotionContainer)(({ theme }) => ({
   position: 'fixed',
-  width: '100dvw', height: `calc(100dvh - ${header})`,
-  marginTop: header,
+  width: '100dvw', height: '100dvh',
+  marginTop: `${header}px`,
   display: 'flex', justifyContent: 'center', alignItems: 'center',
   overflow: 'hidden',
 }));
@@ -96,6 +97,7 @@ const AnimatedCard = styled(MotionBox)(({ theme }) => ({
   maxWidth: '450px', maxHeight: '500px',
   originX: 0,
   willChange: 'transform,opacity',
+  backfaceVisibility: 'hidden',
   [theme.breakpoints.down('md')]: {
     width: '75%',
   },
@@ -119,53 +121,6 @@ const StyledCard = styled(MotionBox)(({ theme }) => ({
   flexWrap: 'wrap',
   gap: '8px',
   padding: '8px',
-}));
-
-const StyledAvatar = styled(Avatar)(({ theme }) => ({
-  height: 48,
-  width: 48,
-  float: 'left',
-  marginRight: theme.spacing(2),
-  marginTop: '6px',
-  '& img': {
-    objectFit: 'contain',
-    backgroundColor: 'rgba(250,250,250,0.9)',
-  },
-}));
-
-const SubHeader = styled(Typography)(({ theme }) => ({
-  display: 'inline',
-  color: (theme.vars || theme).palette.primary.main,
-  fontFamily: 'Fraunces',
-  textTransform: 'uppercase',
-  letterSpacing: '0.2em',
-  fontWeight: 600,
-  opacity: '0.8',
-  fontSize: '16px',
-  [theme.breakpoints.down('md')]: {
-    fontSize: '14px',
-  }
-}));
-
-const StyledListItem = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'flex-start',
-  marginBottom: theme.spacing(1)
-}));
-
-const StyledPlayArrowIcon = styled(PlayArrowIcon)(({ theme }) => ({
-  marginRight: theme.spacing(2),
-  flexShrink: 0,
-}));
-
-const StyledList = styled(Typography)(({ theme }) => ({
-  display: 'inline',
-  fontFamily: 'Archivo',
-  fontSize: '16px',
-  lineHeight: 1.5,
-  [theme.breakpoints.down('md')]: {
-    fontSize: '14px',
-  }
 }));
 
 const cardVars = {
@@ -270,7 +225,6 @@ export default function Certifications({ refProps, handleViewport }) {
             {cards.map((v, i) => (
               <AnimatedCard
                 key={v.title + i}
-                layout
                 custom={{ i, stackdiff, flipx }}
                 variants={cardVars}
                 whileInView="visible"
@@ -282,23 +236,7 @@ export default function Certifications({ refProps, handleViewport }) {
                   variants={itemVars}
                   whileHover={i == 0 && 'hover'}
                 >
-                  <Box>
-                    <StyledAvatar
-                      variant='square'
-                      src={v.icon}
-                    />
-                    <SubHeader>
-                      {v.title}
-                    </SubHeader>
-                  </Box>
-                  {v.descriptions.map((item, i) => (
-                    <StyledListItem key={`desc-${v.title}-${i}`} >
-                      <StyledPlayArrowIcon />
-                      <StyledList>
-                        {item}
-                      </StyledList>
-                    </StyledListItem>
-                  ))}
+                  <CardContent card={v} />
                 </StyledCard>
               </AnimatedCard>
             ))}
@@ -339,6 +277,76 @@ function Animated3D() {
   )
 }
 
+const StyledIcon = styled('img')(({ theme }) => ({
+  height: 48,
+  width: 48,
+  borderRadius: '8px',
+  float: 'left',
+  marginRight: theme.spacing(2),
+  marginTop: '6px',
+  objectFit: 'contain',
+  backgroundColor: 'rgba(250,250,250,0.9)',
+}));
+
+const SubHeader = styled(Typography)(({ theme }) => ({
+  display: 'inline',
+  color: (theme.vars || theme).palette.primary.main,
+  fontFamily: 'Fraunces',
+  textTransform: 'uppercase',
+  letterSpacing: '0.2em',
+  fontWeight: 600,
+  opacity: '0.8',
+  fontSize: '16px',
+  [theme.breakpoints.down('md')]: {
+    fontSize: '14px',
+  }
+}));
+
+const StyledListItem = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'flex-start',
+  marginBottom: theme.spacing(1)
+}));
+
+const StyledPlayArrowIcon = styled(PlayArrowIcon)(({ theme }) => ({
+  marginRight: theme.spacing(2),
+  flexShrink: 0,
+}));
+
+const StyledListText = styled(Typography)(({ theme }) => ({
+  display: 'inline',
+  fontFamily: 'Archivo',
+  fontSize: '16px',
+  lineHeight: 1.5,
+  [theme.breakpoints.down('md')]: {
+    fontSize: '14px',
+  }
+}));
+
+const CardContent = memo(function CardContent({ card }) {
+
+  return (
+    <React.Fragment>
+      <Box>
+        <StyledIcon
+          src={card.icon}
+        />
+        <SubHeader>
+          {card.title}
+        </SubHeader>
+      </Box>
+      {card.descriptions.map((item, i) => (
+        <StyledListItem key={i} >
+          <StyledPlayArrowIcon />
+          <StyledListText>
+            {item}
+          </StyledListText>
+        </StyledListItem>
+      ))}
+    </React.Fragment>
+  )
+});
+
 const StyledGridItem = styled(Grid)(({ theme }) => ({
   display: 'flex',
   justifyContent: 'center',
@@ -350,6 +358,7 @@ const StyledGridItem = styled(Grid)(({ theme }) => ({
 }));
 
 const ReducedAnimationCard = styled(Box)(({ theme }) => ({
+  width: 350, height: 400,
   color: (theme.vars || theme).palette.text.primary,
   border: '1px solid',
   borderColor: `rgba(${(theme.vars || theme).palette.text.primaryChannel} / 0.15)`,
@@ -363,6 +372,9 @@ const ReducedAnimationCard = styled(Box)(({ theme }) => ({
   flexWrap: 'wrap',
   gap: '8px',
   padding: '8px',
+  [theme.breakpoints.down('md')]: {
+    width: 250, height: 300,
+  }
 }));
 
 function ReducedAnimation({ }) {
@@ -399,37 +411,19 @@ function ReducedAnimation({ }) {
       >
         {items.slice((page - 1) * perpage, page * perpage).map((v, i) => (
           <StyledGridItem item size={{ xs: 12, md: 6 }} key={i}>
-            <ReducedAnimationCard
-              sx={{
-                width: { xs: 250, md: 350 },
-                height: { xs: 300, md: 400 },
-              }}
-            >
-              <Avatar
-                variant='square'
+            <ReducedAnimationCard>
+              <StyledIcon
                 src={v.icon}
-                slotProps={{
-                  img: {
-                    style: {
-                      objectFit: 'contain',
-                      backgroundColor: 'rgba(250,250,250,0.9)',
-                    },
-                  },
-                }}
-                sx={{
-                  height: 48,
-                  width: 48,
-                }}
               />
               <SubHeader>
                 {v.title}
               </SubHeader>
               {v.descriptions.map((item, i) => (
-                <StyledListItem key={`desc-${v.title}-${i}`} >
+                <StyledListItem key={i} >
                   <StyledPlayArrowIcon />
-                  <StyledList>
+                  <StyledListText>
                     {item}
-                  </StyledList>
+                  </StyledListText>
                 </StyledListItem>
               ))}
             </ReducedAnimationCard>

@@ -1,4 +1,4 @@
-import { useRef, useMemo, useEffect } from 'react'
+import { useRef, useMemo, memo, useEffect } from 'react'
 import { useFrame, extend } from '@react-three/fiber'
 import { shaderMaterial } from '@react-three/drei'
 import * as THREE from 'three'
@@ -7,15 +7,48 @@ const FloatingMaterial = shaderMaterial(
     {
         uTime: 0,
         uTexture: new THREE.Texture(),
+        uYTravel: new THREE.Vector2(0.8, 0.5), // x: speed, y: range
+        uRotX: new THREE.Vector2(0, 0.2),     // x: start, y: amp
+        uRotY: new THREE.Vector2(0, 0),       // x: start, y: amp
+        uRotZ: new THREE.Vector2(0, 0),       // x: start, y: amp
     },
     // Vertex Shader
     `
     varying vec2 vUv;
+    uniform float uTime;
+    uniform vec2 uYTravel;
+    uniform vec2 uRotX;
+    uniform vec2 uRotY;
+    uniform vec2 uRotZ;
+
+    // Helper function to rotate a vector
+    mat3 rotationMatrix(vec3 axis, float angle) {
+        float s = sin(angle);
+        float c = cos(angle);
+        float oc = 1.0 - c;
+        return mat3(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,
+                    oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,
+                    oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c);
+    }
 
     void main() {
       vUv = uv;
+      vec3 pos = position;
 
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      // 1. Calculate dynamic angles
+      float angleX = uRotX.x + (cos(uTime * uYTravel.x) * uRotX.y);
+      float angleY = uRotY.x + (sin(uTime * 0.15) * uRotY.y);
+      float angleZ = uRotZ.x + (sin(uTime * 0.15) * uRotZ.y);
+
+      // 2. Apply Rotations (Order: XYZ)
+      pos = rotationMatrix(vec3(1, 0, 0), angleX) * pos;
+      pos = rotationMatrix(vec3(0, 1, 0), angleY) * pos;
+      pos = rotationMatrix(vec3(0, 0, 1), angleZ) * pos;
+
+      // 3. Apply Vertical Float
+      pos.y += sin(uTime * uYTravel.x) * uYTravel.y;
+
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
     }
   `,
     // Fragment Shader
@@ -25,7 +58,7 @@ const FloatingMaterial = shaderMaterial(
 
     void main() {
       vec4 color = texture2D(uTexture, vUv);
-      if (color.a < 0.1) discard; // Optimization: don't render transparent pixels
+      if (color.a < 0.1) discard;
       gl_FragColor = color;
     }
   `
@@ -33,91 +66,54 @@ const FloatingMaterial = shaderMaterial(
 
 extend({ FloatingMaterial })
 
-export default function FloatingItem({ url, position,
+const FloatingItem = memo(function FloatingItem({ url, position,
     size = { width: 0.75, aspectratio: 1 / 1 },
     rotate = { xStart: 0, xAmp: 0, yStart: 0, yAmp: 0, zStart: 0, zAmp: 0 },
     ytravel = { speed: 0.8, range: 0.5 }, }) {
-    const meshRef = useRef()
+
     const materialRef = useRef()
 
+    // Memoize geometry and texture as before
     const width = size.width;
     const height = size.width * (1 / size.aspectratio);
 
-    const X_START_RAD = useMemo(() => THREE.MathUtils.degToRad(rotate.xStart), [rotate.xStart]);
-    const X_ROT_AMP = useMemo(() => THREE.MathUtils.degToRad(rotate.xAmp), [rotate.xAmp]);
-
-    const Y_START_RAD = useMemo(() => THREE.MathUtils.degToRad(rotate.yStart), [rotate.yStart]);
-    const Y_ROT_AMP = useMemo(() => THREE.MathUtils.degToRad(rotate.yAmp), [rotate.yAmp]);
-
-    const Z_START_RAD = useMemo(() => THREE.MathUtils.degToRad(rotate.zStart), [rotate.zStart]);
-    const Z_ROT_AMP = useMemo(() => THREE.MathUtils.degToRad(rotate.zAmp), [rotate.zAmp]);
-
-    // useMemo ensures we don't re-create this geometry on every frame/render
-    const geometry = useMemo(() =>
-        new THREE.PlaneGeometry(width, height, 1, 1),
-        [width, height])
-
-    // 1. Optimized Texture Loading & Cleanup
     const texture = useMemo(() => {
-        const loader = new THREE.TextureLoader()
-        const tex = loader.load(url)
-        tex.anisotropy = 16
+        const tex = new THREE.TextureLoader().load(url)
+        tex.anisotropy = 8
         return tex
     }, [url])
 
-    // Cleanup texture on unmount to prevent memory leaks
-    useEffect(() => {
-        return () => texture.dispose()
-    }, [texture])
+    useEffect(() => () => texture.dispose(), [texture])
 
-    const accumulator = useRef(0)
+    // Convert degrees to radians once
+    const r = useMemo(() => ({
+        x: [THREE.MathUtils.degToRad(rotate.xStart), THREE.MathUtils.degToRad(rotate.xAmp)],
+        y: [THREE.MathUtils.degToRad(rotate.yStart), THREE.MathUtils.degToRad(rotate.yAmp)],
+        z: [THREE.MathUtils.degToRad(rotate.zStart), THREE.MathUtils.degToRad(rotate.zAmp)],
+    }), [rotate])
 
-    useFrame((state, delta) => {
-        // 2. Add the time since the last frame to our bucket
-        accumulator.current += delta
-
-        // 3. Set your desired tick rate (e.g., 1/30 = 30fps)
-        const targetInterval = 1 / 10
-
-        if (accumulator.current >= targetInterval) {
-            // --- ALL CALCULATIONS GO HERE ---
-            const time = state.clock.getElapsedTime()
-            const moveSpeed = ytravel.speed
-
-            const sinTime = Math.sin(time * moveSpeed)
-            const cosTime = Math.cos(time * moveSpeed)
-
-            if (meshRef.current) {
-                const baseY = position[1]
-                meshRef.current.position.y = baseY + sinTime * ytravel.range
-
-                // The target is now your base X + the dynamic cosTime tilt
-                const targetX = X_START_RAD + (cosTime * 0.2);
-                meshRef.current.rotation.x = THREE.MathUtils.lerp(
-                    meshRef.current.rotation.x,
-                    targetX,
-                    0.1
-                )
-                meshRef.current.rotation.y = Y_START_RAD + Math.sin(time * 0.15) * Y_ROT_AMP
-                meshRef.current.rotation.z = Z_START_RAD + Math.sin(time * 0.15) * Z_ROT_AMP;
-            }
-
-            // 4. Reset the accumulator
-            accumulator.current %= targetInterval
+    useFrame((state) => {
+        if (materialRef.current) {
+            materialRef.current.uTime = state.clock.getElapsedTime()
         }
     })
 
     return (
-        <mesh ref={meshRef} position={position} geometry={geometry}>
+        <mesh position={position}>
+            <planeGeometry args={[width, height]} />
             <floatingMaterial
                 ref={materialRef}
                 uTexture={texture}
-                transparent={true}
+                uYTravel={[ytravel.speed, ytravel.range]}
+                uRotX={r.x}
+                uRotY={r.y}
+                uRotZ={r.z}
+                transparent
                 alphaTest={0.5}
                 side={THREE.DoubleSide}
-                premultipliedAlpha={true}
-                depthWrite={true}
             />
         </mesh>
     )
-}
+});
+
+export default FloatingItem;

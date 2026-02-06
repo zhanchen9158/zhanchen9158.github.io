@@ -243,8 +243,7 @@ const GridItemContainerShadow = styled(Box)(({ theme }) => ({
 
 const Header = styled(Box)(({ theme }) => ({
     position: 'relative',
-    fontWeight: 800,
-    letterSpacing: `-0.05em`,
+    fontWeight: 600,
     lineHeight: 0.9,
     fontFamily: 'Playfair Display',
     fontSize: '24px',
