@@ -380,10 +380,11 @@ const cardcontainerVars = {
 
 const colorVars = {
   initial: {
-    opacity: 1,
+    opacity: 0.4,
     scale: 1,
   },
   hover: {
+    opacity: 1,
     scale: 1.02,
     transition: { duration: 0.3, ease: "easeOut" }
   },

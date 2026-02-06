@@ -35,7 +35,7 @@ export default function PortfolioPage({ }) {
   const handleScrollsection = useCallback((section) => {
     sectionRef.current[section].scrollIntoView({
       behavior: 'auto',
-      block: 'end',
+      block: 'nearest',
     });
   }, []);
 

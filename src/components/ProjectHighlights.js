@@ -299,15 +299,7 @@ const SubHeader = styled(MotionBox)(({ theme }) => ({
   fontFamily: 'Playfair Display',
   letterSpacing: '2px',
   fontSize: 'clamp(24px, 26px, 26px)',
-  background: `linear-gradient(
-    180deg, 
-    #FFFFFF 0%, 
-    #f1f4f8 50%, 
-    #E2E8F0 100%
-  )`,
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  //color: '#E2E8F0',
+  color: '#E2E8F0',
   WebkitFontSmoothing: 'antialiased',
   MozOsxFontSmoothing: 'grayscale',
   backfaceVisibility: 'hidden',
