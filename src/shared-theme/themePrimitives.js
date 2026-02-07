@@ -16,7 +16,7 @@ const bgColor = {
 
 const bgAlpha = {
   light: [0, 0, 0, 0.1],
-  dark: [0, 0.8, 0.2, 0.2]
+  dark: [0.1, 0.2, 0.2, 0.2]
 };
 
 const generatePageBg = (mode) => {
