@@ -60,7 +60,7 @@ export default function Hero({ refProps, handleViewport, handleScrollsection }) 
   return (
     <SectionContainer
       id="introduction"
-      ref={el => refProps.current['introduction'] = el}
+      //ref={el => refProps.current['introduction'] = el}
       onViewportEnter={() => handleViewport('introduction', true)}
       onViewportLeave={() => handleViewport('introduction', false)}
       viewport={{ amount: 0.5 }}

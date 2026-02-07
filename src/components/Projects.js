@@ -133,7 +133,7 @@ export default function Projects({ refProps, handleViewport }) {
 
   return (
     <SectionContainer
-      ref={el => refProps.current['projects'] = el}
+      //ref={el => refProps.current['projects'] = el}
       onViewportEnter={() => handleViewport('projects', true)}
       onViewportLeave={() => handleViewport('projects', false)}
       viewport={{ amount: 0.5 }}

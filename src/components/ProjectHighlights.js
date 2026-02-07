@@ -127,7 +127,7 @@ export default function ProjectHighlights({ refProps, handleViewport }) {
 
   return (
     <SectionContainer
-      ref={el => refProps.current['highlights'] = el}
+      //ref={el => refProps.current['highlights'] = el}
       onViewportEnter={() => handleViewport('highlights', true)}
       onViewportLeave={() => handleViewport('highlights', false)}
       viewport={{ amount: 0.5 }}

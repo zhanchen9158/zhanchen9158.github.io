@@ -205,7 +205,7 @@ export default function Certifications({ refProps, handleViewport }) {
 
   return (
     <SectionContainer
-      ref={el => refProps.current['certifications'] = el}
+      //ref={el => refProps.current['certifications'] = el}
       onViewportEnter={() => handleInView(true)}
       onViewportLeave={() => handleInView(false)}
       viewport={{ amount: 0.5 }}

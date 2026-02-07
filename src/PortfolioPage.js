@@ -35,17 +35,29 @@ export default function PortfolioPage({ }) {
   const handleScrollsection = useCallback((section) => {
     sectionRef.current[section].scrollIntoView({
       behavior: 'auto',
-      block: 'nearest',
+      block: 'end',
     });
   }, []);
 
-  const sections = [
-    <Hero refProps={sectionRef} handleViewport={handleViewport}
-      handleScrollsection={handleScrollsection} />,
-    <Projects refProps={sectionRef} handleViewport={handleViewport} />,
-    <ProjectHighlights refProps={sectionRef} handleViewport={handleViewport} />,
-    <Certifications refProps={sectionRef} handleViewport={handleViewport} />
-  ];
+  const sections = useMemo(() => ([
+    {
+      id: 'introduction',
+      component: <Hero refProps={sectionRef} handleViewport={handleViewport}
+        handleScrollsection={handleScrollsection} />,
+    },
+    {
+      id: 'projects',
+      component: <Projects refProps={sectionRef} handleViewport={handleViewport} />,
+    },
+    {
+      id: 'highlights',
+      component: <ProjectHighlights refProps={sectionRef} handleViewport={handleViewport} />,
+    },
+    {
+      id: 'certifications',
+      component: <Certifications refProps={sectionRef} handleViewport={handleViewport} />,
+    },
+  ]), []);
 
   return (
     <AnimateProvider>
@@ -55,8 +67,13 @@ export default function PortfolioPage({ }) {
       >
         <GrainOverlay opacity={0.07} />
         {sections.map((v, i) => (
-          <Page key={i} containerRef={scrollContainerRef} i={i} activesection={activesection}>
-            {v}
+          <Page key={v.id}
+            id={v.id}
+            sectionRef={sectionRef}
+            containerRef={scrollContainerRef}
+            i={i} activesection={activesection}
+          >
+            {v.component}
           </Page>
         ))}
       </ScrollContainer>
@@ -78,6 +95,13 @@ const ScrollPageContainer = styled(Box)(({ theme }) => ({
   //backdropFilter: 'blur(1px)',
 }));
 
+const PageAnchor = styled(Box)(({ theme }) => ({
+  position: 'absolute',
+  top: 0, left: 0,
+  width: '1px', height: '1px',
+  visibility: 'hidden'
+}));
+
 const ScrollPage = styled(MotionBox)(({ theme }) => ({
   position: 'absolute',
   width: "100dvw", height: "100dvh",
@@ -92,7 +116,7 @@ const ScrollContent = styled(MotionBox)(({ theme }) => ({
   //willChange: "transform, opacity",
 }));
 
-const Page = memo(function Page({ containerRef, i, activesection, children, ...props }) {
+const Page = memo(function Page({ id, sectionRef, containerRef, i, activesection, children, ...props }) {
 
   const pageRef = useRef(null);
 
@@ -141,6 +165,9 @@ const Page = memo(function Page({ containerRef, i, activesection, children, ...p
       }}
       {...props}
     >
+      <PageAnchor
+        ref={(el) => (sectionRef.current[id] = el)}
+      />
       <ScrollPage
         style={{
           y,
