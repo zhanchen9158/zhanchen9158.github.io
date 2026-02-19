@@ -8,7 +8,6 @@ import floatingbook from '../pics/floatingbook.webp';
 import floatingpen from '../pics/floatingpen.webp';
 import floatingpencap from '../pics/floatingpencap.webp';
 import FloatingItem from './FloatingItem';
-import floatinglaptop from '../pics/floatinglaptop.webp';
 
 
 const StyledCanvas = styled(Canvas)(({ theme }) => ({

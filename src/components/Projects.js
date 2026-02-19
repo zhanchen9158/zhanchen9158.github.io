@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useMemo, memo } from 'react';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
-import marketintelligence from '../pics/marketintelligence.png';
+import marketintelligence from '../pics/marketintelligence.webp';
 import artexplorer from '../pics/artexplorer.png';
 import researchdigest from '../pics/researchdigest.png';
 import mealplanner from '../pics/mealplanner.webp';
@@ -18,6 +18,16 @@ import { useAnimateContext } from './AnimateContext';
 const projectInfo = [
   {
     id: 1,
+    img: marketintelligence,
+    header: 'Market Intelligence',
+    descriptions: [
+      'Full-stack financial analytics application that ingests real-time market data to forecast trends.',
+      'On-device predictive AI model build on PyTorch and ONNX, achieving a <2% sMAPE to ensure high-fidelity capture of complex market patterns.',
+    ],
+    link: 'https://marketintelligence0.s3.us-east-2.amazonaws.com/index.html',
+  },
+  {
+    id: 2,
     img: researchdigest,
     header: 'Research Digest',
     descriptions: [
@@ -28,7 +38,7 @@ const projectInfo = [
     link: 'https://researchdigest0.s3.us-east-2.amazonaws.com/index.html',
   },
   {
-    id: 2,
+    id: 3,
     img: mealplanner,
     header: 'Meal Planner',
     descriptions: [
@@ -36,16 +46,6 @@ const projectInfo = [
       'Quantized, web-based Grouped-Query Attention Transformer to deliver a low-latency, stateful chat-driven interface for recipe and nutritional retrieval.'
     ],
     link: 'https://mealplanner0.s3.us-east-2.amazonaws.com/index.html',
-  },
-  {
-    id: 3,
-    img: marketintelligence,
-    header: 'Market Intelligence',
-    descriptions: [
-      'Full-stack financial analytics application that ingests real-time market data to forecast trends.',
-      'Predictive AI model trained using PyTorch, achieving less than 10% Multivariate Quantile function forecaster loss, leading to well-calibrated and narrow predicted probabilities of trends.',
-    ],
-    link: 'https://marketintelligence0.s3.us-east-2.amazonaws.com/index.html',
   },
   {
     id: 4,
@@ -256,8 +256,7 @@ const Colorbackground = styled(MotionBox)(({ theme }) => ({
   inset: 0,
   borderRadius: "inherit",
   backgroundColor: (theme.vars || theme).palette.background.default,
-  zIndex: 0,
-  willChange: 'transform,opacity',
+  zIndex: -1,
 }));
 
 const Bloombackground = styled(MotionBox)(({ theme }) => ({
@@ -375,20 +374,17 @@ const cardcontainerVars = {
 const colorVars = {
   initial: {
     opacity: 0.4,
-    scale: 1,
   },
   hover: {
     opacity: 1,
-    scale: 1.02,
     transition: { duration: 0.3, ease: "easeOut" }
   },
   hidden: {
     opacity: 0,
-    scale: 1,
     transition: { duration: 0.3 }
   },
   static: {
-    opacity: 1, scale: 1,
+    opacity: 1,
     transition: { duration: 0 }
   }
 };

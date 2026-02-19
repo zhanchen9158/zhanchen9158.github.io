@@ -12,8 +12,39 @@ import getRandom from '../functions/getRandom';
 
 
 const highlights = {
-  researchdigest: {
+  marketintelligence: {
     id: 1,
+    projtitle: 'Market Intelligence',
+    items:
+      [
+        {
+          id: 1,
+          title: 'sMAPE Based Forecasting',
+          description: '',
+          image: PROJECT_HIGHLIGHTS.marketintelligence.forecast,
+        },
+        {
+          id: 2,
+          title: 'Financial Data Visualization',
+          description: '',
+          image: PROJECT_HIGHLIGHTS.marketintelligence.chart,
+        },
+        {
+          id: 3,
+          title: 'Technical Analysis Platform',
+          description: '',
+          image: PROJECT_HIGHLIGHTS.marketintelligence.analysis,
+        },
+        {
+          id: 4,
+          title: 'Financial Quote Retrieval',
+          description: '',
+          image: PROJECT_HIGHLIGHTS.marketintelligence.ticker,
+        },
+      ],
+  },
+  researchdigest: {
+    id: 2,
     projtitle: 'Research Digest',
     items:
       [
@@ -44,7 +75,7 @@ const highlights = {
       ],
   },
   mealplanner: {
-    id: 2,
+    id: 3,
     projtitle: 'Meal Planner',
     items:
       [
@@ -71,37 +102,6 @@ const highlights = {
           title: 'Advanced Recipe Querying',
           description: '',
           image: PROJECT_HIGHLIGHTS.mealplanner.search,
-        },
-      ],
-  },
-  marketintelligence: {
-    id: 3,
-    projtitle: 'Market Intelligence',
-    items:
-      [
-        {
-          id: 1,
-          title: 'Multivariate Quantile function based Forecasting',
-          description: '',
-          image: PROJECT_HIGHLIGHTS.marketintelligence.forecast,
-        },
-        {
-          id: 2,
-          title: 'Financial Data Visualization',
-          description: '',
-          image: PROJECT_HIGHLIGHTS.marketintelligence.chart,
-        },
-        {
-          id: 3,
-          title: 'Technical Analysis Platform',
-          description: '',
-          image: PROJECT_HIGHLIGHTS.marketintelligence.analysis,
-        },
-        {
-          id: 4,
-          title: 'Financial Quote Retrieval',
-          description: '',
-          image: PROJECT_HIGHLIGHTS.marketintelligence.ticker,
         },
       ],
   },
@@ -171,7 +171,7 @@ const overlayVars = {
 };
 
 function HoverGallery({ }) {
-  const [activeImage, setActiveImage] = useState(null);
+  const [activeImage, setActiveImage] = useState(highlights.marketintelligence.items[0].image);
 
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -225,7 +225,7 @@ function HoverGallery({ }) {
           handleActivatingImage={handleActivatingImage} />
       ))}
       <FloatingImage image={activeImage} mouseX={mouseX} mouseY={mouseY}
-        animationConfig={animationConfig}
+        animationConfig={animationConfig} handleActivatingImage={handleActivatingImage}
       />
     </GalleryContainer>
   );
@@ -522,18 +522,16 @@ const AnimatedList = memo(function AnimatedList({ proj, i, animationConfig,
           <SubHeaderContainer
             key={item.id}
             variants={subheaderContainerVars}
-            onHoverStart={() => handleActivatingImage(item.image)}
-            onHoverEnd={() => handleActivatingImage(null)}
-            whileHover={{
-              zIndex: 50,
+            onClick={() => handleActivatingImage(isHovered ? null : item.image)}
+            animate={{
+              zIndex: isHovered ? 50 : 1,
               transition: { duration: 0.35, ease: "easeOut" }
             }}
           >
             <SubHeaderBlur
               variants={subheaderBlurVars}
               initial="initial"
-              animate={animationConfig.blur}
-              whileHover={{ opacity: 0 }}
+              animate={isHovered ? 'initial' : animationConfig.blur}
             > {item.title}</SubHeaderBlur>
             <SubHeader
               variants={subheaderTextVars}
@@ -767,7 +765,7 @@ const FloatingShadowVars = {
   }
 };
 
-function FloatingImage({ image, mouseX, mouseY, animationConfig }) {
+function FloatingImage({ image, mouseX, mouseY, animationConfig, handleActivatingImage }) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   const offsetX = 20;
@@ -858,6 +856,7 @@ function FloatingImage({ image, mouseX, mouseY, animationConfig }) {
             initial='initial'
             animate='animate'
             exit='exit'
+            onClick={() => handleActivatingImage(null)}
             sx={{ backgroundImage: `url(${image})` }}
           />
         </React.Fragment>
