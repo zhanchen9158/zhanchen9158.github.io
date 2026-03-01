@@ -81,7 +81,7 @@ const highlights = {
       [
         {
           id: 9,
-          title: 'A.I. Assistant',
+          title: 'GQA Language Model A.I. Assistant',
           description: '',
           image: PROJECT_HIGHLIGHTS.mealplanner.aichat,
         },
@@ -171,15 +171,7 @@ const overlayVars = {
 };
 
 function HoverGallery({ }) {
-  const [activeImage, setActiveImage] = useState(highlights.marketintelligence.items[0].image);
-
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  const handleMouseMove = useCallback((e) => {
-    mouseX.set(e.clientX);
-    mouseY.set(e.clientY);
-  }, [mouseX, mouseY]);
+  const [activeImage, setActiveImage] = useState(null);
 
   const handleActivatingImage = useCallback((v) => {
     setActiveImage(v);
@@ -211,7 +203,6 @@ function HoverGallery({ }) {
   return (
     <GalleryContainer
       component={'section'}
-      onMouseMove={handleMouseMove}
     >
       <HoverOverlay
         variants={overlayVars}
@@ -220,11 +211,11 @@ function HoverGallery({ }) {
       />
       {Object.values(highlights).map((v, i) => (
         <AnimatedList key={v.id}
-          proj={v} i={i} animationConfig={animationConfig}
+          proj={v} proji={i} animationConfig={animationConfig}
           activeImage={activeImage}
           handleActivatingImage={handleActivatingImage} />
       ))}
-      <FloatingImage image={activeImage} mouseX={mouseX} mouseY={mouseY}
+      <FloatingImage image={activeImage}
         animationConfig={animationConfig} handleActivatingImage={handleActivatingImage}
       />
     </GalleryContainer>
@@ -371,7 +362,7 @@ const AnimatedLetter = styled(MotionBox)({
   willChange: 'transform',
 });
 
-const listItemDelay = 0.35;
+const listItemDelay = 0.45;
 
 const containerVars = {
   hidden: { opacity: 0, },
@@ -467,12 +458,12 @@ const lettermaskVars = {
   hidden: {
     opacity: 0,
   },
-  visible: ({ i, itemi }) => ({
+  visible: ({ proji, itemi }) => ({
     opacity: 1,
     transition: {
-      delayChildren: itemi * listItemDelay,
-      staggerChildren: 0.03 + ((itemi * 7) % 5) * 0.01,
-      staggerDirection: (i % 2 === 0) ? 1 : -1,
+      delayChildren: itemi * listItemDelay + 0.5,
+      staggerChildren: 0.07 + ((itemi * 7) % 5) * 0.01,
+      staggerDirection: (proji % 2 === 0) ? 1 : -1,
     }
   })
 };
@@ -484,31 +475,31 @@ const letterVars = {
   visible: (i) => ({
     y: 0, rotate: 0,
     transition: {
-      duration: 0.5 + ((i * 3) % 4) * 0.1,
+      duration: 0.5 + (3 - i) * 0.1,
       ease: [0.33, 1, 0.68, 1],
     }
   })
 };
 
-const AnimatedList = memo(function AnimatedList({ proj, i, animationConfig,
+const AnimatedList = memo(function AnimatedList({ proj, proji, animationConfig,
   activeImage, handleActivatingImage }) {
 
   return (
     <ListContainer
-      i={i}
+      i={proji}
       variants={containerVars}
       initial="hidden"
       whileInView={animationConfig.visible}
       viewport={{ once: false, amount: 0.2 }}
     >
       <ListBorder
-        i={i}
+        i={proji}
         variants={borderVars}
       />
       <Header
-        i={i}
+        i={proji}
         variants={driftVars}
-        custom={i}
+        custom={proji}
         initial={animationConfig.header}
         animate={animationConfig.header}
       >
@@ -551,7 +542,7 @@ const AnimatedList = memo(function AnimatedList({ proj, i, animationConfig,
               </ShadowContainer>
               <LetterMask
                 variants={lettermaskVars}
-                custom={{ i, itemi }}
+                custom={{ proji, itemi }}
                 initial='hidden'
                 whileInView='visible'
                 viewport={{ once: false, amount: 0.2 }}
@@ -559,7 +550,7 @@ const AnimatedList = memo(function AnimatedList({ proj, i, animationConfig,
                 {item.title.split('').map((l, letteri) => (
                   <AnimatedLetter
                     key={letteri}
-                    custom={i}
+                    custom={itemi}
                     variants={letterVars}
                   >
                     {l === " " ? "\u00A0" : l}
@@ -574,7 +565,12 @@ const AnimatedList = memo(function AnimatedList({ proj, i, animationConfig,
   )
 });
 
-const glowborder = 3;
+const BgOverlay = styled(MotionBox)(({ theme }) => ({
+  position: 'fixed',
+  inset: 0,
+  backgroundColor: (theme.vars || theme).palette.highlights.overlay,
+  zIndex: -1,
+}));
 
 const BackgroundImage = styled(MotionBox)(({ theme }) => ({
   position: 'fixed',
@@ -583,122 +579,8 @@ const BackgroundImage = styled(MotionBox)(({ theme }) => ({
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   filter: 'url(#liquid-ripple)',
-  willChange: 'filter',
+  willChange: 'filter, opacity',
   zIndex: 1,
-}));
-
-const BgOverlay = styled(MotionBox)(({ theme }) => ({
-  position: 'fixed',
-  inset: 0,
-  backgroundColor: (theme.vars || theme).palette.highlights.overlay,
-  zIndex: -1,
-}));
-
-const ImageModal = styled(Box)(({ theme }) => ({
-  position: "fixed",
-  top: 0,
-  left: 0,
-  pointerEvents: "none",
-  width: '100%', height: '100%',
-  zIndex: 10,
-  background: 'transparent',
-  willChange: "transform, opacity",
-}));
-
-const ImageShadowContainer = styled(MotionBox)(({ theme }) => ({
-  position: 'fixed',
-  inset: '30px',
-  width: '50%', //height: 'auto',
-  aspectRatio: 16 / 9,
-  borderRadius: '16px',
-  zIndex: -1,
-  willChange: 'transform, opacity',
-  [theme.breakpoints.down('lg')]: {
-    width: '80%',
-  },
-  [theme.breakpoints.down('md')]: {
-    width: '90%',
-  },
-  [theme.breakpoints.down('sm')]: {
-    width: '100%',
-  },
-}));
-
-const FloatingShadow = styled(MotionBox)(({ theme }) => ({
-  position: 'absolute',
-  top: 0, left: 0, right: 0, bottom: 0,
-  background: 'rgba(0, 30, 60, 0.6)',
-  filter: 'blur(8px)',
-  borderRadius: 'inherit',
-  willChange: 'transform, opacity',
-}));
-
-const ImageContainer = styled(MotionBox)(({ theme }) => ({
-  position: 'fixed',
-  width: '50%', //height: 'auto',
-  aspectRatio: 16 / 9,
-  borderRadius: '16px',
-  willChange: "transform, opacity",
-  [theme.breakpoints.down('lg')]: {
-    width: '80%',
-  },
-  [theme.breakpoints.down('md')]: {
-    width: '90%',
-  },
-  [theme.breakpoints.down('sm')]: {
-    width: '100%',
-  },
-}));
-
-const ImageBorder = styled(MotionBox)(({ theme }) => ({
-  position: 'absolute',
-  inset: 0,
-  borderRadius: 'inherit',
-  backfaceVisibility: 'hidden',
-  zIndex: -1,
-  outline: `${glowborder}px solid ${(theme.vars || theme).palette.highlights.glow}`,
-}));
-
-const ImageGlow = styled(MotionBox)(({ theme }) => ({
-  position: 'absolute',
-  inset: `-${glowborder}px`,
-  borderRadius: 'inherit',
-  boxShadow: `0 0 25px ${(theme.vars || theme).palette.highlights.glow}`,
-  zIndex: -1,
-  willChange: 'transform, opacity',
-  backfaceVisibility: 'hidden',
-  mixBlendMode: 'plus-lighter',
-}));
-
-const GlowShadow = styled(MotionBox)(({ theme }) => ({
-  position: 'absolute',
-  width: '100%', height: '5px',
-  top: 'calc(100% + 30px)', left: theme.spacing(3),
-  background: (theme.vars || theme).palette.highlights.glow,
-  filter: 'blur(10px)',
-  borderRadius: 'inherit',
-  //willChange: 'transform, opacity',
-  backfaceVisibility: 'hidden',
-  zIndex: -1,
-}));
-
-const ImageShadow = styled(Box)(({ theme }) => ({
-  position: 'absolute',
-  width: '100%', height: '25%',
-  top: '105%', left: theme.spacing(3),
-  background: '#001e3c',
-  filter: 'blur(10px)',
-  opacity: 0.25,
-  borderRadius: 'inherit',
-  willChange: 'transform, opacity',
-  zIndex: -2,
-}));
-
-const StyledImage = styled('img')(({ theme }) => ({
-  width: '100%', height: '100%',
-  borderRadius: 'inherit',
-  objectFit: 'cover',
-  display: 'block',
 }));
 
 const rippleduration = 8;
@@ -709,7 +591,7 @@ const bgoverlayVars = {
     opacity: 1,
     transition: { duration: rippleduration / 4 }
   },
-  exit: { opacity: 0 }
+  exit: { opacity: 0, transition: { duration: rippleduration / 4 } }
 };
 
 const bgVars = {
@@ -720,82 +602,19 @@ const bgVars = {
     opacity: 0.4, scale: 1,
     transition: { duration: rippleduration / 4, ease: "easeOut", }
   },
-  exit: { opacity: 0 }
+  exit: { opacity: 0, transition: { duration: rippleduration / 4 } }
 };
 
-const imageVars = {
-  initial: {
-    opacity: 0,
-    scale: 0.8
-  },
-  animate: (opacity = 1) => ({
-    opacity: opacity,
-    scale: 1,
-    transition: {
-      opacity: { duration: 0.6 },
-      scale: { type: "spring", stiffness: 100, damping: 20 }
-    }
-  }),
-};
-
-const glowVars = {
-  initial: {
-    scaleX: 0,
-    opacity: 0, originX: 0.5
-  },
-  animate: {
-    scaleX: 1, opacity: 1,
-    transition: {
-      delay: 0.35,
-      duration: 0.8,
-      ease: "easeInOut"
-    }
-  },
-};
-
-const FloatingShadowVars = {
-  floating: {
-    x: ["0%", "5%", "-3%", "0%"],
-    y: ["0%", "-2%", "5%", "0%"],
-    transition: {
-      duration: shadowduration,
-      repeat: Infinity,
-      ease: "easeInOut"
-    }
-  }
-};
-
-function FloatingImage({ image, mouseX, mouseY, animationConfig, handleActivatingImage }) {
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  const offsetX = 20;
-  const offsetY = 20;
+const FloatingImage = memo(function FloatingImage({ image, animationConfig, handleActivatingImage }) {
 
   const rippleParams = useMemo(() => ({
     randomScale: Math.round(getRandom(20, 50)),
     randomFreq: getRandom(0.02, 0.04).toFixed(3)
   }), [image]);
 
-  const boundsRef = useRef({ vw: window.innerWidth, vh: window.innerHeight });
-  const sizeRef = useRef({ width: 300, height: 169 });
-
-  useEffect(() => {
-    const updateBounds = () => {
-      boundsRef.current = {
-        vw: window.innerWidth,
-        vh: window.innerHeight
-      };
-    };
-
-    window.addEventListener('resize', updateBounds);
-    updateBounds();
-    return () => window.removeEventListener('resize', updateBounds);
-  }, []);
-
   const rippleProgress = useMotionValue(0);
 
   useEffect(() => {
-    setIsLoaded(false);
     rippleProgress.set(0);
     animate(rippleProgress, 1, {
       duration: rippleduration,
@@ -803,47 +622,11 @@ function FloatingImage({ image, mouseX, mouseY, animationConfig, handleActivatin
     });
   }, [image]);
 
-  const handleImageLoad = (e) => {
-    sizeRef.current = {
-      width: e.currentTarget.offsetWidth,
-      height: e.currentTarget.offsetHeight
-    };
-    setIsLoaded(true);
-  };
-
-  const clampedX = useTransform(mouseX, (x) => {
-    const { vw } = boundsRef.current;
-    const { width } = sizeRef.current;
-    const maxX = vw - width;
-    return Math.max(0, Math.min(x - offsetX, maxX));
-  });
-
-  const clampedY = useTransform(mouseY, (y) => {
-    const { vh } = boundsRef.current;
-    const { height } = sizeRef.current;
-    const maxY = vh - height;
-    return Math.max(0, Math.min(y - offsetY, maxY));
-  });
-
-  const imageX = useTransform(clampedX, (v) => v * 0.85);
-  const imageY = useTransform(clampedY, (v) => v * 0.85);
-  //const shadowX = useTransform(clampedX, (v) => v * 0.92);
-  //const shadowY = useTransform(clampedY, (v) => v * 0.92);
-
-  const springConfig = { stiffness: 200, damping: 25, mass: 0.2 };
-
-  const edgeX = useSpring(imageX, springConfig);
-  const edgeY = useSpring(imageY, springConfig);
-  //const sX = useSpring(shadowX, springConfig);
-  //const sY = useSpring(shadowY, springConfig);
-
   return (
     <AnimatePresence>
+      <LiquidFilter progress={rippleProgress} rippleParams={rippleParams} />
       {image && (
-        <LiquidFilter progress={rippleProgress} rippleParams={rippleParams} />
-      )}
-      {image && (
-        <React.Fragment>
+        <motion.div key={image}>
           <BgOverlay
             variants={bgoverlayVars}
             initial='initial'
@@ -859,64 +642,16 @@ function FloatingImage({ image, mouseX, mouseY, animationConfig, handleActivatin
             onClick={() => handleActivatingImage(null)}
             sx={{ backgroundImage: `url(${image})` }}
           />
-        </React.Fragment>
-      )}
-      {image && (
-        <ImageModal
-          variants={imageVars}
-          initial="initial"
-          animate={isLoaded ? "animate" : "initial"}
-          exit="initial"
-        >
-          {/*<ImageShadowContainer
-            key={`shadowcontainer-${image}`}
-            style={{
-              x: sX,
-              y: sY,
-            }}
-            variants={imageVars}
-            custom={0.4}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          >
-            <FloatingShadow
-              key={`shadow-${image}`}
-              variants={FloatingShadowVars}
-              animate={animationConfig.floating}
-            />
-          </ImageShadowContainer>*/}
-          <ImageContainer
-            key={image}
-            onLoad={handleImageLoad}
-            style={{
-              x: edgeX,
-              y: edgeY,
-            }}
-            variants={imageVars}
-            initial="initial"
-            animate={isLoaded ? "animate" : "initial"}
-            exit="initial"
-          >
-            <ImageBorder
-              variants={glowVars}
-            />
-            <ImageGlow
-              variants={glowVars}
-            />
-            <GlowShadow
-              variants={glowVars}
-            />
-            {/*<ImageShadow />*/}
-            <StyledImage
-              src={image}
-            />
-          </ImageContainer>
-        </ImageModal>
+        </motion.div>
       )}
     </AnimatePresence>
   );
-}
+});
+
+const StyledSvg = styled('svg')(({ theme }) => ({
+  position: 'absolute',
+  width: 0, height: 0
+}));
 
 const LiquidFilter = memo(function LiquidFilter({ progress, rippleParams }) {
 
@@ -926,7 +661,7 @@ const LiquidFilter = memo(function LiquidFilter({ progress, rippleParams }) {
   const frequency = useTransform(progress, [0, 1], [randomFreq, 0.01]);
 
   return (
-    <svg style={{ position: 'absolute', width: 0, height: 0 }}>
+    <StyledSvg>
       <filter id="liquid-ripple" x="-10%" y="-10%" width="110%" height="110%">
         <motion.feTurbulence
           type="fractalNoise"
@@ -942,6 +677,6 @@ const LiquidFilter = memo(function LiquidFilter({ progress, rippleParams }) {
           yChannelSelector="G"
         />
       </filter>
-    </svg>
+    </StyledSvg>
   );
 });

@@ -65,7 +65,7 @@ export default function PortfolioPage({ }) {
       <ScrollContainer
         ref={scrollContainerRef}
       >
-        <GrainOverlay opacity={0.07} />
+        <GrainOverlay bgcolor='#000000' />
         {sections.map((v, i) => (
           <Page key={v.id}
             id={v.id}

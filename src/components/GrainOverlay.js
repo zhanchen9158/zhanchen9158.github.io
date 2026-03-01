@@ -1,32 +1,23 @@
-const GrainOverlay = ({ opacity = 0.05, contrast = "150%" }) => {
-  return (
-    <div 
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        pointerEvents: 'none',
-        zIndex: 9999,
-        opacity: opacity,
-        filter: `contrast(${contrast}) brightness(100%)`,
-      }}
-    >
-      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-        <filter id="noiseFilter">
-          <feTurbulence 
-            type="fractalNoise" 
-            baseFrequency="0.60" 
-            numOctaves="3" 
-            stitchTiles="stitch" 
-          />
-          <feColorMatrix type="saturate" values="0" />
-        </filter>
-        <rect width="100%" height="100%" filter="url(#noiseFilter)" />
-      </svg>
-    </div>
-  );
-};
+import { styled } from '@mui/material/styles';
+
+
+const GrainOverlay = styled('div')(({ theme, opacity = 0.05,
+  bgcolor, contrast = "150%" }) => {
+
+  const color = (theme.vars || theme).palette.background.default;
+
+  return {
+    position: 'absolute', inset: 0,
+    borderRadius: 'inherit',
+    pointerEvents: 'none',
+    zIndex: 9999,
+    opacity: opacity,
+    filter: `contrast(${contrast}) brightness(100%)`,
+    backgroundColor: bgcolor || color,
+    backgroundImage: `url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyAMAAAAD896isAAAAAXNSR0IArs4c6QAAAFZJREFUOMtjYKAicP7/z4AGmBgoA7YVTP8fMCALMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDD8BwBySAsX3v6I2gAAAABJRU5ErkJggg==")`,
+    backgroundRepeat: 'repeat',
+    backfaceVisibility: "hidden",
+  };
+});
 
 export default GrainOverlay;

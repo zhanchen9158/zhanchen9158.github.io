@@ -4,13 +4,14 @@ import { styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import {
     motion, AnimatePresence, useMotionValue,
-    useSpring, useTransform, cubicBezier,
+    useSpring, useTransform,
 } from "motion/react";
 import Box from '@mui/material/Box';
 import { useAnimateContext } from './AnimateContext';
+import GlassOverlay from './GlassOverlay';
 import SvgGlow from './SvgGlow';
-import SvgGlassOverlay from './SvgGlassOverlay';
 import SvgSplitColor, { SvgSplitShadow, SvgBorder } from './SvgSplitColor';
+import GrainOverlay from './GrainOverlay';
 import hexToRgba from '../functions/hexToRgba';
 
 
@@ -51,6 +52,7 @@ const SKILLS_DATA = [
         mainicon: 'frontend',
         icons: [
             { file: 'react', name: 'React' },
+            { file: 'onnx', name: 'ONNX Runtime Web' },
             { file: 'materialui', name: 'Material UI' },
             { file: 'html', name: 'HTML' },
             { file: 'css', name: 'CSS' },
@@ -225,140 +227,50 @@ const GridItemContainer = styled(MotionBox)(({ theme }) => ({
     borderRadius: '32px',
     cursor: 'pointer',
     perspective: '1000px',
-    //transformStyle: "preserve-3d",
+    transformStyle: "preserve-3d",
     willChange: 'transform',
     backfaceVisibility: "hidden",
     isolation: 'isolate',
 }));
 
-const GridItemContainerShadow = styled(Box)(({ theme }) => ({
-    position: 'absolute',
-    inset: 0,
-    borderRadius: 'inherit',
-    zIndex: -1,
-    backfaceVisibility: "hidden",
-    boxShadow: '0 10px 20px rgba(0,0,0,0.15), 0 6px 6px rgba(0,0,0,0.24)',
-    pointerEvents: 'none',
-}));
-
-const Header = styled(Box)(({ theme }) => ({
-    position: 'relative',
-    fontWeight: 600,
-    lineHeight: 0.9,
-    fontFamily: 'Playfair Display',
-    fontSize: '24px',
-    alignSelf: 'self-start',
-    color: 'rgb(0,0,0)',
-    [theme.breakpoints.down('md')]: {
-        fontSize: '22px',
-    },
-}));
-
-const SubHeader = styled(MotionBox)(({ theme }) => ({
-    position: 'relative',
-    textTransform: 'uppercase',
-    tracking: '0.1em',
-    opacity: 0.6,
-    fontFamily: 'Instrument Serif',
-    fontSize: '22px',
-    color: 'rgb(255,255,255)',
-    backfaceVisibility: "hidden",
-}));
-
-const TextShadow = styled(Box)(({ theme, color = '#000000', opacity = 0.5,
-    top = '100%', height = '40%'
-}) => ({
-    position: 'absolute',
-    top: top, left: 0,
-    width: '100%', height: height,
-    backgroundColor: color,
-    filter: 'blur(8px)',
-    opacity: opacity,
-    pointerEvents: 'none',
-}));
-
 const itemVars = {
-    hidden: (i) => ({
-        x: i == 1
-            ? -120
-            : i == 3
-                ? 120 : 0,
-        y: i == 2
-            ? -120
-            : i == 4
-                ? 120 : 0,
-    }),
-    visible: {
-        x: 0, y: 0,
-        transition: {
-            delay: 0.35,
-            duration: 0.65,
-            ease: cubicBezier(0.45, 0, 0.55, 1),
-            staggerChildren: 0.35,
-            delayChildren: 0.6,
-        }
-    },
-    static: { x: 0, y: 0, transition: { duration: 0 } },
-};
-
-const textVars = {
     hidden: {
-        opacity: 0,
-        x: -20,
+        opacity: 1,
     },
     visible: {
         opacity: 1,
-        x: 0,
         transition: {
-            type: "spring", stiffness: 160, damping: 20,
+            //delay: 0.65,
+            duration: 1.85,
+            ease: [0.33, 1, 0.68, 1],
         }
     },
-    static: { opacity: 1, scale: 1, x: 0, y: 0, transition: { duration: 0 } },
+    static: { opacity: 1, transition: { duration: 0 } },
 };
 
 const AnimatedGridItem = memo(function AnimatedGridItem({ item, selectedId, lastSelectedId,
     handleItemSelect, handleGridAnimationComplete }) {
 
-    const lesserThanSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
-
     return (
         <GridItemContainer
-            variants={itemVars}
+            //variants={itemVars}
             custom={item.id}
             layoutId={`skillgriditem-${item.id}`}
             layout
-            onClick={() => handleItemSelect(item.id)}
             onLayoutAnimationComplete={() => handleGridAnimationComplete(item.id)}
-            //whileHover={{ scale: 0.98 }}
+            onClick={() => handleItemSelect(item.id)}
+            whileHover={{
+                zIndex: 99,
+            }}
             sx={{
                 gridArea: gridMap[item.id] || 'a',
-                zIndex: (selectedId == item.id || lastSelectedId == item.id) ? 10 : 1,
+                zIndex: (selectedId === item.id || lastSelectedId === item.id) ? 10 : 1,
             }}
         >
-            <GridItemContainerShadow />
-            <AnimatedGridItem3D item={item}>
-                <Header>
-                    <TextShadow />
-                    {item.title}
-                </Header>
-                {item.id == 1 && !lesserThanSm && item.icons.map((v, i) => (
-                    <SubHeader
-                        key={i}
-                        variants={textVars}
-                    >
-                        <TextShadow
-                            opacity={0.3}
-                            top={'90%'} height={'20%'}
-                        />
-                        {v.name}
-                    </SubHeader>
-                ))}
-            </AnimatedGridItem3D>
+            <AnimatedGridItem3D item={item} handleGridAnimationComplete={handleGridAnimationComplete} />
         </GridItemContainer>
     );
 });
-
-const SPRING3D_CONFIG = { stiffness: 150, damping: 20 };
 
 const GridItem3D = styled(MotionBox)(({ theme }) => ({
     position: 'relative',
@@ -367,84 +279,99 @@ const GridItem3D = styled(MotionBox)(({ theme }) => ({
     width: '100%', height: '100%',
     background: 'transparent',
     transformStyle: "preserve-3d",
-    transform: 'translateZ(0)',
     willChange: "transform",
     outline: "1px solid transparent",
     backfaceVisibility: "hidden",
 }));
 
-const GridItemBg = styled(Box)(({ theme }) => ({
+const BORDER = 1.5;
+
+const GridItemBorder = styled(MotionBox)(({ theme, color = '#ffffff' }) => ({
+    position: 'absolute',
+    inset: `-${BORDER}px`,
+    background: `radial-gradient(
+        300px circle at var(--mouse-x) var(--mouse-y), 
+        ${color}, 
+        transparent 60%
+    ) no-repeat`,
+    WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+    WebkitMaskComposite: 'xor',
+    maskComposite: 'exclude',
+    padding: `${BORDER}px`,
+    borderRadius: 'inherit',
+    zIndex: 2,
+    backfaceVisibility: "hidden",
+    pointerEvents: 'none',
+    //outline: "2px solid transparent",
+    //boxShadow: '0 0 2px transparent',
+    border: `${BORDER}px solid transparent`,
+}));
+
+const GridItemBg = styled(MotionBox)(({ theme }) => ({
     position: 'absolute',
     inset: 0,
     borderRadius: 'inherit',
-    transform: 'translateZ(0)',
     outline: "1px solid transparent",
     backfaceVisibility: "hidden",
     zIndex: 0,
     pointerEvents: 'none',
 }));
 
-const GridItemUnderlayer = styled(MotionBox)(({ theme }) => ({
-    position: 'absolute',
-    inset: '-2%',
-    borderRadius: 'inherit',
-    transform: 'translateZ(-30px)',
-    outline: "1px solid transparent",
-    backfaceVisibility: "hidden",
-    zIndex: -1,
-    pointerEvents: 'none',
-}));
-
-const GridItemLight = styled(Box)(({ theme }) => ({
+const Spotlight = styled(motion.div)({
     position: 'absolute',
     inset: 0,
-    overflow: 'hidden',
     borderRadius: 'inherit',
+    background: `radial-gradient(
+        circle at var(--mouse-x) var(--mouse-y), 
+        rgba(255, 255, 255, 0.15), 
+        transparent 80%
+    )`,
+    zIndex: 3,
     pointerEvents: 'none',
-    //zIndex: 1
-}));
+});
 
-const GridItemContent = styled(Box)(({ theme }) => ({
-    position: 'relative',
-    width: '100%', height: '100%',
-    borderRadius: theme.spacing(4),
-    padding: theme.spacing(4),
-    cursor: 'pointer',
-    display: 'flex', flexDirection: 'column-reverse',
-    justifyContent: 'space-between', alignItems: 'center',
-    color: (theme.vars || theme).palette.text.primary,
-    overflow: 'hidden',
-    transform: "translateZ(60px) rotate(0.001deg)",
-    transformStyle: "preserve-3d",
-    backfaceVisibility: "hidden",
-    WebkitBackfaceVisibility: "hidden",
-    //WebkitFontSmoothing: "antialiased",
-    //zIndex: 2,
-    [theme.breakpoints.down('md')]: {
-        borderRadius: theme.spacing(3),
-        paddingLeft: theme.spacing(2),
-        paddingRight: theme.spacing(2),
-        paddingBottom: theme.spacing(4),
-    },
-    [theme.breakpoints.down('sm')]: {
-        borderRadius: theme.spacing(2),
-        padding: theme.spacing(2),
-        paddingLeft: theme.spacing(4),
-    },
-}));
+const hover = 0.5;
+const HOVERBG_CONFIG = { duration: hover, ease: 'easeOut' };
+const HOVERCONTENT_CONFIG = { duration: 2.5 * hover, ease: 'easeOut' };
 
-const underlayerVars = {
-    hidden: { opacity: 0 },
-    visible: {
-        opacity: 1,
-        transition: {
-            duration: 4, ease: 'easeOut'
-        }
+const item3dVars = {
+    initial: {
+        z: 0,
+        scale: 1,
+        transition: HOVERBG_CONFIG,
     },
-    static: { opacity: 1, transition: { duration: 0 } },
+    hover: {
+        z: 60,
+        scale: 1.02,
+        transition: HOVERCONTENT_CONFIG,
+    },
+    rest: {
+        z: 0,
+        scale: 1,
+        transition: HOVERBG_CONFIG,
+    },
+    static: { z: 0, scale: 1 },
 };
 
-const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, children }) {
+const griditemhoverVars = {
+    initial: {
+        opacity: 0,
+        transition: HOVERBG_CONFIG,
+    },
+    hover: ({ o = 1, d = hover } = {}) => ({
+        opacity: o,
+        transition: { duration: d, ease: 'easeOut' },
+    }),
+    rest: {
+        opacity: 0,
+        transition: HOVERBG_CONFIG,
+    },
+    static: { opacity: 1, },
+};
+
+const SPRING3D_CONFIG = { stiffness: 150, damping: 20, mass: 0.1 };
+
+const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item }) {
 
     const lesserThanSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
     const containerRef = useRef(null);
@@ -452,11 +379,8 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, children }) 
     const x = useMotionValue(0);
     const y = useMotionValue(0);
 
-    const mouseXSpring = useSpring(x, SPRING3D_CONFIG);
-    const mouseYSpring = useSpring(y, SPRING3D_CONFIG);
-
-    const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["-7.5deg", "7.5deg"]);
-    const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["7.5deg", "-7.5deg"]);
+    const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [-12, 12]), SPRING3D_CONFIG);
+    const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [12, -12]), SPRING3D_CONFIG);
 
     const handleMouseEnter = useCallback((e) => {
         containerRef.current = e.currentTarget.getBoundingClientRect();
@@ -467,15 +391,38 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, children }) 
         if (!dimension) return;
 
         const { left, top, width, height } = dimension;
+        const mouseX = e.clientX - left;
+        const mouseY = e.clientY - top;
 
-        x.set((e.clientX - left) / width - 0.5);
-        y.set((e.clientY - top) / height - 0.5);
+        e.currentTarget.style.setProperty('--mouse-x', `${mouseX}px`);
+        e.currentTarget.style.setProperty('--mouse-y', `${mouseY}px`);
+
+        x.set(mouseX / width - 0.5);
+        y.set(mouseY / height - 0.5);
     }, [x, y]);
 
-    const handleMouseLeave = useCallback(() => {
+    const handleMouseLeave = useCallback((e) => {
         x.set(0);
         y.set(0);
+        //e.currentTarget.style.setProperty('--mouse-x', `0px`);
+        //e.currentTarget.style.setProperty('--mouse-y', `0px`);
     }, [x, y]);
+
+    const { manual, system } = useAnimateContext();
+    const mode = system || manual;
+
+    const animationConfig = useMemo(() => {
+        const isNormal = (mode === 'normal');
+
+        return {
+            initial: isNormal ? 'initial' : 'static',
+            rest: isNormal ? 'rest' : 'static',
+            hover: isNormal ? 'hover' : 'static',
+
+            hidden: isNormal ? 'hidden' : "static",
+            visible: isNormal ? 'visible' : "static",
+        };
+    }, [mode]);
 
     return (
         <GridItem3D
@@ -486,61 +433,279 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, children }) 
                 rotateX: lesserThanSm ? 0 : rotateX,
                 rotateY: lesserThanSm ? 0 : rotateY,
             }}
+            variants={item3dVars}
+            initial={animationConfig.initial}
+            animate={animationConfig.rest}
+            whileInView={animationConfig.visible}
+            whileHover={animationConfig.hover}
         >
-            <GridItemBg
-                sx={{
-                    bgcolor: item.color,
-                    //border: `1px solid ${item.border}`,
-                }}
+            <GridItemBorder
+                variants={griditemhoverVars}
             />
-            {!lesserThanSm &&
-                <GridItemUnderlayer
-                    variants={underlayerVars}
-                    initial='hidden'
-                    whileInView='visible'
-                    viewport={{ once: false, amount: 0.5 }}
-                    sx={{
-                        bgcolor: item.underlayercolor,
-                        //border: `1px solid ${item.border}`,
-                    }}
-                />
-            }
-            {!lesserThanSm &&
-                <GridItemLight>
-                    <SvgGlow opacity={0.6} />
-                </GridItemLight>
-            }
-            <GridItemContent>
-                {children}
-            </GridItemContent>
+            <GridItemBg
+                variants={griditemhoverVars}
+            >
+                <GrainOverlay opacity={0.15} bgcolor='#ffffff' contrast='200%' />
+            </GridItemBg>
+            <Spotlight
+                variants={griditemhoverVars}
+            />
+            <AnimatedGridItemContent item={item} animationConfig={animationConfig}
+                shadowX={rotateX} shadowY={rotateY}
+            />
         </GridItem3D>
     );
 });
 
+const GridItemContent = styled(MotionBox)(({ theme }) => ({
+    position: 'relative',
+    width: '100%', height: '100%',
+    borderRadius: 'inherit',
+    padding: theme.spacing(4, 2),
+    cursor: 'pointer',
+    display: 'flex', flexDirection: 'column-reverse',
+    justifyContent: 'space-between', alignItems: 'center',
+    //overflow: 'hidden',
+    transformStyle: "preserve-3d",
+    backfaceVisibility: "hidden",
+    WebkitBackfaceVisibility: "hidden",
+    WebkitFontSmoothing: "antialiased",
+    //zIndex: 2,
+    [theme.breakpoints.down('sm')]: {
+        padding: theme.spacing(2),
+    },
+}));
+
+const TextHover = styled(MotionBox)(({ theme, align = 'auto' }) => ({
+    position: 'relative',
+    transformStyle: "preserve-3d",
+    backfaceVisibility: "hidden",
+    alignSelf: align,
+}));
+
+const TextClip = styled(MotionBox)({
+    overflow: 'hidden',
+    display: 'block',
+    lineHeight: 1.2,
+});
+
+const Header = styled(MotionBox)(({ theme, textcolor = '#000000' }) => ({
+    position: 'relative',
+    fontWeight: 600,
+    lineHeight: 0.9,
+    fontFamily: 'Fraunces',
+    textTransform: 'uppercase',
+    fontSize: '26px',
+    color: textcolor,
+    whiteSpace: 'nowrap',
+    [theme.breakpoints.down('md')]: {
+        fontSize: '24px',
+    },
+    transformStyle: "preserve-3d",
+    backfaceVisibility: "hidden",
+}));
+
+const SubHeader = styled(MotionBox)(({ theme }) => ({
+    position: 'relative',
+    textTransform: 'uppercase',
+    letterspacing: '0.15em',
+    fontFamily: 'Antonio',
+    fontSize: '22px',
+    color: 'rgb(255,255,255)',
+    transformStyle: "preserve-3d",
+    backfaceVisibility: "hidden",
+}));
+
+const TextShadow = styled(MotionBox)(({ theme, color = '#000000',
+    top = '100%', height = '40%'
+}) => ({
+    position: 'absolute',
+    top: top, left: 0,
+    width: '100%', height: height,
+    backgroundColor: color,
+    filter: 'blur(12px)',
+    pointerEvents: 'none',
+    transformStyle: "preserve-3d",
+    backfaceVisibility: "hidden",
+}));
+
+const pagedelay = 1.6;
+
+const itemcontentVars = {
+    initial: {
+        z: 0,
+        transition: HOVERBG_CONFIG,
+    },
+    hover: {
+        z: 60,
+        transition: HOVERCONTENT_CONFIG,
+    },
+    rest: {
+        z: 0,
+        transition: HOVERBG_CONFIG,
+    },
+    static: { z: 0, },
+};
+
+const texthoverVars = {
+    initial: {
+        z: 0,
+    },
+    hover: (i = 0) => ({
+        z: 90,
+        transition: {
+            delay: i * 0.35,
+            ...HOVERBG_CONFIG
+        },
+    }),
+    rest: {
+        z: 0,
+        transition: HOVERBG_CONFIG,
+    },
+    static: { z: 0, transition: { duration: 0 } },
+};
+
+const headerVars = {
+    initial: {
+        textShadow: '2px 0px 0px rgba(255, 0, 0, 1), -2px 0px 0px rgba(0, 0, 255, 1)',
+    },
+    visible: {
+        textShadow: '0px 0px 0px rgba(255, 0, 0, 0), 0px 0px 0px rgba(0, 0, 255, 0)',
+        transition: {
+            duration: 2,
+            ease: [0.22, 1, 0.36, 1],
+            delay: pagedelay - 0.2
+        }
+    },
+    static: { textShadow: '0px 0px 0px rgba(255, 0, 0, 0), 0px 0px 0px rgba(0, 0, 255, 0)', },
+};
+
+const textshadowVars = {
+    initial: {
+        opacity: 0, z: 0,
+        scale: 1,
+    },
+    hover: (i) => ({
+        opacity: 0.35, z: -100,
+        scale: 1.10,
+        transition: {
+            delay: i * 0.45,
+            ...HOVERBG_CONFIG
+        },
+    }),
+    static: { opacity: 0, z: 0, scale: 1 },
+};
+
+const textVars = {
+    initial: {
+        opacity: 0,
+        y: '100%',
+    },
+    visible: (i) => ({
+        opacity: 1,
+        y: 0,
+        transition: {
+            delay: i * 0.35 + pagedelay + 0.2,
+            type: "spring", stiffness: 160, damping: 20,
+        }
+    }),
+    static: { opacity: 1, y: 0, transition: { duration: 0 } },
+};
+
+const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, animationConfig,
+    shadowX, shadowY
+}) {
+
+    const lesserThanSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
+
+    return (
+        <GridItemContent
+            variants={itemcontentVars}
+        >
+            <TextHover
+                variants={texthoverVars}
+                align={'flex-start'}
+            >
+                <TextShadow
+                    variants={textshadowVars}
+                    top={'80%'} height={'40%'}
+                    style={{
+                        x: lesserThanSm ? 0 : shadowY,
+                        y: lesserThanSm ? 0 : shadowX,
+                    }}
+                />
+                <Header
+                    textcolor={item.color}
+                    variants={headerVars}
+                >
+                    {item.title}
+                </Header>
+            </TextHover>
+            {item.id == 1 && !lesserThanSm && item.icons.map((v, i) => (
+                <TextHover
+                    key={i}
+                    custom={i}
+                    variants={texthoverVars}
+                >
+                    <TextShadow
+                        custom={i}
+                        variants={textshadowVars}
+                        top={'80%'} height={'20%'}
+                        style={{
+                            x: lesserThanSm ? 0 : shadowY,
+                            y: lesserThanSm ? 0 : shadowX,
+                        }}
+                    />
+                    <TextClip>
+                        <SubHeader
+                            custom={i}
+                            variants={textVars}
+                        >
+                            {v.name}
+                        </SubHeader>
+                    </TextClip>
+                </TextHover>
+            ))}
+        </GridItemContent>
+    );
+});
+
 const Modal = styled(MotionBox)(({ theme }) => ({
-    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+    position: 'fixed', inset: 0,
     zIndex: 10, display: 'flex',
     alignItems: 'center', justifyContent: 'center',
     backfaceVisibility: "hidden",
 }));
 
-const ModalContent = styled(MotionBox)(({ theme }) => ({
+const ModalContent = styled(MotionBox)(({ theme, bgcolor }) => ({
     position: 'relative',
     width: '80%', maxWidth: 675, height: 450,
     borderRadius: '32px', padding: 0,
-    color: 'rgba(0,0,0,1)',
+    //background: bgcolor,
+    //backdropFilter: 'blur(20px) saturate(180%)',
     display: 'flex', justifyContent: 'center', alignItems: 'center',
     [theme.breakpoints.down('sm')]: {
         width: '100%',
     },
     perspective: '1000px',
-    //transformStyle: "preserve-3d",
+    transformStyle: "preserve-3d",
     willChange: 'transform, opacity',
     backfaceVisibility: "hidden",
     isolation: 'isolate',
 }));
 
-const ModalTitle = styled(Box)(({ theme }) => ({
+const ModalBg = styled(MotionBox)(({ theme, bgcolor }) => ({
+    position: 'absolute',
+    width: '80%', maxWidth: 675, height: 450,
+    borderRadius: '32px', padding: 0,
+    background: bgcolor,
+    backdropFilter: 'blur(20px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+    //willChange: 'transform, opacity',
+    backfaceVisibility: "hidden",
+}));
+
+const ModalTitle = styled(MotionBox)(({ theme }) => ({
     position: 'absolute',
     top: theme.spacing(2), left: theme.spacing(2),
     whiteSpace: 'nowrap',
@@ -562,6 +727,8 @@ const TitleGlow = styled(MotionBox)(({ theme }) => ({
     //willChange: 'transform, opacity',
 }));
 
+const layoutduration = 0.5;
+
 const modalVars = {
     initial: {
         opacity: 0,
@@ -569,7 +736,6 @@ const modalVars = {
     animate: {
         opacity: 1,
         transition: {
-            layout: { duration: 0.3, ease: "easeOut" },
             opacity: { duration: 0.3 }
         }
     },
@@ -591,29 +757,38 @@ const AnimatedModal = memo(function AnimatedModal({ selectedItem, handleItemSele
     return (
         <Modal
             variants={modalVars}
+            initial='initial'
             animate='animate'
             exit='initial'
-            transition={{ layout: { duration: 0.3 } }}
             onClick={() => handleItemSelect(null)}
         >
+            <ModalBg
+                bgcolor={hexToRgba(selectedItem.cardcolors[1], 0.15)}
+            />
             <ModalContent
                 layoutId={`skillgriditem-${selectedItem.id}`}
                 layout
-                sx={{
-                    backgroundColor: selectedItem.cardcolors[1],
+                transition={{
+                    layout: {
+                        duration: layoutduration,
+                        ease: "easeOut"
+                    },
                 }}
+            //bgcolor={hexToRgba(selectedItem.cardcolors[1], 0.7)}
             >
-                <SvgSplitShadow />
-                <SvgSplitColor color={selectedItem.cardcolors[0]}
-                    transform="translateZ(30px)" transformStyle="preserve-3d"
-                />
-                <SvgBorder
+
+
+                <GrainOverlay />
+                {/*<SvgSplitShadow />*/}
+                {/*<SvgSplitColor color={selectedItem.cardcolors[0]} />*/}
+                {/*<SvgBorder
                     glowColor={selectedItem.cardcolors[2]}
                     borderColor={selectedItem.cardcolors[0]}
-                />
+                />*/}
                 <ModalTitle
+
                     sx={{
-                        color: selectedItem.cardcolors[1],
+                        color: selectedItem.color,
                     }}
                 >
                     <TitleGlow
@@ -653,7 +828,7 @@ const ICON_LAYOUTS = SKILLS_DATA.reduce((acc, skill) => {
 
 const StyledCard = styled(Box)(({ theme }) => ({
     width: '90%', maxWidth: 675, height: 450,
-    borderRadius: theme.spacing(4), padding: theme.spacing(4),
+    borderRadius: 'inherit', padding: theme.spacing(4),
     color: 'rgba(0,0,0,1)',
     display: 'flex', justifyContent: 'center', alignItems: 'center',
     flexWrap: 'wrap',
@@ -680,7 +855,7 @@ const cardcontentVars = {
     animate: {
         opacity: 1, scale: 1, y: 0,
         transition: {
-            delay: 0.35,
+            delay: layoutduration,
             type: 'spring', stiffness: 80, damping: 10,
         }
     },
@@ -839,7 +1014,7 @@ const CenterIcon = memo(function CenterIcon({ icon, content, animationConfig }) 
             <CenterAvatarContainer
                 variants={centerAvatarVars}
             >
-                <SvgGlassOverlay />
+                <GlassOverlay />
                 <StyledAvatar
                     src={icons[`../icons/skills/${icon.file}.svg`]?.default}
                     alt={icon.name}
@@ -931,7 +1106,7 @@ const entranceVars = {
     animate: (i) => ({
         opacity: 1, scale: 1, y: 0,
         transition: {
-            delay: 0.35 + 0.08 * i,
+            delay: layoutduration + 0.08 * i,
             ...iconTransition
         }
     }),
@@ -1007,7 +1182,7 @@ const AnimatedIcon = memo(function AnimatedIcon({ icon, i, content, handleHovere
                         backgroundColor: content.cardcolors[1],
                     }}
                 />*/}
-                    <SvgGlassOverlay i={i} />
+                    <GlassOverlay />
                     <StyledAvatar
                         src={icons[`../icons/skills/${icon.file}.svg`]?.default}
                         alt={icon.name}

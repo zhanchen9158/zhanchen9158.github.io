@@ -7,17 +7,30 @@ import hexToRgba from '../functions/hexToRgba';
 
 const MotionBox = motion(Box);
 
+const delay = 1.35;
+
 const SvgContainer = styled(MotionBox)(({ theme }) => ({
     position: 'absolute',
     width: '100%', height: '100%',
+    //background: 'transparent',
     pointerEvents: 'none',
     zIndex: 0,
     borderRadius: 'inherit',
+    transformStyle: "preserve-3d",
+    transformOrigin: 'top left',
 }));
 
 const containerVars = {
-    initial: { opacity: 0 },
-    animate: { opacity: 1 }
+    initial: { opacity: 1, scale: 0, z: 60 },
+    animate: {
+        opacity: 1,
+        scale: 1, z: 60,
+        transition: {
+            delay: delay,
+            duration: 2,
+            ease: 'easeOut',
+        }
+    }
 };
 
 const borderVars = {
@@ -25,6 +38,7 @@ const borderVars = {
     animate: {
         opacity: 1,
         transition: {
+            delay: delay,
             duration: 2,
             ease: 'easeOut',
         }
@@ -121,8 +135,7 @@ const SvgSplitColor = memo(({ color = 'rgba(255, 255, 255, 1)',
 
 const ShadowContainer = styled(Box)(({ theme }) => ({
     position: 'absolute',
-    width: '100%',
-    height: '100%',
+    width: '100%', height: '100%',
     pointerEvents: 'none',
     zIndex: 0,
     borderRadius: 'inherit',

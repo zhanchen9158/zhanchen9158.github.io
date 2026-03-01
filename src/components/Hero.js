@@ -166,7 +166,7 @@ const wordVars = {
   visible: (previousChars) => ({
     opacity: 1,
     transition: {
-      delayChildren: previousChars * letterStagger,
+      delayChildren: previousChars * letterStagger + 2,
       staggerChildren: letterStagger
     }
   })

@@ -282,7 +282,7 @@ export const colorSchemes = {
       },
       text: {
         primary: gray[800],
-        secondary: gray[600],
+        secondary: gray[700],
         warning: orange[400],
         contrast: 'rgba(250,250,250,1)',
       },
@@ -341,7 +341,7 @@ export const colorSchemes = {
       },
       text: {
         primary: 'hsl(0, 0%, 100%)',
-        secondary: gray[400],
+        secondary: gray[200],
         contrast: 'rgba(5,5,5,1)',
       },
       action: {
