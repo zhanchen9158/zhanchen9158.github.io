@@ -227,10 +227,11 @@ const SubMenu = memo(function SubMenu({ open, name, section, icon, tooltip, hand
       <StyledSubMenuIcon>
         {icon}
       </StyledSubMenuIcon>
-      <AnimatePresence mode='wait'>
+      <AnimatePresence mode='popLayout'>
         {open == null &&
           <StyledSubMenuText
-            key={`submenutext-${name}-${tooltip}`}
+            //key={`submenutext-${name}-${tooltip}`}
+            key={name}
             variants={submenuVars}
             initial='initial'
             animate='animate'
@@ -244,7 +245,7 @@ const SubMenu = memo(function SubMenu({ open, name, section, icon, tooltip, hand
         }
         {open == name && SUBACTIONS_DATA[name].map((v, i) => (
           <StyledSubAction
-            key={`subaction-${name}-${v.name}`}
+            key={v.name}
             onClick={() => handleSubaction(v.route)}
             variants={subactionVars}
             custom={calculatedPositions[i]}

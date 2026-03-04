@@ -1,8 +1,5 @@
 import React, { useMemo, memo } from 'react';
 import { styled } from '@mui/material/styles';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
 import getActivesection from '../functions/getActivesection';
 import { motion, AnimatePresence } from "motion/react";
 import Box from '@mui/material/Box';
@@ -10,25 +7,21 @@ import Box from '@mui/material/Box';
 
 const MotionBox = motion(Box);
 
-const StyledAppbar = styled(AppBar)(({ theme }) => ({
-  border: '1px solid',
-  borderColor: `rgba(${(theme.vars || theme).palette.primary.lightChannel} / 0.3)`,
-  boxShadow: `0 10px 15px -3px rgba(${(theme.vars || theme).palette.background.contrastChannel} / 0.1)`,
-  width: '90%',
-  borderRadius: '12px',
+const AppBar = styled(Box)(({ theme }) => ({
+  position: 'fixed',
   left: 0, right: 0, margin: '1rem auto',
-  backgroundColor: `rgba(${(theme.vars || theme).palette.background.defaultChannel}/0.1)`,
-  willChange: 'transform',
-}));
-
-const StyledToolbar = styled(Toolbar)(({ theme }) => ({
+  width: '90%', height: '50px',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   flexShrink: 0,
-  border: 'none',
-  backgroundColor: 'transparent',
+  borderRadius: '12px',
+  border: '1px solid',
+  borderColor: `rgba(${(theme.vars || theme).palette.primary.lightChannel} / 0.3)`,
+  backgroundColor: `rgba(${(theme.vars || theme).palette.background.defaultChannel}/0.1)`,
+  boxShadow: `0 10px 15px -3px rgba(${(theme.vars || theme).palette.background.contrastChannel} / 0.1)`,
+  zIndex: 9999,
 }));
 
-const StyledTypography = styled(Typography)(({ theme }) => ({
+const AppBarHeader = styled(MotionBox)(({ theme }) => ({
   width: 'fit-content',
   textAlign: 'center', textTransform: 'capitalize',
   fontFamily: 'Playfair Display',
@@ -43,6 +36,7 @@ const StyledTypography = styled(Typography)(({ theme }) => ({
     fontSize: '20px',
   },
   WebkitFontSmoothing: 'antialiased',
+  backfaceVisibility: "hidden",
 }));
 
 const itemVars = {
@@ -75,28 +69,21 @@ const AnimatedAppBar = memo(function AnimatedAppBar({ activesection }) {
   }, [activesection]);
 
   return (
-    <StyledAppbar
-      position="fixed"
-      enableColorOnDark
+    <AppBar
+
     >
-      <StyledToolbar
-        variant="dense"
-        disableGutters
-      >
-        <AnimatePresence>
-          <MotionBox
-            key={key}
-            variants={itemVars}
-            initial='initial'
-            animate="animate"
-          >
-            <StyledTypography>
-              {name}
-            </StyledTypography>
-          </MotionBox>
-        </AnimatePresence>
-      </StyledToolbar>
-    </StyledAppbar >
+
+      <AnimatePresence>
+        <AppBarHeader
+          key={key}
+          variants={itemVars}
+          initial='initial'
+          animate="animate"
+        >
+          {name}
+        </AppBarHeader>
+      </AnimatePresence>
+    </AppBar >
   );
 });
 

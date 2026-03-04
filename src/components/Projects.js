@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect, useMemo, memo } from 'react';
+import React, { useState, useRef, forwardRef, useCallback, useEffect, useMemo, memo } from 'react';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import marketintelligence from '../pics/marketintelligence.webp';
@@ -17,7 +17,7 @@ import GlassOverlay, { BevelGlassOverlay, BorderSheen } from './GlassOverlay';
 import glassbg from '../pics/glassbg.webp';
 
 
-const projectInfo = [
+const PROJECTSINFO = [
   {
     id: 1,
     img: marketintelligence,
@@ -28,8 +28,8 @@ const projectInfo = [
       'Python', 'Node.js', 'PyTorch', 'ONNX', 'React', 'JavaScript', 'AWS', 'Docker',
     ],
     descriptions: [
-      'Full-stack financial analytics application that ingests real-time market data to forecast trends.',
       'On-device predictive AI model build on PyTorch and ONNX, achieving a <2% sMAPE to ensure high-fidelity capture of complex market patterns.',
+      'Full-stack financial analytics application that ingests real-time market data to forecast trends.',
     ],
     link: 'https://marketintelligence0.s3.us-east-2.amazonaws.com/index.html',
   },
@@ -40,11 +40,11 @@ const projectInfo = [
     tech: [
       'Bi-Encoder Text Embedding Transformer', 'Retrieval-Augmented Generation',
       'Lightweight Embedding Alignment Framework', 'Semantic Search',
-      'HuggingFace', 'React', 'Node.js', 'JavaScript', 'AWS',
+      'HuggingFace', 'Node.js', 'JavaScript', 'React', 'AWS',
     ],
     descriptions: [
+      'Client-side Retrieval-Augmented Generation AI for real-time Question Answering of papers.',
       'Knowledge retrieval portal for searching scientific literature.',
-      'Client-side Retrieval-Augmented Generation-based real-time Question Answering of papers.',
       'Optimized performances using multi-threading to offload heavy model inference computations, preserving UI responsiveness.',
     ],
     link: 'https://researchdigest0.s3.us-east-2.amazonaws.com/index.html',
@@ -56,11 +56,11 @@ const projectInfo = [
     tech: [
       'Auto-Regressive Transformer Decoder', 'Probabilistic Next-Token Prediction',
       'MobileLLM Architecture', 'Edge AI Deployment',
-      'Node.js', 'React', 'JavaScript', 'HuggingFace', 'AWS',
+      'Node.js', 'JavaScript', 'HuggingFace', 'React', 'AWS',
     ],
     descriptions: [
+      'Quantized, web-based Grouped-Query Attention Transformer to deliver a low-latency, stateful chat-driven interface for recipe and nutritional retrieval.',
       'Elastically scalable meal planning solution utilizing AWS cloud infrastructure, aggregating data sources to provide a holistic user experience for recipe and nutritional retrieval.',
-      'Quantized, web-based Grouped-Query Attention Transformer to deliver a low-latency, stateful chat-driven interface for recipe and nutritional retrieval.'
     ],
     link: 'https://mealplanner0.s3.us-east-2.amazonaws.com/index.html',
   },
@@ -68,7 +68,7 @@ const projectInfo = [
     id: 4,
     img: artexplorer,
     header: 'Art Explorer',
-    tech: [],
+    tech: ['React', 'JavaScript', 'AWS',],
     descriptions: [
       'Artwork search engine presenting information on artists, art descriptions, and comprehensive historical details.',
     ],
@@ -85,14 +85,12 @@ const CARDHsm = 350;
 
 const SectionContainer = styled(MotionContainer)(({ theme }) => ({
   position: 'fixed',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  width: '100dvw', height: `100dvh`,
+  display: 'flex', justifyContent: 'center', alignItems: 'center',
+  height: `100dvh`,
   overflow: 'hidden',
-  gap: theme.spacing(3),
+  paddingBottom: theme.spacing(8),
   [theme.breakpoints.down('md')]: {
-    gap: theme.spacing(1),
+    paddingBottom: theme.spacing(7),
   }
 }));
 
@@ -104,31 +102,12 @@ const ContentBox = styled(Box)(({ theme }) => ({
   zIndex: 1,
 }));
 
-export default function Projects({ refProps, handleViewport }) {
-  const [page, setPage] = useState(1);
+function Projects({ refProps, handleViewport }) {
   const [hoveredProj, setHoveredProj] = useState(null);
 
   const handleHovering = useCallback((v) => {
     setHoveredProj(v);
   }, []);
-
-  const theme = useTheme();
-  const lesserThanMd = useMediaQuery(theme.breakpoints.down('md'));
-  const lesserThanSm = useMediaQuery(theme.breakpoints.down('sm'));
-
-  const perpage = lesserThanSm ? 1
-    : lesserThanMd
-      ? 2 : 3;
-  const maxpage = Math.ceil(projectInfo.length / perpage);
-
-  const handlePageChange = useCallback((_, v) => {
-    setPage(v);
-  }, []);
-
-  const currentPage = useMemo(() =>
-    projectInfo.slice((page - 1) * perpage, page * perpage),
-    [page, perpage]
-  );
 
   const { manual, system } = useAnimateContext();
   const mode = system || manual;
@@ -142,7 +121,8 @@ export default function Projects({ refProps, handleViewport }) {
       animate: !isNormal ? "static" : (hoveredProj ? "hidden" : "initial"),
       hover: isNormal ? "hover" : "static",
 
-      pulse: isNormal ? "animate" : "static",
+      glowpulse: isNormal ? "animate" : "static",
+      bordersheen: isNormal ? "animate" : "static",
 
       image: isNormal ? "animate" : "static",
     };
@@ -157,118 +137,230 @@ export default function Projects({ refProps, handleViewport }) {
       id="projects"
       maxWidth="lg"
     >
-      <ContentBox>
-        <ProjectsGrid currentPage={currentPage} page={page} perpage={perpage}
-          hoveredProj={hoveredProj}
-          handleHovering={handleHovering}
-          animationConfig={animationConfig}
-        />
-        <Pagination count={maxpage} page={page} onChange={handlePageChange}
-          sx={{ display: 'flex', justifyContent: 'center', }} />
-      </ContentBox>
+      <ProjectsCarousel
+        hoveredProj={hoveredProj}
+        handleHovering={handleHovering}
+        animationConfig={animationConfig}
+      />
       <HoveredAnimation hoveredProj={hoveredProj} animationConfig={animationConfig} />
     </SectionContainer >
   );
 }
 
-const GRIDGAP = 4;
+const CarouselContainer = styled(Box)(({ theme }) => ({
+  width: '100%', //height: 'auto'
+  display: 'flex', justifyContent: 'center', alignItems: 'center',
+  flexDirection: 'column',
+  gap: theme.spacing(2),
+  //zIndex: 1,
+}));
 
-const GridContainer = styled(MotionBox)(({ theme }) => ({
+const CarouselContent = styled(MotionBox)(({ theme }) => ({
   position: 'relative',
   width: '100%',
   display: 'flex', justifyContent: 'center', alignItems: 'center',
-  flexWrap: 'wrap',
-  gap: theme.spacing(GRIDGAP),
-}));
-
-const StyledGridItem = styled(MotionBox)(({ theme }) => ({
-  width: `calc(33.33% - ${theme.spacing(GRIDGAP)})`, height: CARDH + 50,
-  display: 'flex', justifyContent: 'center', alignItems: 'center',
-  borderRadius: '32px',
+  //flexWrap: 'wrap',
+  gap: theme.spacing(4),
   backfaceVisibility: "hidden",
-  isolation: 'isolate',
-  '& .MuiPaper-root': {
-    border: `none`,
-  },
-  [theme.breakpoints.down('md')]: {
-    width: `calc(50% - ${theme.spacing(GRIDGAP)})`,
-  },
-  [theme.breakpoints.down('sm')]: {
-    width: '100%',
-  },
-  '@media (max-height: 600px)': {
-    height: CARDHsm + 50,
-  },
 }));
 
-const containerVars = {
-  hidden: { opacity: 0, },
-  visible: {
-    opacity: 1,
-    transition: {
-      delayChildren: 0.5,
-      staggerChildren: 0.45,
-    },
-  },
-  static: { opacity: 1, },
-};
+const projlength = PROJECTSINFO.length;
+const getIndex = (i) => (i + projlength) % projlength;
 
-const itemVars = {
-  hidden: {
-    opacity: 0,
-    y: 20,
-    clipPath: "inset(0% -10% 100% -10%)",
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-    clipPath: "inset(0% -10% 0% -10%)",
-    transition: {
-      duration: 0.8,
-      ease: [0.4, 0, 0.2, 1],
-    }
-  },
-  static: { opacity: 1, y: 0, clipPath: "inset(0% -10% 0% -10%)", },
-};
-
-const ProjectsGrid = memo(function ProjectsGrid({ currentPage, page, perpage, hoveredProj,
+const ProjectsCarousel = memo(function ProjectsCarousel({ hoveredProj,
   handleHovering, animationConfig }) {
+  const [index, setIndex] = useState(0);
+
+  const prevIndex = getIndex(index - 1);
+  const nextIndex = getIndex(index + 1);
+
+  const paginate = useCallback((newDirection) => {
+    setIndex((prev) => getIndex(prev + newDirection));
+  }, [index]);
 
   return (
-    <GridContainer container key={`${page}-${perpage}`} spacing={2}
-      variants={containerVars}
-      initial="hidden"
-      whileInView={animationConfig.gridcontainer}
-      viewport={{ once: false, amount: 0.5 }}
-    >
-      <AnimatePresence mode='wait'>
-        {currentPage.map((v, i) => (
-          <StyledGridItem
-            key={v.id}
-            size={{ xs: 12, sm: 6, md: 4 }}
-            variants={itemVars}
-          >
-            <ProjectCard v={v}
-              hoveredProj={hoveredProj}
-              handleHovering={handleHovering} animationConfig={animationConfig}
+    <CarouselContainer>
+      <CarouselContent>
+        <AnimatePresence mode='popLayout'>
+          {[prevIndex, index, nextIndex].map((projindex, i) => (
+            <AnimatedCarouselItem key={PROJECTSINFO[projindex].id}
+              projindex={projindex} i={i}
+              hoveredProj={hoveredProj} handleHovering={handleHovering}
+              animationConfig={animationConfig}
             />
-          </StyledGridItem>
-        ))}
-      </AnimatePresence>
-    </GridContainer>
+          ))}
+        </AnimatePresence>
+      </CarouselContent>
+      <button onClick={() => paginate(1)}>{">"}</button>
+    </CarouselContainer>
   );
 });
 
-const CardContainer = styled(MotionBox)(({ theme }) => ({
+const CARD_RADIUS = 32;
+
+const CarouselItem = styled(MotionBox)(({ theme, isActive }) => ({
+  width: '350px', height: CARDH + 50,
+  borderRadius: `${CARD_RADIUS}px`,
+  backfaceVisibility: "hidden",
+  isolation: 'isolate',
+  [theme.breakpoints.down('sm')]: {
+    width: '300px', height: CARDHsm + 50,
+  },
+  zIndex: isActive ? 10 : 1,
+}));
+
+const CarouselEntrance = styled(MotionBox)(({ theme }) => ({
+  width: '100%', height: '100%',
+  display: 'flex', justifyContent: 'center', alignItems: 'center',
+  borderRadius: 'inherit',
+  backfaceVisibility: "hidden",
+}));
+
+const itemVars = {
+  initial: { opacity: 0, x: 50, scale: 0.7 },
+  active: {
+    opacity: 1,
+    x: 0, y: 0,
+    scale: 1,
+  },
+
+  inactive: ({ floatingValues } = {}) => ({
+    opacity: floatingValues.opacity,
+    x: floatingValues.x, y: floatingValues.y,
+    scale: floatingValues.scale,
+    rotate: floatingValues.rotate,
+    transition: {
+      y: {
+        duration: floatingValues.duration,
+        repeat: Infinity,
+        ease: "easeInOut",
+        delay: -floatingValues.delay
+      },
+      rotate: {
+        duration: floatingValues.duration + 10,
+        repeat: Infinity,
+        ease: "easeInOut",
+        delay: -floatingValues.delay
+      }
+    }
+  }),
+  staticactive: { opacity: 1, x: 0, scale: 1 },
+  staticinactive: { opacity: 1, x: 0, scale: 0.8 },
+};
+
+const carouselentranceVars = {
+  hidden: {
+    opacity: 0.6, filter: 'blur(4px)',
+  },
+  visible: ({ isActive } = {}) => ({
+    opacity: 1, filter: 'blur(0px)',
+    transition: {
+      delay: isActive ? 1 : 0.8,
+      duration: 0.8,
+      ease: [0.22, 1, 0.36, 1],
+    }
+  }),
+  static: ({ isActive } = {}) => ({
+    opacity: isActive ? 1 : 0.6, filter: 'blur(0px)',
+  }),
+};
+
+const random = (min, max) => Math.random() * (max - min) + min;
+const round = (num) => Math.round(num * 100) / 100;
+
+const getFloatingValues = () => {
+  const xy1 = 5; const xy2 = 3;
+
+  const xSeed = Math.random() > 0.5;
+  const x1 = xSeed
+    ? Math.round(random(xy2, xy1))
+    : Math.round(random(-xy1, -xy2));
+  const x2 = xSeed
+    ? Math.round(random(-xy1, -xy2))
+    : Math.round(random(xy2, xy1));
+
+  const ySeed = Math.random() > 0.5;
+  const y1 = ySeed
+    ? Math.round(random(xy2, xy1))
+    : Math.round(random(-xy1, -xy2));
+  const y2 = ySeed
+    ? Math.round(random(-xy1, -xy2))
+    : Math.round(random(xy2, xy1));
+
+  const rotateSeed = Math.random() > 0.5;
+  const rotate = rotateSeed
+    ? [1, -1, 1]
+    : [-1, 1, -1];
+
+  return {
+    opacity: [0.6, round(random(0.65, 0.7)), 0.6],
+    x: [x1, x2, x1],
+    y: [y1, y2, y1],
+    scale: [0.7, round(random(0.75, 0.85)), 0.7],
+    rotate: rotate,
+    duration: round(random(8, 12)),
+    delay: round(random(0, 4)),
+  };
+};
+
+const TRANSITIONCONFIG = {
+  carouselduration: 1.2,
+
+  cardscaleduration: 1.2,
+
+};
+
+const AnimatedCarouselItem = motion(forwardRef(function AnimatedCarouselItem({ projindex,
+  i, hoveredProj, handleHovering, animationConfig }, ref) {
+
+  const isActive = useMemo(() => i === 1, [i]);
+  const floatingValues = useMemo(() => getFloatingValues(), [projindex]);
+
+  return (
+    <CarouselItem
+      ref={ref}
+      custom={{ floatingValues }}
+      variants={itemVars}
+      layout
+      initial={'initial'}
+      animate={isActive ? 'active' : 'inactive'}
+      exit={'initial'}
+      transition={{
+        duration: TRANSITIONCONFIG.carouselduration,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+      isActive={isActive}
+    >
+      <CarouselEntrance
+        custom={{ isActive: isActive }}
+        variants={carouselentranceVars}
+        initial="hidden"
+        whileInView={'visible'}
+        viewport={{ once: false, amount: 0.5 }}
+      >
+        <ProjectCard projinfo={PROJECTSINFO[projindex]} isActive={isActive}
+          hoveredProj={hoveredProj} handleHovering={handleHovering}
+          animationConfig={animationConfig}
+        />
+      </CarouselEntrance>
+    </CarouselItem>
+  );
+}));
+
+const CardContainer = styled(MotionBox)(({ theme, isActive }) => ({
   position: 'relative',
   width: '100%', height: CARDH,
   display: 'flex', justifyContent: 'center', alignItems: 'center',
   borderRadius: 'inherit',
   backfaceVisibility: "hidden",
   isolation: 'isolate',
+  [theme.breakpoints.down('sm')]: {
+    height: CARDHsm,
+  },
   '@media (max-height: 600px)': {
     height: CARDHsm,
   },
+  cursor: isActive ? 'none' : 'default',
 }));
 
 const RestBorder = styled(MotionBox)(({ theme }) => ({
@@ -279,7 +371,7 @@ const RestBorder = styled(MotionBox)(({ theme }) => ({
   backfaceVisibility: 'hidden',
 }));
 
-const CardGlow = styled(MotionBox)(({ theme }) => {
+const BorderGlow = styled(MotionBox)(({ theme }) => {
   const color = (theme.vars || theme).palette.primary.mainChannel;
 
   return {
@@ -292,18 +384,18 @@ const CardGlow = styled(MotionBox)(({ theme }) => {
   };
 });
 
-const BORDERWIDTH = 1.5;
+const BORDERWIDTH = 2;
 
 const HoverBorder = styled(MotionBox)(({ theme }) => ({
   position: "absolute",
   inset: -BORDERWIDTH,
-  borderRadius: "inherit",
+  borderRadius: `${CARD_RADIUS + BORDERWIDTH + 1}px`,
   zIndex: -2,
   mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
   WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
   maskComposite: "exclude",
   WebkitMaskComposite: "destination-out",
-  padding: `${BORDERWIDTH}px`,
+  padding: `${BORDERWIDTH + 1}px`,
   pointerEvents: "none",
   backfaceVisibility: 'hidden',
 }));
@@ -317,37 +409,34 @@ const HueRotateLayer = styled(MotionBox)(({ theme, bg }) => ({
   backfaceVisibility: 'hidden',
 }));
 
-const blursize = 4;
-
 const RestBg = styled(MotionBox)(({ theme }) => ({
   position: "absolute", inset: 0,
   borderRadius: "inherit",
-  background: `
-      radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.08) 0%, transparent 60%)
-    `,
-  boxShadow: `
-      inset 0 1px 1px rgba(255, 255, 255, 0.15), 
-      0 10px 15px -3px rgba(0, 0, 0, 0.1),
-      0 4px 6px -4px rgba(0, 0, 0, 0.1)
-    `,
   //backdropFilter: 'blur(2px)',
   //WebkitBackdropFilter: 'blur(2px)',
-  zIndex: -1,
   overflow: 'hidden',
+  zIndex: -1,
   backfaceVisibility: "hidden",
-  "&::before": {
-    content: '""',
-    position: "absolute", inset: -blursize,
+}));
+
+const GlassBg = styled(MotionBox)(({ theme, opacity = 1, bgcolor, coloropacity = 0.2, blur = 0 }) => {
+  const color = `rgba(${(theme.vars || theme).palette.background.defaultChannel} / ${coloropacity})`;
+
+  return {
+    position: "absolute", inset: -blur,
+    borderRadius: "inherit",
+    backgroundColor: bgcolor || color,
     backgroundImage: `url(${glassbg})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
-    filter: `blur(${blursize}px)`,
-  }
-}));
+    filter: `blur(${blur}px)`,
+    opacity: opacity,
+    backfaceVisibility: "hidden",
+  };
+});
 
 const HoverBg = styled(MotionBox)(({ theme }) => ({
-  position: "absolute",
-  inset: 0,
+  position: "absolute", inset: 0,
   borderRadius: "inherit",
   background: `rgba(${(theme.vars || theme).palette.background.defaultChannel} / 0.15)`,
   backdropFilter: "blur(20px)",
@@ -378,12 +467,7 @@ const StyledCard = styled(MotionBox)(({ theme }) => ({
   borderRadius: 'inherit',
   //transformStyle: "preserve-3d",
   backfaceVisibility: "hidden",
-  overflow: 'auto',
-  msOverflowStyle: 'none',
-  scrollbarWidth: 'none',
-  '&::-webkit-scrollbar': {
-    display: 'none',
-  },
+  overflow: 'hidden',
   maskImage: 'linear-gradient(to bottom, black 90%, transparent 100%)',
   WebkitMaskImage: 'linear-gradient(to bottom, black 90%, transparent 100%)',
 }));
@@ -396,11 +480,25 @@ const CardContent = styled(MotionBox)(({ theme }) => ({
   justifyContent: 'space-start', alignItems: 'center',
   gap: theme.spacing(1),
   boxSizing: 'border-box',
-  cursor: 'none',
+  backfaceVisibility: "hidden",
+  overflow: 'auto',
+  msOverflowStyle: 'none',
+  scrollbarWidth: 'none',
+  '&::-webkit-scrollbar': {
+    display: 'none',
+  },
+}));
+
+const HoverContent = styled(MotionBox)(({ theme }) => ({
+  width: '100%', //height: '100%',
+  //borderRadius: 'inherit',
+  display: 'flex', flexDirection: 'column',
+  justifyContent: 'center', alignItems: 'center',
+  gap: theme.spacing(1),
   backfaceVisibility: "hidden",
 }));
 
-const CardImageContainer = styled(MotionBox)(({ theme }) => ({
+const CardImageContainer = styled(Box)(({ theme }) => ({
   height: '150px',
   position: 'relative',
   aspectRatio: 16 / 9,
@@ -420,12 +518,12 @@ const CardImage = styled('img')(({ theme }) => ({
   display: 'block',
 }));
 
-const StyledCardHeader = styled(MotionBox)(({ theme }) => ({
-  paddingTop: theme.spacing(2), //paddingBottom: theme.spacing(1),
+const StyledCardHeader = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(3, 0), //paddingBottom: theme.spacing(1),
   fontFamily: 'Lora, sans-serif',
   fontSize: '24px',
   fontWeight: 800,
-  letterSpacing: '0.02em',
+  letterSpacing: '0.05em',
   textTransform: 'uppercase',
   textAlign: 'center',
   backfaceVisibility: "hidden",
@@ -434,7 +532,23 @@ const StyledCardHeader = styled(MotionBox)(({ theme }) => ({
   WebkitBackgroundClip: 'text',
   color: 'transparent',
   textShadow: '0px 2px 6px rgba(0, 0, 0, 0.2)',
-  boxShadow: `0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(0, 0, 0, 0.3)`,
+  //boxShadow: `0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(0, 0, 0, 0.3)`,
+}));
+
+const StyledListItem = styled(ListItem)(({ theme }) => ({
+  justifyContent: 'center',
+  textAlign: 'center',
+}));
+
+const StyledListItemText = styled(ListItemText)(({ theme }) => ({
+  color: (theme.vars || theme).palette.text.primary,
+  '& .MuiListItemText-primary': {
+    fontFamily: 'Fraunces, sans-serif',
+    lineHeight: 1.6,
+    fontSize: '18px',
+    fontWeight: 400,
+    textAlign: 'center',
+  },
 }));
 
 const TechStackContainer = styled(MotionBox)(({ theme }) => ({
@@ -460,41 +574,26 @@ const TechChip = styled(motion.span)(({ theme }) => ({
   backfaceVisibility: "hidden",
 }));
 
-const StyledListItem = styled(ListItem)(({ theme }) => ({
-  justifyContent: 'center',
-  textAlign: 'center',
-}));
-
-const StyledListItemText = styled(ListItemText)(({ theme }) => ({
-  color: (theme.vars || theme).palette.text.primary,
-  '& .MuiListItemText-primary': {
-    fontFamily: 'Fraunces, sans-serif',
-    lineHeight: 1.5,
-    fontSize: '18px',
-    fontWeight: 500,
-    textAlign: 'center',
-  },
-}));
-
 const ZBASE = { scale: 1 };
-const ZHOVER = { scale: 1.1 };
+const ZHOVER = { scale: 1.2 };
 
 const cardcontainerVars = {
-  initial: {
+  initial: ({ isActive } = {}) => ({
     opacity: 1, ...ZBASE,
-    transition: { duration: 0.35, ease: "easeOut" }
-  },
+    transition: {
+      delay: isActive ? 0 : 0.35,
+      duration: TRANSITIONCONFIG.cardscaleduration, ease: "easeInOut"
+    }
+  }),
   hover: {
     opacity: 1, ...ZHOVER,
-    transition: { duration: 0.3, ease: "easeOut" }
+    transition: { duration: TRANSITIONCONFIG.cardscaleduration, ease: "easeInOut" }
   },
   hidden: {
     opacity: 0, ...ZBASE,
-    transition: { duration: 0.35, ease: "easeOut" }
   },
   static: {
     opacity: 1, ...ZBASE,
-    transition: { duration: 0 }
   }
 };
 
@@ -518,7 +617,7 @@ const restborderVars = {
   })
 };
 
-const bordersheenVars = {
+const borderpulseVars = {
   initial: {
     opacity: 0.3,
   },
@@ -534,6 +633,7 @@ const bordersheenVars = {
 const hoverbgVars = {
   initial: ({ io, ho } = { io: 1, ho: 1 }) => ({
     opacity: io,
+    //transition: { delay: isActive ? 5 : 0 }
   }),
   hover: ({ io, ho } = { io: 1, ho: 1 }) => ({
     opacity: ho,
@@ -541,11 +641,10 @@ const hoverbgVars = {
   }),
   hidden: {
     opacity: 0,
-    transition: { duration: 0.3 }
+    //transition: { duration: 0.3, ease: "easeOut" }
   },
   static: {
     opacity: 1,
-    transition: { duration: 0 }
   }
 };
 
@@ -580,21 +679,33 @@ const bloomVars = {
 
 const cardVars = {
   initial: {
-    opacity: 1, ...ZBASE,
+    opacity: 1,
     transition: { duration: 0.35, ease: "easeOut" }
   },
   hover: {
-    opacity: 1, ...ZHOVER,
+    opacity: 1,
     transition: { duration: 0.3, ease: "easeOut" }
   },
   hidden: {
-    opacity: 0, ...ZBASE,
+    opacity: 0,
     transition: { duration: 0.35, ease: "easeOut" }
   },
   static: {
-    opacity: 1, ...ZBASE,
+    opacity: 1,
     transition: { duration: 0 }
   }
+};
+
+const hovercontentVars = {
+  initial: {
+    opacity: 0,
+    transition: { duration: 0.35 },
+  },
+  animate: {
+    opacity: 1,
+    transition: { duration: 0.35 },
+  },
+  static: { opacity: 1, },
 };
 
 const techchipcontainerVars = {
@@ -603,25 +714,23 @@ const techchipcontainerVars = {
     opacity: 1,
     transition: {
       delayChildren: 1.25,
-      staggerChildren: 0.35,
+      staggerChildren: 0.06,
+      staggerDirection: 1,
     },
   },
   static: { opacity: 1 },
 };
 
 const techchipVars = {
-  initial: { scale: 0.8, opacity: 0 },
+  initial: { opacity: 0, y: 15, scale: 0.95 },
   visible: {
-    scale: 1,
-    opacity: 1,
+    opacity: 1, y: 0, scale: 1,
     transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 15,
-      mass: 0.5
+      duration: 0.8,
+      ease: [0.175, 0.885, 0.32, 1.275],
     }
   },
-  static: { scale: 1, opacity: 1 },
+  static: { opacity: 1, y: 0, scale: 1 },
 };
 
 const paletteA = ['#70d6ff', '#ae97ff', '#9792ff'];
@@ -636,10 +745,11 @@ const shuffle = (array) => {
   return newArray;
 };
 
-const ProjectCard = memo(function ProjectCard({ v, hoveredProj, handleHovering, animationConfig }) {
+const ProjectCard = memo(function ProjectCard({ projinfo, isActive,
+  hoveredProj, handleHovering, animationConfig }) {
 
   const cardRef = useRef(null);
-  const activeProj = useMemo(() => hoveredProj && hoveredProj.header === v.header, [hoveredProj]);
+  const activeProj = useMemo(() => isActive && hoveredProj, [isActive, hoveredProj]);
 
   useEffect(() => {
     if (!activeProj && cardRef.current) {
@@ -649,9 +759,8 @@ const ProjectCard = memo(function ProjectCard({ v, hoveredProj, handleHovering, 
 
   const handleClick = useCallback((e) => {
     e.stopPropagation();
-
-    window.open(v.link, '_blank', 'noopener,noreferrer');
-  }, [v.link])
+    if (isActive) window.open(projinfo.link, '_blank', 'noopener,noreferrer');
+  }, [projinfo.link])
 
   const borderConfig = useMemo(() => {
 
@@ -676,27 +785,29 @@ const ProjectCard = memo(function ProjectCard({ v, hoveredProj, handleHovering, 
 
   return (
     <CardContainer
+      custom={{ isActive: isActive }}
       variants={cardcontainerVars}
       initial="initial"
       animate={activeProj ? 'hover' : animationConfig.animate}
-      whileHover={animationConfig.hover}
+      whileHover={isActive ? animationConfig.hover : 'initial'}
+      isActive={isActive}
     >
       <RestBorder
         custom={{ io: 1, ho: 0 }}
         variants={borderwrapperVars}
-        animate={activeProj ? 'hover' : animationConfig.animate}
+      //animate={activeProj ? 'hover' : animationConfig.animate}
       >
         <BorderSheen
           custom={{ d: borderConfig.duration }}
-          variants={bordersheenVars}
+          variants={borderpulseVars}
           initial='initial'
-          animate='animate'
+          animate={animationConfig.bordersheen}
         />
       </RestBorder>
       <HoverBorder
         custom={{ io: 0, ho: 1 }}
         variants={borderwrapperVars}
-        animate={activeProj ? 'hover' : animationConfig.animate}
+      //animate={activeProj ? 'hover' : animationConfig.animate}
       >
         <HueRotateLayer
           variants={restborderVars}
@@ -713,54 +824,75 @@ const ProjectCard = memo(function ProjectCard({ v, hoveredProj, handleHovering, 
       </HoverBorder>
       <RestBg
         variants={hoverbgVars}
-        custom={{ io: 0.4, ho: 0 }}
-        animate={activeProj ? 'hover' : animationConfig.animate}
+        custom={{ io: 0.6, ho: 0, isActive: isActive }}
+        //animate={activeProj ? 'hover' : animationConfig.animate}
+        isActive={isActive}
       >
-        <BevelGlassOverlay />
+        <GlassBg
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isActive ? 1 : 0 }}
+          transition={{ duration: TRANSITIONCONFIG.carouselduration }}
+          bgcolor={'#ffffff'} blur={4}
+        />
       </RestBg>
       <HoverBg
         variants={hoverbgVars}
         custom={{ io: 0, ho: 1 }}
-        animate={activeProj ? 'hover' : animationConfig.animate}
+      //animate={activeProj ? 'hover' : animationConfig.animate}
       >
-        <GrainOverlay opacity={0.2} contrast='200%' />
+        <GlassBg opacity={0.4} blur={4} />
       </HoverBg>
       <BloomBg
         variants={bloomVars}
-        animate={activeProj ? 'hover' : animationConfig.animate}
+        //animate={activeProj ? 'hover' : animationConfig.animate}
         bg={borderConfig.gradientA}
       />
       <StyledCard
-        ref={cardRef}
         variants={cardVars}
         animate={activeProj ? 'hover' : animationConfig.animate}
       >
         <CardContent
-          onMouseEnter={() => handleHovering(v)}
+          ref={cardRef}
+          onMouseEnter={() => isActive ? handleHovering(projinfo) : null}
           onMouseLeave={() => handleHovering(null)}
           onClick={handleClick}
         >
-          {!hoveredProj &&
-            <CardImageContainer>
-              <CardImage src={v.img} />
-            </CardImageContainer>
-          }
-          <StyledCardHeader>{v.header}</StyledCardHeader>
-          {hoveredProj &&
-            <motion.div>
-              {v.descriptions.map((description, i) => (
-                <StyledListItem key={i}>
-                  <StyledListItemText primary={description} />
-                </StyledListItem>
-              ))}
-            </motion.div>
-          }
+          <AnimatePresence>
+            {!hoveredProj ?
+              <HoverContent
+                variants={hovercontentVars}
+                initial='initial'
+                animate='animate'
+                exit='initial'
+              >
+                <CardImageContainer>
+                  <CardImage src={projinfo.img} />
+                </CardImageContainer>
+                <StyledCardHeader>{projinfo.header}</StyledCardHeader>
+              </HoverContent>
+              :
+              <HoverContent
+                variants={hovercontentVars}
+                initial='initial'
+                animate='animate'
+                exit='initial'
+              >
+                <StyledCardHeader>{projinfo.header}</StyledCardHeader>
+                {projinfo.descriptions.map((description, i) => (
+                  <StyledListItem key={i}>
+                    <StyledListItemText primary={description} />
+                  </StyledListItem>
+                ))}
+              </HoverContent>
+            }
+          </AnimatePresence>
           <TechStackContainer
+            //key={hoveredProj ? 'hidden' : 'visible'}
             variants={techchipcontainerVars}
             initial='initial'
-            whileInView={'visible'}
+            animate={!hoveredProj ? 'visible' : 'static'}
           >
-            {v.tech.map((t, i) => (
+            {projinfo.tech.map((t, i) => (
               <TechChip
                 key={i}
                 variants={techchipVars}
@@ -788,9 +920,7 @@ const AnimatedToolTip = styled(MotionBox)(({ theme }) => ({
   padding: theme.spacing(1),
   backgroundColor: (theme.vars || theme).palette.primary.main,
   color: (theme.vars || theme).palette.background.default,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
   textAlign: 'center',
   fontFamily: 'Playfair Display',
   lineHeight: 1.1,
@@ -810,7 +940,7 @@ const ImageContainer = styled(MotionBox)(({ theme }) => ({
 
 const ImageOverlay = styled(MotionBox)(({ theme }) => ({
   position: 'absolute', inset: 0,
-  background: (theme.vars || theme).palette.background.default,
+  background: '#000000',
   borderRadius: 'inherit',
   backfaceVisibility: "hidden",
 }));
@@ -845,7 +975,10 @@ const imageVars = {
     opacity: o, scale: 1,
     transition: { duration: 0.8, ease: [0.4, 0, 0.2, 1] }
   }),
-  exit: { opacity: 0, scale: 1.05 },
+  exit: {
+    opacity: 0, scale: 1.05,
+    transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] }
+  },
   static: { opacity: 0, scale: 1 },
 };
 
@@ -869,7 +1002,7 @@ const HoveredAnimation = memo(function HoveredAnimation({ hoveredProj, animation
     return () => window.removeEventListener('mousemove', updateMouse);
   }, [hoveredProj, mouseX, mouseY]);
 
-  if (!hoveredProj) return null;
+  if (!hoveredProj) return <AnimatePresence />;
 
   return (
     <AnimatePresence mode='wait'>
@@ -902,3 +1035,5 @@ const HoveredAnimation = memo(function HoveredAnimation({ hoveredProj, animation
     </AnimatePresence>
   )
 });
+
+export default memo(Projects);

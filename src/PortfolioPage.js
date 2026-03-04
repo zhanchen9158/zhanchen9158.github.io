@@ -108,12 +108,14 @@ const ScrollPage = styled(MotionBox)(({ theme }) => ({
   transformOrigin: "center center",
   //willChange: "transform, opacity",
   WebkitFontSmoothing: "antialiased",
+  backfaceVisibility: 'hidden',
 }));
 
 const ScrollContent = styled(MotionBox)(({ theme }) => ({
   width: '100%', height: '100%',
   display: "flex", alignItems: "center", justifyContent: "center",
   //willChange: "transform, opacity",
+  backfaceVisibility: 'hidden',
 }));
 
 const Page = memo(function Page({ id, sectionRef, containerRef, i, activesection, children, ...props }) {

@@ -33,25 +33,21 @@ const scrolldown = 80;
 
 const SectionContainer = styled(MotionContainer)(({ theme }) => ({
   position: 'fixed',
-  marginTop: header,
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  width: '100dvw', height: `calc(100dvh - ${header})`,
+  //marginTop: header,
+  display: 'flex', justifyContent: 'center', alignItems: 'center',
+  //width: '100dvw', 
+  height: '100dvh',
   overflow: 'hidden',
 }));
 
 const PageContainer = styled(Box)(({ theme }) => ({
   width: '100%',
-  display: 'flex',
-  justifyContent: 'start',
-  alignItems: 'center',
+  display: 'flex', justifyContent: 'flex-start', alignItems: 'center',
   flexDirection: 'column',
   gap: theme.spacing(1),
-  paddingBottom: `${1.5 * scrolldown}px`,
-  transformStyle: "preserve-3d",
+  paddingBottom: theme.spacing(10),
   [theme.breakpoints.down('md')]: {
-    paddingBottom: `${0.9 * scrolldown}px`,
+    paddingBottom: theme.spacing(9),
   }
 }));
 

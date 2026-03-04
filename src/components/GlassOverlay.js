@@ -14,24 +14,23 @@ const GlassOverlay = styled(Box)(({ theme, opacity = 1 }) => ({
     border: '1px solid rgba(255, 255, 255, 1)',
     boxShadow: 'inset 0 0 5px rgba(255, 255, 255, 0.25)',
     opacity: opacity,
-    willChange: 'transform',
     backfaceVisibility: "hidden",
 }));
 
-const BevelGlassOverlay = styled(Box)(({ theme, opacity = 1 }) => ({
+const BevelGlassOverlay = styled(Box)(({ theme, opacity = 1, depth = 1 }) => ({
     position: 'absolute', inset: 0,
     borderRadius: 'inherit',
     pointerEvents: 'none',
 
-    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 60%)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
+    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(0, 0, 0, 0.05) 100%)',
+    border: '1px solid rgba(255, 255, 255, 0.3)',
     boxShadow: `
-      inset 0 1px 1px rgba(255, 255, 255, 0.5), 
-      inset 0 -1px 1px rgba(0, 0, 0, 0.15),
-      0 2px 4px rgba(0, 0, 0, 0.15)
+      inset 0 ${depth}px ${depth}px rgba(255, 255, 255, 0.5), 
+      inset 0 -${depth}px ${depth}px rgba(0, 0, 0, 0.15),
+      0 ${2 * depth}px ${4 * depth}px rgba(0, 0, 0, 0.15)
     `,
     opacity: opacity,
-    willChange: 'transform',
+    zIndex: 10,
     backfaceVisibility: "hidden",
 }));
 
@@ -43,7 +42,6 @@ const BorderSheen = styled(MotionBox)(({ theme, border = 1.5 }) => ({
     WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
     maskComposite: 'exclude',
     pointerEvents: 'none',
-    willChange: 'transform',
     backfaceVisibility: "hidden",
 }));
 

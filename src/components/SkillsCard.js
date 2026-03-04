@@ -905,7 +905,7 @@ const AnimatedCard = memo(function AnimatedCard({ content = {} }) {
                     />
                 }
                 {positionedIcons.map((icon, i) => (
-                    <AnimatedIcon key={icon.file} icon={icon} i={i}
+                    <AnimatedIcon key={i} icon={icon} i={i}
                         content={content} handleHovered={handleHovered}
                     />
                 ))}
