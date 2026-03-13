@@ -1142,7 +1142,7 @@ function AnimatedTechChip({ i, isActive, text, animationConfig }) {
     <TechChipWrapper
       custom={i}
       variants={chipwaveVars}
-      initial={false}
+      initial={'static'}
       animate={animationConfig.pulse}
     >
       <TechChip
