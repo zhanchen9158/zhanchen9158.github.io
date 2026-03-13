@@ -144,8 +144,8 @@ const BASE_Y = Math.sin((ANGLE * Math.PI) / 180) * RADIUS;
 
 const SECTION_COLORS = {
   introduction: '#E0F7FA',
-  projects: '#FF8C00',
-  highlights: '#E0B0FF',
+  projects: '#0F172A',
+  highlights: '#FF8C00',
   certifications: '#E0F7FA',
 };
 

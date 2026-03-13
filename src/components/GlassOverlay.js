@@ -9,9 +9,7 @@ const GlassOverlay = styled(Box)(({ theme, opacity = 1 }) => ({
     position: 'absolute', inset: 0,
     borderRadius: 'inherit',
     pointerEvents: 'none',
-
     background: 'radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.05))',
-    border: '1px solid rgba(255, 255, 255, 1)',
     boxShadow: 'inset 0 0 5px rgba(255, 255, 255, 0.25)',
     opacity: opacity,
     backfaceVisibility: "hidden",
@@ -21,7 +19,6 @@ const BevelGlassOverlay = styled(Box)(({ theme, opacity = 1, depth = 1 }) => ({
     position: 'absolute', inset: 0,
     borderRadius: 'inherit',
     pointerEvents: 'none',
-
     background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(0, 0, 0, 0.05) 100%)',
     border: '1px solid rgba(255, 255, 255, 0.3)',
     boxShadow: `

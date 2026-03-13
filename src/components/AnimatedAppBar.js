@@ -21,13 +21,13 @@ const AppBar = styled(Box)(({ theme }) => ({
   zIndex: 9999,
 }));
 
-const AppBarHeader = styled(MotionBox)(({ theme }) => ({
+const AppBarHeader = styled(MotionBox)(({ theme, textcolor }) => ({
   width: 'fit-content',
   textAlign: 'center', textTransform: 'capitalize',
   fontFamily: 'Playfair Display',
   fontWeight: 800,
   lineHeight: 1.5,
-  background: `linear-gradient(to bottom right, #6366F1, #38BDF8)`,
+  background: textcolor,
   WebkitBackgroundClip: 'text',
   backgroundClip: 'text',
   color: 'transparent',
@@ -58,24 +58,38 @@ const itemVars = {
   },
 };
 
+const colorgradient = [
+  'linear-gradient(to bottom right, #6366F1, #38BDF8)',
+  'linear-gradient(to right, rgba(15, 23, 42, 0.1), rgba(47, 71, 94, 0.6), rgba(15, 23, 42, 0.1))',
+  'linear-gradient(to bottom right, #6366F1, #38BDF8)',
+  'linear-gradient(to bottom right, #6366F1, #38BDF8)',
+];
+
+const sectionToIndex = {
+  'introduction': 0,
+  'projects': 1,
+  'highlights': 2,
+  'certifications': 3
+};
+
 const AnimatedAppBar = memo(function AnimatedAppBar({ activesection }) {
 
-  const { key, name } = useMemo(() => {
+  const { key, name, textcolor } = useMemo(() => {
     const s = getActivesection(activesection);
+    const index = sectionToIndex[s] ?? 0;
     return {
       key: s,
-      name: s === 'introduction' ? "zhan chen's portfolio" : s
+      name: s === 'introduction' ? "zhan chen's portfolio" : s,
+      textcolor: colorgradient[index]
     };
   }, [activesection]);
 
   return (
-    <AppBar
-
-    >
-
+    <AppBar>
       <AnimatePresence>
         <AppBarHeader
           key={key}
+          textcolor={textcolor}
           variants={itemVars}
           initial='initial'
           animate="animate"

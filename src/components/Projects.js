@@ -5,16 +5,18 @@ import marketintelligence from '../pics/marketintelligence.webp';
 import artexplorer from '../pics/artexplorer.png';
 import researchdigest from '../pics/researchdigest.png';
 import mealplanner from '../pics/mealplanner.webp';
-import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
-import Pagination from '@mui/material/Pagination';
-import { motion, useMotionValue, useSpring, AnimatePresence } from "motion/react";
+import {
+  motion, useMotionValue, useSpring, AnimatePresence,
+  useAnimation, useInView
+} from "motion/react";
 import { styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useAnimateContext } from './AnimateContext';
 import GrainOverlay from './GrainOverlay';
 import GlassOverlay, { BevelGlassOverlay, BorderSheen } from './GlassOverlay';
-import glassbg from '../pics/glassbg.webp';
+import IconButton from '@mui/material/IconButton';
+import ChevronLeftRounded from '@mui/icons-material/ChevronLeftRounded';
+import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
 
 
 const PROJECTSINFO = [
@@ -85,21 +87,9 @@ const CARDHsm = 350;
 
 const SectionContainer = styled(MotionContainer)(({ theme }) => ({
   position: 'fixed',
-  display: 'flex', justifyContent: 'center', alignItems: 'center',
+  display: 'flex', justifyContent: 'center', alignItems: 'flex-start',
   height: `100dvh`,
   overflow: 'hidden',
-  paddingBottom: theme.spacing(8),
-  [theme.breakpoints.down('md')]: {
-    paddingBottom: theme.spacing(7),
-  }
-}));
-
-const ContentBox = styled(Box)(({ theme }) => ({
-  width: '100%', //height: 'auto'
-  display: 'flex', justifyContent: 'center', alignItems: 'center',
-  flexDirection: 'column',
-  gap: theme.spacing(1),
-  zIndex: 1,
 }));
 
 function Projects({ refProps, handleViewport }) {
@@ -118,11 +108,17 @@ function Projects({ refProps, handleViewport }) {
     return {
       gridcontainer: isNormal ? "visible" : "static",
 
+      carouselentrance: isNormal ? 'visible' : 'static',
+      carouselrotate: isNormal ? 'animate' : 'static',
+
+      headerinitial: isNormal ? 'initial' : 'static',
+      headerexit: isNormal ? 'exit' : 'static',
+
       animate: !isNormal ? "static" : (hoveredProj ? "hidden" : "initial"),
+      bloom: !isNormal ? "static" : (hoveredProj ? "hidden" : "hidden"),
       hover: isNormal ? "hover" : "static",
 
-      glowpulse: isNormal ? "animate" : "static",
-      bordersheen: isNormal ? "animate" : "static",
+      pulse: isNormal ? "animate" : "static",
 
       image: isNormal ? "animate" : "static",
     };
@@ -151,7 +147,8 @@ const CarouselContainer = styled(Box)(({ theme }) => ({
   width: '100%', //height: 'auto'
   display: 'flex', justifyContent: 'center', alignItems: 'center',
   flexDirection: 'column',
-  gap: theme.spacing(2),
+  marginTop: theme.spacing(12),
+  gap: theme.spacing(1),
   //zIndex: 1,
 }));
 
@@ -164,185 +161,275 @@ const CarouselContent = styled(MotionBox)(({ theme }) => ({
   backfaceVisibility: "hidden",
 }));
 
-const projlength = PROJECTSINFO.length;
-const getIndex = (i) => (i + projlength) % projlength;
-
-const ProjectsCarousel = memo(function ProjectsCarousel({ hoveredProj,
-  handleHovering, animationConfig }) {
-  const [index, setIndex] = useState(0);
-
-  const prevIndex = getIndex(index - 1);
-  const nextIndex = getIndex(index + 1);
-
-  const paginate = useCallback((newDirection) => {
-    setIndex((prev) => getIndex(prev + newDirection));
-  }, [index]);
-
-  return (
-    <CarouselContainer>
-      <CarouselContent>
-        <AnimatePresence mode='popLayout'>
-          {[prevIndex, index, nextIndex].map((projindex, i) => (
-            <AnimatedCarouselItem key={PROJECTSINFO[projindex].id}
-              projindex={projindex} i={i}
-              hoveredProj={hoveredProj} handleHovering={handleHovering}
-              animationConfig={animationConfig}
-            />
-          ))}
-        </AnimatePresence>
-      </CarouselContent>
-      <button onClick={() => paginate(1)}>{">"}</button>
-    </CarouselContainer>
-  );
-});
-
 const CARD_RADIUS = 32;
 
-const CarouselItem = styled(MotionBox)(({ theme, isActive }) => ({
-  width: '350px', height: CARDH + 50,
+const CarouselRotationAnimation = styled(MotionBox)(({ theme }) => ({
+  width: '400px', height: CARDH + 50,
   borderRadius: `${CARD_RADIUS}px`,
   backfaceVisibility: "hidden",
-  isolation: 'isolate',
   [theme.breakpoints.down('sm')]: {
     width: '300px', height: CARDHsm + 50,
   },
-  zIndex: isActive ? 10 : 1,
 }));
 
-const CarouselEntrance = styled(MotionBox)(({ theme }) => ({
-  width: '100%', height: '100%',
-  display: 'flex', justifyContent: 'center', alignItems: 'center',
-  borderRadius: 'inherit',
-  backfaceVisibility: "hidden",
-}));
+const TRANSITIONCONFIG = {
+  headeranimation: 8,
+  headerrotate: { duration: 0.4, ease: [0.43, 0.13, 0.23, 0.96] },
+  headerhover: { duration: 0.6, ease: "easeOut" },
 
-const itemVars = {
-  initial: { opacity: 0, x: 50, scale: 0.7 },
-  active: {
-    opacity: 1,
-    x: 0, y: 0,
-    scale: 1,
-  },
-
-  inactive: ({ floatingValues } = {}) => ({
-    opacity: floatingValues.opacity,
-    x: floatingValues.x, y: floatingValues.y,
-    scale: floatingValues.scale,
-    rotate: floatingValues.rotate,
-    transition: {
-      y: {
-        duration: floatingValues.duration,
-        repeat: Infinity,
-        ease: "easeInOut",
-        delay: -floatingValues.delay
-      },
-      rotate: {
-        duration: floatingValues.duration + 10,
-        repeat: Infinity,
-        ease: "easeInOut",
-        delay: -floatingValues.delay
-      }
-    }
-  }),
-  staticactive: { opacity: 1, x: 0, scale: 1 },
-  staticinactive: { opacity: 1, x: 0, scale: 0.8 },
+  carouselduration: 1.2,
+  cardscaleduration: 1.2,
+  hover: { delay: 0.3, duration: 0.5, ease: "easeInOut" },
 };
 
 const carouselentranceVars = {
   hidden: {
     opacity: 0.6, filter: 'blur(4px)',
   },
-  visible: ({ isActive } = {}) => ({
+  visible: {
     opacity: 1, filter: 'blur(0px)',
     transition: {
-      delay: isActive ? 1 : 0.8,
+      delay: 1,
       duration: 0.8,
       ease: [0.22, 1, 0.36, 1],
+      staggerChildren: 0.5,
     }
+  },
+  static: {
+    opacity: 1, filter: 'blur(0px)',
+  },
+};
+
+const carouselrotateVars = {
+  initial: (direction) => ({
+    x: direction > 0 ? 100 : -100,
+    opacity: 0,
+    scale: 0.9,
+    filter: 'blur(4px)',
   }),
-  static: ({ isActive } = {}) => ({
-    opacity: isActive ? 1 : 0.6, filter: 'blur(0px)',
+  animate: {
+    opacity: 1, scale: 1,
+    x: 0,
+    zIndex: 1,
+    filter: 'blur(0px)',
+    transition: {
+      duration: TRANSITIONCONFIG.carouselduration,
+      ease: [0.22, 1, 0.36, 1]
+    }
+  },
+  exit: (direction) => ({
+    opacity: 0, scale: 0.9,
+    x: direction < 0 ? 100 : -100,
+    zIndex: 0,
+    filter: 'blur(4px)',
   }),
+  static: {
+    opacity: 1, scale: 1,
+    x: 0,
+    filter: 'blur(0px)',
+  },
 };
 
-const random = (min, max) => Math.random() * (max - min) + min;
-const round = (num) => Math.round(num * 100) / 100;
+const projlength = PROJECTSINFO.length;
+const getIndex = (i) => (i + projlength) % projlength;
 
-const getFloatingValues = () => {
-  const xy1 = 5; const xy2 = 3;
+const ProjectsCarousel = memo(function ProjectsCarousel({ hoveredProj,
+  handleHovering, animationConfig }) {
+  const [[index, direction], setIndex] = useState([0, 0]);
 
-  const xSeed = Math.random() > 0.5;
-  const x1 = xSeed
-    ? Math.round(random(xy2, xy1))
-    : Math.round(random(-xy1, -xy2));
-  const x2 = xSeed
-    ? Math.round(random(-xy1, -xy2))
-    : Math.round(random(xy2, xy1));
+  const prevIndex = getIndex(index - 1);
+  const nextIndex = getIndex(index + 1);
 
-  const ySeed = Math.random() > 0.5;
-  const y1 = ySeed
-    ? Math.round(random(xy2, xy1))
-    : Math.round(random(-xy1, -xy2));
-  const y2 = ySeed
-    ? Math.round(random(-xy1, -xy2))
-    : Math.round(random(xy2, xy1));
+  const paginate = useCallback((newIndex) => {
+    if (index === newIndex) return;
 
-  const rotateSeed = Math.random() > 0.5;
-  const rotate = rotateSeed
-    ? [1, -1, 1]
-    : [-1, 1, -1];
+    setIndex(prev => {
+      const diff = newIndex - prev[0];
+      return [newIndex, diff > 0 ? 1 : -1]
+    });
+  }, [index]);
 
-  return {
-    opacity: [0.6, round(random(0.65, 0.7)), 0.6],
-    x: [x1, x2, x1],
-    y: [y1, y2, y1],
-    scale: [0.7, round(random(0.75, 0.85)), 0.7],
-    rotate: rotate,
-    duration: round(random(8, 12)),
-    delay: round(random(0, 4)),
-  };
+  return (
+    <CarouselContainer>
+      <AnimatedProjectHeader proj={PROJECTSINFO[index]}
+        hoveredProj={hoveredProj} animationConfig={animationConfig}
+      />
+      <CarouselContent
+        variants={carouselentranceVars}
+        initial="hidden"
+        whileInView={animationConfig.carouselentrance}
+        viewport={{ once: false, amount: 0.5 }}
+      >
+        <AnimatePresence mode='popLayout' custom={direction}>
+          {[prevIndex, index, nextIndex].map((projindex, i) => (
+            <CarouselRotationAnimation
+              key={`${PROJECTSINFO[projindex].id}-${projindex}`}
+              custom={direction}
+              variants={carouselrotateVars}
+              initial='initial'
+              animate='animate'
+              exit='exit'
+            >
+              <AnimatedCarouselItem //key={PROJECTSINFO[projindex].id}
+                projindex={projindex} i={i}
+                hoveredProj={hoveredProj} handleHovering={handleHovering}
+                animationConfig={animationConfig}
+              />
+            </CarouselRotationAnimation>
+          ))}
+        </AnimatePresence>
+      </CarouselContent>
+      <PaginationControls currentIndex={index} paginate={paginate}
+        direction={direction} total={projlength} />
+    </CarouselContainer>
+  );
+});
+
+const StyledCardHeader = styled(MotionBox)(({ theme }) => ({
+  position: 'relative',
+  //marginTop: theme.spacing(8),
+  fontFamily: 'DM Serif Display, sans-serif',
+  fontSize: 'clamp(20px, 3vw, 32px)',
+  fontWeight: 800,
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase', fontStyle: 'italic',
+  textAlign: 'center',
+  WebkitFontSmoothing: 'antialiased',
+  backfaceVisibility: "hidden",
+  color: 'rgba(255, 255, 255, 0.8)',
+  textShadow: `
+    0 8px 12px rgba(0, 0, 0, 0.3),   
+    0 2px 2px rgba(0, 0, 0, 0.1)     
+  `,
+  backgroundImage: `linear-gradient(
+    120deg, 
+    rgba(255,255,255,0) 0%, 
+    rgba(255,255,255,0.8) 50%, 
+    rgba(255,255,255,0) 100%
+  )`,
+  backgroundSize: '200% 100%',
+  WebkitBackgroundClip: 'text',
+  backgroundClip: 'text',
+}));
+
+const CardHeaderUnderline = styled(MotionBox)(({ theme }) => ({
+  position: 'relative',
+  width: '60%', height: '2px',
+  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)',
+  transformOrigin: 'center',
+  backfaceVisibility: "hidden",
+}));
+
+const headerVars = {
+  initial: {
+    backgroundPosition: '-100% 0%',
+    letterSpacing: '0.12em',
+    opacity: 0, scale: 1,
+    y: -10,
+    transition: TRANSITIONCONFIG.headerrotate
+  },
+  visible: {
+    backgroundPosition: '-100% 0%',
+    letterSpacing: '0.12em',
+    opacity: 0.9, scale: 1,
+    y: 0,
+    transition: TRANSITIONCONFIG.headerrotate
+  },
+  animate: {
+    backgroundPosition: '100% 0%',
+    letterSpacing: '0.2em',
+    opacity: 1,
+    scale: 1.02,
+    y: -10,
+    transition: {
+      backgroundPosition: { duration: 2, repeat: Infinity, ease: "linear" },
+      letterSpacing: TRANSITIONCONFIG.headerhover,
+      scale: TRANSITIONCONFIG.headerhover,
+      y: TRANSITIONCONFIG.headerhover,
+    }
+  },
+  exit: {
+    backgroundPosition: '-100% 0%',
+    letterSpacing: '0.12em',
+    opacity: 0, scale: 1,
+    y: 10,
+    transition: TRANSITIONCONFIG.headerrotate,
+  },
+  static: {
+    backgroundPosition: '-100% 0%',
+    letterSpacing: '0.12em',
+    opacity: 0.9, scale: 1,
+    y: 0,
+  },
 };
 
-const TRANSITIONCONFIG = {
-  carouselduration: 1.2,
-
-  cardscaleduration: 1.2,
-
+const underlineVars = {
+  initial: {
+    opacity: 1, scaleX: [0.5, 1],
+    transition: {
+      duration: TRANSITIONCONFIG.headeranimation,
+      repeat: Infinity, repeatType: "mirror", ease: "easeInOut"
+    }
+  },
+  animate: {
+    opacity: 0, scaleX: 0,
+    transition: TRANSITIONCONFIG.headerhover,
+  },
 };
+
+const AnimatedProjectHeader = memo(function AnimatedProjectHeader({ proj,
+  hoveredProj, animationConfig }) {
+
+  return (
+    <React.Fragment>
+      <AnimatePresence mode='wait'>
+        <StyledCardHeader
+          key={proj.id}
+          variants={headerVars}
+          initial={animationConfig.headerinitial}
+          animate={hoveredProj ? "animate" : "visible"}
+          exit={animationConfig.headerexit}
+        >
+          {proj.header}
+        </StyledCardHeader>
+      </AnimatePresence>
+      <CardHeaderUnderline
+        variants={underlineVars}
+        initial="initial"
+        animate={hoveredProj ? "animate" : "initial"}
+      />
+    </React.Fragment>
+  );
+});
+
+const CarouselItem = styled(MotionBox)(({ theme, isActive }) => ({
+  width: '100%', height: '100%',
+  borderRadius: 'inherit',
+  display: 'flex', justifyContent: 'center', alignItems: 'center',
+  backfaceVisibility: "hidden",
+  isolation: 'isolate',
+  zIndex: isActive ? 10 : 1,
+}));
 
 const AnimatedCarouselItem = motion(forwardRef(function AnimatedCarouselItem({ projindex,
   i, hoveredProj, handleHovering, animationConfig }, ref) {
 
   const isActive = useMemo(() => i === 1, [i]);
-  const floatingValues = useMemo(() => getFloatingValues(), [projindex]);
 
   return (
     <CarouselItem
       ref={ref}
-      custom={{ floatingValues }}
-      variants={itemVars}
       layout
-      initial={'initial'}
-      animate={isActive ? 'active' : 'inactive'}
-      exit={'initial'}
       transition={{
         duration: TRANSITIONCONFIG.carouselduration,
         ease: [0.22, 1, 0.36, 1],
       }}
       isActive={isActive}
     >
-      <CarouselEntrance
-        custom={{ isActive: isActive }}
-        variants={carouselentranceVars}
-        initial="hidden"
-        whileInView={'visible'}
-        viewport={{ once: false, amount: 0.5 }}
-      >
-        <ProjectCard projinfo={PROJECTSINFO[projindex]} isActive={isActive}
-          hoveredProj={hoveredProj} handleHovering={handleHovering}
-          animationConfig={animationConfig}
-        />
-      </CarouselEntrance>
+      <ProjectCard projinfo={PROJECTSINFO[projindex]} isActive={isActive}
+        hoveredProj={hoveredProj} handleHovering={handleHovering}
+        animationConfig={animationConfig}
+      />
     </CarouselItem>
   );
 }));
@@ -372,14 +459,20 @@ const RestBorder = styled(MotionBox)(({ theme }) => ({
 }));
 
 const BorderGlow = styled(MotionBox)(({ theme }) => {
-  const color = (theme.vars || theme).palette.primary.mainChannel;
+  const color = (theme.vars || theme).palette.primary.lightChannel;
 
   return {
     position: "absolute", inset: 0,
     borderRadius: "inherit",
-    boxShadow: `0 0 10px rgba(${color} / 0.8)`,
-    border: `1px solid rgba(${color} / 0.75)`,
-    background: 'transparent',
+    boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.3)',
+    border: "1px solid transparent",
+    background: `
+      linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.05)) border-box,
+      linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05)) padding-box
+    `,
+    mask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0) border-box",
+    WebkitMaskComposite: "destination-out",
+    pointerEvents: "none",
     backfaceVisibility: "hidden",
   };
 });
@@ -405,52 +498,65 @@ const HueRotateLayer = styled(MotionBox)(({ theme, bg }) => ({
   inset: 0,
   borderRadius: "inherit",
   background: bg,
+  maskImage: 'radial-gradient(circle at top left, white 50%, transparent 70%)',
+  WebkitMaskImage: 'radial-gradient(circle at top left, white 50%, transparent 70%)',
   willChange: "opacity",
   backfaceVisibility: 'hidden',
 }));
 
-const RestBg = styled(MotionBox)(({ theme }) => ({
+const BgWrapper = styled(MotionBox)(({ theme }) => ({
   position: "absolute", inset: 0,
   borderRadius: "inherit",
-  //backdropFilter: 'blur(2px)',
-  //WebkitBackdropFilter: 'blur(2px)',
-  overflow: 'hidden',
   zIndex: -1,
   backfaceVisibility: "hidden",
 }));
 
-const GlassBg = styled(MotionBox)(({ theme, opacity = 1, bgcolor, coloropacity = 0.2, blur = 0 }) => {
-  const color = `rgba(${(theme.vars || theme).palette.background.defaultChannel} / ${coloropacity})`;
+const GlassSheen = styled(MotionBox)(({ theme, opacity = 1,
+  bgcolor, coloropacity = 0, sheencolor = '255,255,255' }) => {
+  const color = theme.palette.mode === 'dark'
+    ? `rgba(255,255,255, ${coloropacity})`
+    : `rgba(255,255,255, ${coloropacity})`;
 
   return {
-    position: "absolute", inset: -blur,
+    position: "absolute", inset: 0,
     borderRadius: "inherit",
     backgroundColor: bgcolor || color,
-    backgroundImage: `url(${glassbg})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    filter: `blur(${blur}px)`,
+    background: `
+      linear-gradient(135deg, rgba(${sheencolor}, 0.4), rgba(${sheencolor}, 0.05)) border-box,
+      linear-gradient(rgba(${sheencolor}, 0.2), rgba(${sheencolor}, 0.05)) padding-box
+    `,
+    mask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0) border-box",
+    WebkitMaskComposite: "destination-out",
     opacity: opacity,
+    zIndex: 1,
+    pointerEvents: "none",
     backfaceVisibility: "hidden",
   };
 });
 
-const HoverBg = styled(MotionBox)(({ theme }) => ({
-  position: "absolute", inset: 0,
-  borderRadius: "inherit",
-  background: `rgba(${(theme.vars || theme).palette.background.defaultChannel} / 0.15)`,
-  backdropFilter: "blur(20px)",
-  WebkitBackdropFilter: "blur(20px)",
-  //boxShadow: `inset 0 0 1px rgba(255, 255, 255, 0.3), 
-  //  inset 0 0 20px rgba(255, 255, 255, 0.05)`,
-  //boxShadow: `0 10px 20px rgba(15,15,15, 0.05), 0 6px 6px rgba(15,15,15, 0.08)`,
-  zIndex: -1,
-  backfaceVisibility: "hidden",
-}));
+const GlassBg = styled(MotionBox)(({ theme, opacity = 1,
+  bgcolor, coloropacity = 0.3 }) => {
+  const color = theme.palette.mode === 'dark'
+    ? `rgba(22, 28, 36, ${coloropacity + 0.1})`
+    : `rgba(22, 28, 36, ${coloropacity})`;
+
+  return {
+    position: "absolute", inset: 0,
+    borderRadius: "inherit",
+    backgroundColor: bgcolor || color,
+    boxShadow: `
+      inset 0 0 0 1px rgba(255, 255, 255, 0.1), // Bright inner edge
+      0 4px 24px -1px rgba(0, 0, 0, 0.2)        // Soft outer drop
+    `,
+    opacity: opacity,
+    backdropFilter: 'blur(20px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+    backfaceVisibility: "hidden",
+  };
+});
 
 const BloomBg = styled(MotionBox)(({ theme, bg }) => ({
-  position: "absolute",
-  inset: 0,
+  position: "absolute", inset: 0,
   borderRadius: "inherit",
   background: bg,
   maskImage: "radial-gradient(circle, transparent var(--inner), black var(--inner), black var(--outer), transparent var(--outer))",
@@ -467,7 +573,7 @@ const StyledCard = styled(MotionBox)(({ theme }) => ({
   borderRadius: 'inherit',
   //transformStyle: "preserve-3d",
   backfaceVisibility: "hidden",
-  overflow: 'hidden',
+  //overflow: 'hidden',
   maskImage: 'linear-gradient(to bottom, black 90%, transparent 100%)',
   WebkitMaskImage: 'linear-gradient(to bottom, black 90%, transparent 100%)',
 }));
@@ -475,7 +581,7 @@ const StyledCard = styled(MotionBox)(({ theme }) => ({
 const CardContent = styled(MotionBox)(({ theme }) => ({
   width: '100%', height: '100%',
   borderRadius: 'inherit',
-  padding: theme.spacing(2),
+  padding: theme.spacing(2, 0),
   display: 'flex', flexDirection: 'column',
   justifyContent: 'space-start', alignItems: 'center',
   gap: theme.spacing(1),
@@ -489,25 +595,29 @@ const CardContent = styled(MotionBox)(({ theme }) => ({
   },
 }));
 
-const HoverContent = styled(MotionBox)(({ theme }) => ({
+const HoverContent = styled(MotionBox)(({ theme, hover = false }) => ({
+  position: 'relative',
   width: '100%', //height: '100%',
   //borderRadius: 'inherit',
   display: 'flex', flexDirection: 'column',
   justifyContent: 'center', alignItems: 'center',
-  gap: theme.spacing(1),
+  padding: !hover ? theme.spacing(2, 0) : theme.spacing(2, 4),
+  gap: theme.spacing(4),
   backfaceVisibility: "hidden",
 }));
 
-const CardImageContainer = styled(Box)(({ theme }) => ({
+const CardImageContainer = styled(MotionBox)(({ theme, isActive = false }) => ({
+  position: isActive ? 'absolute' : 'relative',
+  top: isActive ? 0 : 'auto',
   height: '150px',
-  position: 'relative',
   aspectRatio: 16 / 9,
-  borderRadius: '16px',
+  borderRadius: '20px',
   boxShadow: `
     2px 4px 3px rgba(0, 0, 0, 0.15),
     4px 8px 10px rgba(0, 0, 0, 0.1),
     8px 16px 20px rgba(0, 0, 0, 0.05)
   `,
+  filter: isActive ? 'blur(4px)' : 'blur(0px)',
   backfaceVisibility: "hidden",
 }));
 
@@ -516,78 +626,97 @@ const CardImage = styled('img')(({ theme }) => ({
   borderRadius: 'inherit',
   objectFit: 'cover',
   display: 'block',
-}));
-
-const StyledCardHeader = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(3, 0), //paddingBottom: theme.spacing(1),
-  fontFamily: 'Lora, sans-serif',
-  fontSize: '24px',
-  fontWeight: 800,
-  letterSpacing: '0.05em',
-  textTransform: 'uppercase',
-  textAlign: 'center',
+  opacity: 0.9,
   backfaceVisibility: "hidden",
-  background: `linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0.7) 100%)`,
-  backgroundClip: 'text',
-  WebkitBackgroundClip: 'text',
-  color: 'transparent',
-  textShadow: '0px 2px 6px rgba(0, 0, 0, 0.2)',
-  //boxShadow: `0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(0, 0, 0, 0.3)`,
 }));
 
-const StyledListItem = styled(ListItem)(({ theme }) => ({
-  justifyContent: 'center',
-  textAlign: 'center',
-}));
+const CardText = styled(Box)(({ theme }) => {
+  const glowColor = theme.palette.mode === 'dark'
+    ? '255, 209, 176'
+    : '255, 209, 176';
 
-const StyledListItemText = styled(ListItemText)(({ theme }) => ({
-  color: (theme.vars || theme).palette.text.primary,
-  '& .MuiListItemText-primary': {
+  return {
+    paddingBottom: theme.spacing(2),
+    color: 'rgba(255, 255, 255, 0.95)',
     fontFamily: 'Fraunces, sans-serif',
     lineHeight: 1.6,
     fontSize: '18px',
-    fontWeight: 400,
+    fontWeight: 500,
+    letterSpacing: '0.03em',
     textAlign: 'center',
-  },
-}));
+    textShadow: `
+      0 2px 4px rgba(0, 0, 0, 0.3),   
+      0 2px 12px rgba(${glowColor}, 0.5)
+    `,
+    backfaceVisibility: "hidden",
+  }
+});
 
 const TechStackContainer = styled(MotionBox)(({ theme }) => ({
   width: '100%',
   display: 'flex', justifyContent: 'center',
   flexWrap: 'wrap',
-  gap: theme.spacing(1),
-  padding: theme.spacing(1),
+  gap: theme.spacing(4),
   boxSizing: 'border-box',
   backfaceVisibility: "hidden",
 }));
 
-const TechChip = styled(motion.span)(({ theme }) => ({
-  position: 'relative',
-  padding: theme.spacing(1, 2),
-  borderRadius: '20px',
-  fontSize: '14px',
-  fontWeight: 600,
-  fontFamily: 'Fraunces, sans-serif',
-  letterSpacing: '0.02em',
+const TechChipHover = styled(MotionBox)(({ theme }) => {
+  const glowColor = theme.palette.mode === 'dark'
+    ? `214, 138, 122`
+    : `214, 138, 122`;
+
+  return {
+    position: 'relative',
+    borderRadius: '20px',
+    fontSize: '14px',
+    fontWeight: 600,
+    fontFamily: 'Fraunces, sans-serif',
+    letterSpacing: '0.02em',
+    textAlign: 'center',
+    color: 'rgba(255, 255, 255, 0.95)',
+    textShadow: `
+      0 1px 2px rgba(0, 0, 0, 0.5),       
+      0 0 6px rgba(${glowColor}, 0.9),
+      0 0 15px rgba(${glowColor}, 0.4)
+    `,
+    backfaceVisibility: "hidden",
+  };
+});
+
+const InActiveHeader = styled(MotionBox)(({ theme }) => ({
+  position: 'absolute',
+  width: 'min-content',
+  display: 'flex',
+  flexDirection: 'column',
+  lineHeight: 1.1,
+  whiteSpace: 'pre-wrap',
+  fontFamily: 'Cormorant Garamond, sans-serif',
+  fontSize: '30px',
+  fontWeight: 800, fontStyle: 'italic',
+  letterSpacing: '0.12em',
+  textTransform: 'capitalize',
   textAlign: 'center',
-  color: '#ffffff',
+  WebkitFontSmoothing: 'antialiased',
   backfaceVisibility: "hidden",
+  color: 'rgba(255, 255, 255, 1)',
+  textShadow: `
+    0 8px 12px rgba(0, 0, 0, 0.3),   
+    0 2px 2px rgba(0, 0, 0, 0.1)     
+  `,
 }));
 
 const ZBASE = { scale: 1 };
 const ZHOVER = { scale: 1.2 };
 
 const cardcontainerVars = {
-  initial: ({ isActive } = {}) => ({
+  initial: {
     opacity: 1, ...ZBASE,
-    transition: {
-      delay: isActive ? 0 : 0.35,
-      duration: TRANSITIONCONFIG.cardscaleduration, ease: "easeInOut"
-    }
-  }),
+    transition: TRANSITIONCONFIG.hover,
+  },
   hover: {
     opacity: 1, ...ZHOVER,
-    transition: { duration: TRANSITIONCONFIG.cardscaleduration, ease: "easeInOut" }
+    transition: TRANSITIONCONFIG.hover,
   },
   hidden: {
     opacity: 0, ...ZBASE,
@@ -600,52 +729,50 @@ const cardcontainerVars = {
 const borderwrapperVars = {
   initial: ({ io, ho } = {}) => ({
     opacity: io,
+    transition: TRANSITIONCONFIG.hover,
   }),
   hover: ({ io, ho } = {}) => ({
     opacity: ho,
-    transition: { duration: 0.4 }
+    transition: TRANSITIONCONFIG.hover,
   }),
   hidden: { opacity: 0, },
   static: { opacity: 0, }
 };
 
-const restborderVars = {
+const pulseVars = {
   initial: ({ oa, ob, d } = {}) => ({ opacity: oa }),
   animate: ({ oa, ob, d } = {}) => ({
     opacity: [oa, ob, oa],
     transition: { duration: d, repeat: Infinity, ease: "easeInOut" }
-  })
-};
-
-const borderpulseVars = {
-  initial: {
-    opacity: 0.3,
-  },
-  animate: ({ d } = { d: 10 }) => ({
-    opacity: [0.3, 0.8, 0.3],
-    transition: { duration: d, repeat: Infinity, ease: "easeInOut" }
   }),
-  static: {
-    opacity: 0,
-  }
+  hidden: { opacity: 0, },
+  static: { opacity: 0.3, }
 };
 
-const hoverbgVars = {
+const bgwrapperVars = {
   initial: ({ io, ho } = { io: 1, ho: 1 }) => ({
     opacity: io,
-    //transition: { delay: isActive ? 5 : 0 }
+    transition: TRANSITIONCONFIG.hover,
   }),
   hover: ({ io, ho } = { io: 1, ho: 1 }) => ({
     opacity: ho,
-    transition: { duration: 0.3, ease: "easeOut" }
+    transition: TRANSITIONCONFIG.hover,
   }),
-  hidden: {
+  hidden: { opacity: 0, },
+  static: { opacity: 1, }
+};
+
+const glassbgVars = {
+  initial: {
     opacity: 0,
-    //transition: { duration: 0.3, ease: "easeOut" }
+    transition: TRANSITIONCONFIG.hover,
   },
-  static: {
+  hover: {
     opacity: 1,
-  }
+    transition: TRANSITIONCONFIG.hover,
+  },
+  hidden: { opacity: 0, },
+  static: { opacity: 1, }
 };
 
 const bloomVars = {
@@ -673,64 +800,73 @@ const bloomVars = {
   static: {
     opacity: 0,
     "--inner": "0%", "--outer": "0%",
-    transition: { duration: 0 }
   }
 };
 
 const cardVars = {
   initial: {
     opacity: 1,
-    transition: { duration: 0.35, ease: "easeOut" }
+    transition: TRANSITIONCONFIG.hover,
   },
   hover: {
     opacity: 1,
-    transition: { duration: 0.3, ease: "easeOut" }
+    transition: TRANSITIONCONFIG.hover,
   },
   hidden: {
     opacity: 0,
-    transition: { duration: 0.35, ease: "easeOut" }
+    transition: TRANSITIONCONFIG.hover,
   },
-  static: {
-    opacity: 1,
-    transition: { duration: 0 }
-  }
+  static: { opacity: 1, }
 };
 
 const hovercontentVars = {
   initial: {
-    opacity: 0,
-    transition: { duration: 0.35 },
-  },
-  animate: {
-    opacity: 1,
-    transition: { duration: 0.35 },
-  },
-  static: { opacity: 1, },
-};
-
-const techchipcontainerVars = {
-  initial: { opacity: 0, },
-  visible: {
-    opacity: 1,
+    opacity: 0, scale: 1.15,
     transition: {
-      delayChildren: 1.25,
-      staggerChildren: 0.06,
-      staggerDirection: 1,
-    },
-  },
-  static: { opacity: 1 },
-};
-
-const techchipVars = {
-  initial: { opacity: 0, y: 15, scale: 0.95 },
-  visible: {
-    opacity: 1, y: 0, scale: 1,
-    transition: {
-      duration: 0.8,
-      ease: [0.175, 0.885, 0.32, 1.275],
+      opacity: { duration: 0.75, ease: 'linear' },
+      scale: { duration: 1, ease: 'easeIn' },
     }
   },
-  static: { opacity: 1, y: 0, scale: 1 },
+  animate: (d) => ({
+    opacity: 1, scale: 1,
+    transition: { duration: d, ease: 'linear' },
+  }),
+  exit: {
+    opacity: 0, scale: 1.1,
+    transition: TRANSITIONCONFIG.hover,
+  },
+  static: { opacity: 1, scale: 1 },
+};
+
+const itemVars = {
+  initial: { opacity: 0, y: 0, scale: 0.7 },
+  active: {
+    opacity: 1,
+    y: 0,
+    scale: 1, rotate: 0,
+  },
+  inactive: ({ floatingValues } = {}) => ({
+    opacity: floatingValues.opacity,
+    y: floatingValues.y,
+    scale: 0.7,
+    rotate: floatingValues.rotate,
+    transition: {
+      y: {
+        duration: floatingValues.duration,
+        repeat: Infinity,
+        ease: "easeInOut",
+        delay: -floatingValues.delay
+      },
+      rotate: {
+        duration: floatingValues.duration + 10,
+        repeat: Infinity,
+        ease: "easeInOut",
+        delay: -floatingValues.delay
+      }
+    }
+  }),
+  staticactive: { opacity: 1, x: 0, scale: 1 },
+  staticinactive: { opacity: 1, x: 0, scale: 0.7 },
 };
 
 const paletteA = ['#70d6ff', '#ae97ff', '#9792ff'];
@@ -743,6 +879,34 @@ const shuffle = (array) => {
     [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
   }
   return newArray;
+};
+
+const random = (min, max) => Math.random() * (max - min) + min;
+const round = (num) => Math.round(num * 100) / 100;
+
+const getFloatingValues = () => {
+  const xy1 = 5; const xy2 = 3;
+
+  const ySeed = Math.random() > 0.5;
+  const y1 = ySeed
+    ? Math.round(random(xy2, xy1))
+    : Math.round(random(-xy1, -xy2));
+  const y2 = ySeed
+    ? Math.round(random(-xy1, -xy2))
+    : Math.round(random(xy2, xy1));
+
+  const rotateSeed = Math.random() > 0.5;
+  const rotate = rotateSeed
+    ? [1, -1, 1]
+    : [-1, 1, -1];
+
+  return {
+    opacity: [0.6, round(random(0.65, 0.7)), 0.6],
+    y: [y1, y2, y1],
+    rotate: rotate,
+    duration: round(random(8, 12)),
+    delay: round(random(0, 4)),
+  };
 };
 
 const ProjectCard = memo(function ProjectCard({ projinfo, isActive,
@@ -779,77 +943,66 @@ const ProjectCard = memo(function ProjectCard({ projinfo, isActive,
     return {
       gradientA: generateLayerData(paletteA),
       gradientB: generateLayerData(paletteB),
-      duration: Math.floor(Math.random() * 10) + 10,
+      duration: Math.floor(Math.random() * 5) + 5,
     };
   }, []);
 
+  const floatingValues = useMemo(() => getFloatingValues(), [projinfo.id]);
+
   return (
     <CardContainer
-      custom={{ isActive: isActive }}
       variants={cardcontainerVars}
       initial="initial"
-      animate={activeProj ? 'hover' : animationConfig.animate}
-      whileHover={isActive ? animationConfig.hover : 'initial'}
+      animate={hoveredProj ? (isActive ? 'hover' : 'hidden') : 'initial'}
       isActive={isActive}
     >
-      <RestBorder
+      {/*<RestBorder
         custom={{ io: 1, ho: 0 }}
         variants={borderwrapperVars}
-      //animate={activeProj ? 'hover' : animationConfig.animate}
       >
         <BorderSheen
-          custom={{ d: borderConfig.duration }}
-          variants={borderpulseVars}
+          custom={{ oa: 0.8, ob: 0.3, d: borderConfig.duration }}
+          variants={pulseVars}
           initial='initial'
-          animate={animationConfig.bordersheen}
+          animate={isActive ? 'hidden' : 'animate'}
         />
-      </RestBorder>
+      </RestBorder>*/}
       <HoverBorder
         custom={{ io: 0, ho: 1 }}
         variants={borderwrapperVars}
-      //animate={activeProj ? 'hover' : animationConfig.animate}
       >
         <HueRotateLayer
-          variants={restborderVars}
+          variants={pulseVars}
           custom={{ oa: 0.9, ob: 0.4, d: borderConfig.duration }}
-          animate={animationConfig.pulse}
+          initial='initial'
+          animate={'animate'}
           bg={borderConfig.gradientA}
         />
         <HueRotateLayer
-          variants={restborderVars}
+          variants={pulseVars}
           custom={{ oa: 0.4, ob: 0.9, d: borderConfig.duration }}
-          animate={animationConfig.pulse}
+          initial='initial'
+          animate={'animate'}
           bg={borderConfig.gradientB}
         />
       </HoverBorder>
-      <RestBg
-        variants={hoverbgVars}
-        custom={{ io: 0.6, ho: 0, isActive: isActive }}
-        //animate={activeProj ? 'hover' : animationConfig.animate}
-        isActive={isActive}
-      >
-        <GlassBg
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isActive ? 1 : 0 }}
-          transition={{ duration: TRANSITIONCONFIG.carouselduration }}
-          bgcolor={'#ffffff'} blur={4}
-        />
-      </RestBg>
-      <HoverBg
-        variants={hoverbgVars}
+      <BgWrapper
+        key={'hoverbg'}
+        variants={bgwrapperVars}
         custom={{ io: 0, ho: 1 }}
-      //animate={activeProj ? 'hover' : animationConfig.animate}
       >
-        <GlassBg opacity={0.4} blur={4} />
-      </HoverBg>
+        <GlassSheen opacity={0.4} />
+        <GlassBg
+          variants={glassbgVars}
+        />
+        <GlassOverlay opacity={0.4} />
+      </BgWrapper>
       <BloomBg
         variants={bloomVars}
-        //animate={activeProj ? 'hover' : animationConfig.animate}
         bg={borderConfig.gradientA}
       />
       <StyledCard
         variants={cardVars}
-        animate={activeProj ? 'hover' : animationConfig.animate}
       >
         <CardContent
           ref={cardRef}
@@ -857,57 +1010,154 @@ const ProjectCard = memo(function ProjectCard({ projinfo, isActive,
           onMouseLeave={() => handleHovering(null)}
           onClick={handleClick}
         >
-          <AnimatePresence>
-            {!hoveredProj ?
-              <HoverContent
-                variants={hovercontentVars}
-                initial='initial'
-                animate='animate'
-                exit='initial'
+          {isActive ?
+            <AnimatePresence mode='popLayout'>
+              {!hoveredProj ?
+                <HoverContent
+                  key='cardrestcontent'
+                  custom={1}
+                  variants={hovercontentVars}
+                  initial='initial'
+                  animate={'animate'}
+                  exit='initial'
+                >
+                  <CardImageContainer
+                    isActive={true}
+                  >
+                    <GlassSheen opacity={0.4} sheencolor={'0,0,0'} />
+                    <CardImage src={projinfo.img} />
+                  </CardImageContainer>
+                  <TechStackContainer>
+                    {projinfo.tech.map((t, i) => (
+                      <AnimatedTechChip
+                        key={i}
+                        i={i}
+                        isActive={isActive}
+                        text={t}
+                        animationConfig={animationConfig}
+                      />
+                    ))}
+                  </TechStackContainer>
+                </HoverContent>
+                :
+                <HoverContent
+                  key='cardhovercontent'
+                  custom={1.2}
+                  variants={hovercontentVars}
+                  initial='initial'
+                  animate={'animate'}
+                  exit='initial'
+                  hover={true}
+                >
+                  {projinfo.descriptions.map((description, i) => (
+                    <CardText key={i}>
+                      {description}
+                    </CardText>
+                  ))}
+                  <TechStackContainer>
+                    {projinfo.tech.map((t, i) => (
+                      <TechChipHover>{t}</TechChipHover>
+                    ))}
+                  </TechStackContainer>
+                </HoverContent>
+              }
+            </AnimatePresence>
+            :
+            <HoverContent>
+              <CardImageContainer
+                custom={{ floatingValues }}
+                variants={itemVars}
+                initial={'initial'}
+                animate={isActive ? 'active' : 'inactive'}
+                exit={'initial'}
               >
-                <CardImageContainer>
-                  <CardImage src={projinfo.img} />
-                </CardImageContainer>
-                <StyledCardHeader>{projinfo.header}</StyledCardHeader>
-              </HoverContent>
-              :
-              <HoverContent
-                variants={hovercontentVars}
-                initial='initial'
-                animate='animate'
-                exit='initial'
-              >
-                <StyledCardHeader>{projinfo.header}</StyledCardHeader>
-                {projinfo.descriptions.map((description, i) => (
-                  <StyledListItem key={i}>
-                    <StyledListItemText primary={description} />
-                  </StyledListItem>
-                ))}
-              </HoverContent>
-            }
-          </AnimatePresence>
-          <TechStackContainer
-            //key={hoveredProj ? 'hidden' : 'visible'}
-            variants={techchipcontainerVars}
-            initial='initial'
-            animate={!hoveredProj ? 'visible' : 'static'}
-          >
-            {projinfo.tech.map((t, i) => (
-              <TechChip
-                key={i}
-                variants={techchipVars}
-              >
-                {!hoveredProj && <BevelGlassOverlay opacity={0.45} />}
-                <GrainOverlay opacity={0.1} bgcolor='#ffffff' contrast='200%' />
-                {t}
-              </TechChip>
-            ))}
-          </TechStackContainer>
+                <CardImage src={projinfo.img} />
+              </CardImageContainer>
+              <InActiveHeader>{projinfo.header}</InActiveHeader>
+            </HoverContent>
+          }
         </CardContent>
       </StyledCard>
     </CardContainer>
   )
 });
+
+const TechChipWrapper = styled(MotionBox)(({ theme }) => ({
+  position: 'relative',
+  borderRadius: '20px',
+  padding: theme.spacing(1, 0),
+  backfaceVisibility: "hidden",
+}));
+
+const TechChip = styled(MotionBox)(({ theme }) => ({
+  position: 'relative',
+  borderRadius: 'inherit',
+  fontSize: '20px',
+  fontWeight: 600,
+  fontFamily: 'Fraunces, sans-serif',
+  letterSpacing: '0.02em',
+  textAlign: 'center',
+  color: '#ffffff',
+  textShadow: `
+    0 4px 6px rgba(0, 0, 0, 0.3),   
+    0 1px 1px rgba(0, 0, 0, 0.1)     
+  `,
+  backfaceVisibility: "hidden",
+}));
+
+const chipwaveVars = {
+  animate: (i) => ({
+    y: [0, -8, 0, 0, 0],
+    scale: [1, 1.05, 1, 1, 1],
+    transition: {
+      delay: i * 0.4,
+      duration: 12,
+      times: [0, 0.16, 0.33, 0.33, 1],
+      repeat: Infinity,
+      ease: "easeInOut",
+    }
+  }),
+  static: { y: 0, scale: 1 }
+};
+
+const techchipVars = {
+  initial: { opacity: 0, y: 15, scale: 0.95 },
+  animate: (i) => ({
+    opacity: 1, y: 0, scale: 1,
+    transition: {
+      delay: i * 0.06 + 0.4,
+      duration: 0.8,
+      ease: [0.175, 0.885, 0.32, 1.275]
+    }
+  }),
+  static: { opacity: 1, y: 0, scale: 1 }
+};
+
+function AnimatedTechChip({ i, isActive, text, animationConfig }) {
+  const chipRef = useRef(null);
+
+  const inView = useInView(chipRef, { once: false, amount: 0.1 });
+
+  return (
+    <TechChipWrapper
+      custom={i}
+      variants={chipwaveVars}
+      initial={false}
+      animate={animationConfig.pulse}
+    >
+      <TechChip
+        key={inView ? "in-view" : "not-in-view"}
+        ref={chipRef}
+        custom={i}
+        variants={techchipVars}
+        initial="initial"
+        animate={inView || isActive ? "animate" : "static"}
+      >
+        {text}
+      </TechChip>
+    </TechChipWrapper>
+  );
+};
 
 const AnimatedToolTip = styled(MotionBox)(({ theme }) => ({
   position: 'fixed',
@@ -930,6 +1180,7 @@ const AnimatedToolTip = styled(MotionBox)(({ theme }) => ({
 
 const ImageContainer = styled(MotionBox)(({ theme }) => ({
   position: 'fixed',
+  top: '50%', left: '50%',
   width: '100%',
   aspectRatio: 16 / 9,
   borderRadius: '16px',
@@ -938,10 +1189,11 @@ const ImageContainer = styled(MotionBox)(({ theme }) => ({
   pointerEvents: 'none',
 }));
 
-const ImageOverlay = styled(MotionBox)(({ theme }) => ({
+const ImageOverlay = styled(MotionBox)(({ theme, opacity = 0.1 }) => ({
   position: 'absolute', inset: 0,
   background: '#000000',
   borderRadius: 'inherit',
+  opacity: opacity,
   backfaceVisibility: "hidden",
 }));
 
@@ -957,7 +1209,7 @@ const TOOLTIPCONFIG = { stiffness: 450, damping: 40, mass: 0.5 };
 const tooltipVars = {
   initial: {
     opacity: 0,
-    scale: 0,
+    scale: 0.7,
   },
   animate: {
     opacity: 1,
@@ -970,16 +1222,16 @@ const tooltipVars = {
 };
 
 const imageVars = {
-  initial: { opacity: 0, scale: 1.1 },
+  initial: { opacity: 0, scale: 1.1, x: '-50%', y: '-50%', },
   animate: ({ o } = { o: 1 }) => ({
-    opacity: o, scale: 1,
+    opacity: o, scale: 1, x: '-50%', y: '-50%',
     transition: { duration: 0.8, ease: [0.4, 0, 0.2, 1] }
   }),
   exit: {
-    opacity: 0, scale: 1.05,
+    opacity: 0, scale: 1.05, x: '-50%', y: '-50%',
     transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] }
   },
-  static: { opacity: 0, scale: 1 },
+  static: { opacity: 0, scale: 1, x: '-50%', y: '-50%', },
 };
 
 const HoveredAnimation = memo(function HoveredAnimation({ hoveredProj, animationConfig }) {
@@ -1020,20 +1272,146 @@ const HoveredAnimation = memo(function HoveredAnimation({ hoveredProj, animation
         View <br /> Project
       </AnimatedToolTip>
       <ImageContainer
-        custom={{ o: 1 }}
+        custom={{ o: 0.9 }}
         variants={imageVars}
         initial='initial'
         animate={animationConfig.image}
         exit='exit'
       >
-        <ImageOverlay
-          custom={{ o: 0.1 }}
-          variants={imageVars}
-        />
+        <ImageOverlay />
         <StyledImage src={hoveredProj.img} />
       </ImageContainer>
     </AnimatePresence>
   )
+});
+
+const DotSize = 12; const Gap = 1.5;
+const ActiveDotSize = DotSize * 1;
+const DotGap = DotSize * Gap;
+const DOT_DISTANCE = DotSize * (1 + Gap);
+
+const NavDock = styled(MotionBox)(({ theme }) => ({
+  position: 'relative',
+  display: 'flex', justifyContent: 'center', alignItems: 'center',
+  gap: theme.spacing(DotGap / 8),
+  marginTop: theme.spacing(4),
+}));
+
+const NavDotWrapper = styled(MotionBox)(({ theme }) => ({
+  position: 'relative',
+  width: DotSize, height: DotSize,
+  borderRadius: '50%',
+  cursor: 'pointer',
+  zIndex: 0,
+}));
+
+const NavDot = styled(MotionBox)(({ theme }) => ({
+  width: '100%', height: '100%',
+  borderRadius: 'inherit',
+  cursor: 'inherit',
+}));
+
+const StartingDot = styled(MotionBox)(({ theme }) => ({
+  position: 'absolute', left: 0,
+  width: ActiveDotSize, height: ActiveDotSize,
+  borderRadius: ActiveDotSize,
+  background: '#fff',
+  boxShadow: '0 0 10px rgba(255, 255, 255, 0.4)',
+  pointerEvents: 'none',
+  zIndex: 1,
+}));
+
+const ActiveDot = styled(MotionBox)(({ theme }) => ({
+  position: 'absolute', left: 0,
+  width: ActiveDotSize, height: ActiveDotSize,
+  borderRadius: ActiveDotSize / 2,
+  background: 'linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.8) 100%)',
+  boxShadow: '0 0 15px rgba(255, 255, 255, 0.5)',
+  zIndex: 2,
+}));
+
+const navdotVars = {
+  initial: {
+    scale: 0.75,
+    transition: { duration: 0.6, ease: 'easeOut' }
+  },
+  hover: {
+    scale: 1,
+    transition: { duration: 0.6, ease: 'easeOut' }
+  },
+  static: { scale: 1, },
+};
+
+const PaginationControls = memo(function PaginationControls({ currentIndex, paginate,
+  direction, total = 4 }) {
+
+  const prevIndexRef = useRef(currentIndex);
+  const prevIndex = prevIndexRef.current;
+
+  const distance = Math.abs(currentIndex - prevIndex);
+
+  const stretchValue = distance === 0 ? 1 : 1 + (distance * 0.7);
+  const targetWidth = distance === 0 ? DotSize : DotSize + (distance * DOT_DISTANCE * 0.8);
+
+  const startLeft = prevIndex * DOT_DISTANCE;
+  const endLeft = currentIndex * DOT_DISTANCE;
+
+  useEffect(() => {
+    prevIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
+  return (
+    <NavDock>
+      {[...Array(total)].map((_, i) => (
+        <NavDotWrapper
+          key={i}
+          initial='initial'
+          whileHover='hover'
+          onClick={() => paginate(i)}
+        >
+          <NavDot
+            variants={navdotVars}
+          >
+            <GlassSheen />
+          </NavDot>
+        </NavDotWrapper>
+      ))}
+      <StartingDot
+        key={currentIndex}
+        initial={{
+          opacity: 0.8,
+          x: prevIndexRef.current * DOT_DISTANCE,
+          ScaleX: 1,
+        }}
+        animate={{
+          opacity: [0.8, 0.6, 0],
+          x: prevIndexRef.current * DOT_DISTANCE,
+          scaleX: [1, stretchValue, 0.2],
+        }}
+        transition={{
+          opacity: { duration: 1.5, times: [0, 0.7, 1], ease: "easeInOut" },
+          scaleX: { duration: 1.5, times: [0, 0.2, 1], ease: "easeInOut" }
+        }}
+        style={{
+          originX: direction > 0 ? 0 : 1,
+        }}
+      />
+      <ActiveDot
+        initial={false}
+        animate={{
+          left: direction > 0
+            ? [startLeft, startLeft + (distance * DOT_DISTANCE * 0.2), endLeft]
+            : [startLeft, endLeft, endLeft],
+          width: [DotSize, targetWidth, DotSize + currentIndex * 0.001],
+        }}
+        transition={{
+          duration: 1,
+          times: [0, 0.5, 1],
+          ease: ["linear", [0.42, 0, 1, 1]]
+        }}
+      />
+    </NavDock>
+  );
 });
 
 export default memo(Projects);

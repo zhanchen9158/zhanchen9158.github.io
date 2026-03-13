@@ -12,39 +12,8 @@ import getRandom from '../functions/getRandom';
 
 
 const highlights = {
-  marketintelligence: {
-    id: 1,
-    projtitle: 'Market Intelligence',
-    items:
-      [
-        {
-          id: 1,
-          title: 'sMAPE Based Forecasting',
-          description: '',
-          image: PROJECT_HIGHLIGHTS.marketintelligence.forecast,
-        },
-        {
-          id: 2,
-          title: 'Financial Data Visualization',
-          description: '',
-          image: PROJECT_HIGHLIGHTS.marketintelligence.chart,
-        },
-        {
-          id: 3,
-          title: 'Technical Analysis Platform',
-          description: '',
-          image: PROJECT_HIGHLIGHTS.marketintelligence.analysis,
-        },
-        {
-          id: 4,
-          title: 'Financial Quote Retrieval',
-          description: '',
-          image: PROJECT_HIGHLIGHTS.marketintelligence.ticker,
-        },
-      ],
-  },
   researchdigest: {
-    id: 2,
+    id: 1,
     projtitle: 'Research Digest',
     items:
       [
@@ -71,6 +40,37 @@ const highlights = {
           title: 'Advanced Research Querying',
           description: '',
           image: PROJECT_HIGHLIGHTS.researchdigest.search,
+        },
+      ],
+  },
+  marketintelligence: {
+    id: 2,
+    projtitle: 'Market Intelligence',
+    items:
+      [
+        {
+          id: 1,
+          title: 'sMAPE Based Forecasting',
+          description: '',
+          image: PROJECT_HIGHLIGHTS.marketintelligence.forecast,
+        },
+        {
+          id: 2,
+          title: 'Financial Data Visualization',
+          description: '',
+          image: PROJECT_HIGHLIGHTS.marketintelligence.chart,
+        },
+        {
+          id: 3,
+          title: 'Technical Analysis Platform',
+          description: '',
+          image: PROJECT_HIGHLIGHTS.marketintelligence.analysis,
+        },
+        {
+          id: 4,
+          title: 'Financial Quote Retrieval',
+          description: '',
+          image: PROJECT_HIGHLIGHTS.marketintelligence.ticker,
         },
       ],
   },
@@ -317,7 +317,7 @@ const TextShadow = styled(MotionBox)(({ theme }) => ({
   //position: 'absolute',
   width: '100%', height: '100%',
   //top: top, left: theme.spacing(1),
-  backgroundColor: 'rgba(0, 30, 60, 0.6)',
+  backgroundColor: 'rgba(0, 30, 60, 0.9)',
   filter: 'blur(8px)',
   //background: 'linear-gradient(to bottom, rgba(0, 30, 60, 0.6) 0%, rgba(0, 30, 60, 0) 100%)',
   //boxShadow: '0 0 30px 10px rgba(0, 30, 60, 0.4)',
@@ -565,47 +565,58 @@ const AnimatedList = memo(function AnimatedList({ proj, proji, animationConfig,
   )
 });
 
-const BgOverlay = styled(MotionBox)(({ theme }) => ({
-  position: 'fixed',
-  inset: 0,
-  backgroundColor: (theme.vars || theme).palette.highlights.overlay,
-  zIndex: -1,
+const Modal = styled(MotionBox)(({ theme }) => ({
+  position: 'fixed', inset: 0,
+  zIndex: 1,
+  backfaceVisibility: "hidden",
 }));
 
-const BackgroundImage = styled(MotionBox)(({ theme }) => ({
-  position: 'fixed',
-  inset: '-5%',
+const BgUnderlay = styled(MotionBox)(({ theme }) => ({
+  position: 'absolute', inset: '-5%',
+  backgroundColor: (theme.vars || theme).palette.highlights.overlay,
+  originX: 0.5, originY: 0.5,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  zIndex: -1,
+  backfaceVisibility: "hidden",
+}));
+
+const ImageLayer = styled(MotionBox)(({ theme }) => ({
+  position: 'absolute', inset: '-5%',
   originX: 0.5, originY: 0.5,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   filter: 'url(#liquid-ripple)',
-  willChange: 'filter, opacity',
-  zIndex: 1,
+  backfaceVisibility: "hidden",
 }));
 
 const rippleduration = 8;
+const bgduration = rippleduration / 4;
+const BG_TRANSITION = { duration: bgduration, ease: 'easeInOut' };
 
-const bgoverlayVars = {
-  initial: { opacity: 0 },
+const bgunderlayVars = {
+  initial: { opacity: 0, transition: BG_TRANSITION },
   animate: {
     opacity: 1,
-    transition: { duration: rippleduration / 4 }
+    transition: BG_TRANSITION
   },
-  exit: { opacity: 0, transition: { duration: rippleduration / 4 } }
 };
 
 const bgVars = {
-  initial: {
-    opacity: 0, scale: 1.1
+  inactive: {
+    opacity: 0, zIndex: 0,
+    transition: BG_TRANSITION
   },
-  animate: {
-    opacity: 0.4, scale: 1,
-    transition: { duration: rippleduration / 4, ease: "easeOut", }
-  },
-  exit: { opacity: 0, transition: { duration: rippleduration / 4 } }
+  active: (o = 0.6) => ({
+    opacity: o, zIndex: 1,
+    transition: BG_TRANSITION
+  }),
 };
 
 const FloatingImage = memo(function FloatingImage({ image, animationConfig, handleActivatingImage }) {
+  const [activeLayer, setActiveLayer] = useState(0);
+  const [image0, setImage0] = useState(image);
+  const [image1, setImage1] = useState(null);
 
   const rippleParams = useMemo(() => ({
     randomScale: Math.round(getRandom(20, 50)),
@@ -614,43 +625,64 @@ const FloatingImage = memo(function FloatingImage({ image, animationConfig, hand
 
   const rippleProgress = useMotionValue(0);
 
-  useEffect(() => {
+  const triggerRipple = useCallback(() => {
     rippleProgress.set(0);
     animate(rippleProgress, 1, {
       duration: rippleduration,
       ease: [0.16, 1, 0.3, 1],
     });
+  }, []);
+
+  useEffect(() => {
+    triggerRipple();
+
+    if (!image) return;
+
+    if (activeLayer === 0) {
+      if (image !== image0) {
+        setImage1(image);
+        setActiveLayer(1);
+      }
+    } else {
+      if (image !== image1) {
+        setImage0(image);
+        setActiveLayer(0);
+      }
+    }
   }, [image]);
 
   return (
-    <AnimatePresence>
+    <Modal style={{ pointerEvents: image ? 'auto' : 'none' }}>
       <LiquidFilter progress={rippleProgress} rippleParams={rippleParams} />
-      {image && (
-        <motion.div key={image}>
-          <BgOverlay
-            variants={bgoverlayVars}
-            initial='initial'
-            animate='animate'
-            exit='exit'
-          />
-          <BackgroundImage
-            //key={`bg-${image}`}
-            variants={bgVars}
-            initial='initial'
-            animate='animate'
-            exit='exit'
-            onClick={() => handleActivatingImage(null)}
-            sx={{ backgroundImage: `url(${image})` }}
-          />
-        </motion.div>
-      )}
-    </AnimatePresence>
+      <BgUnderlay
+        variants={bgunderlayVars}
+        initial='initial'
+        animate={image ? 'animate' : 'initial'}
+      />
+      <ImageLayer
+        custom={0.6}
+        variants={bgVars}
+        initial="inactive"
+        animate={image && activeLayer === 0 ? 'active' : 'inactive'}
+        style={{ backgroundImage: image0 ? `url(${image0})` : 'none' }}
+        onClick={() => handleActivatingImage(null)}
+      />
+      <ImageLayer
+        custom={0.6}
+        variants={bgVars}
+        initial="inactive"
+        animate={image && activeLayer === 1 ? 'active' : 'inactive'}
+        style={{ backgroundImage: image1 ? `url(${image1})` : 'none' }}
+        onClick={() => handleActivatingImage(null)}
+      />
+    </Modal>
   );
 });
 
 const StyledSvg = styled('svg')(({ theme }) => ({
   position: 'absolute',
-  width: 0, height: 0
+  width: 0, height: 0,
+  willChange: 'filter, opacity',
 }));
 
 const LiquidFilter = memo(function LiquidFilter({ progress, rippleParams }) {
