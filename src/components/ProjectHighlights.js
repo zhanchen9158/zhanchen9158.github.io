@@ -1,4 +1,7 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
+import React, {
+  useState, useRef, useEffect, useLayoutEffect,
+  useCallback, useMemo, memo
+} from "react";
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import { styled, useTheme } from '@mui/material/styles';
@@ -12,39 +15,8 @@ import getRandom from '../functions/getRandom';
 
 
 const highlights = {
-  researchdigest: {
-    id: 1,
-    projtitle: 'Research Digest',
-    items:
-      [
-        {
-          id: 5,
-          title: 'A.I. Question Answering',
-          description: '',
-          image: PROJECT_HIGHLIGHTS.researchdigest.aiqa,
-        },
-        {
-          id: 6,
-          title: 'Daily Fresh Research Feed',
-          description: '',
-          image: PROJECT_HIGHLIGHTS.researchdigest.daily,
-        },
-        {
-          id: 7,
-          title: 'Topical Clustering',
-          description: '',
-          image: PROJECT_HIGHLIGHTS.researchdigest.list,
-        },
-        {
-          id: 8,
-          title: 'Advanced Research Querying',
-          description: '',
-          image: PROJECT_HIGHLIGHTS.researchdigest.search,
-        },
-      ],
-  },
   marketintelligence: {
-    id: 2,
+    id: 1,
     projtitle: 'Market Intelligence',
     items:
       [
@@ -71,6 +43,37 @@ const highlights = {
           title: 'Financial Quote Retrieval',
           description: '',
           image: PROJECT_HIGHLIGHTS.marketintelligence.ticker,
+        },
+      ],
+  },
+  researchdigest: {
+    id: 2,
+    projtitle: 'Research Digest',
+    items:
+      [
+        {
+          id: 5,
+          title: 'A.I. Question Answering',
+          description: '',
+          image: PROJECT_HIGHLIGHTS.researchdigest.aiqa,
+        },
+        {
+          id: 6,
+          title: 'Daily Fresh Research Feed',
+          description: '',
+          image: PROJECT_HIGHLIGHTS.researchdigest.daily,
+        },
+        {
+          id: 7,
+          title: 'Topical Clustering',
+          description: '',
+          image: PROJECT_HIGHLIGHTS.researchdigest.list,
+        },
+        {
+          id: 8,
+          title: 'Advanced Research Querying',
+          description: '',
+          image: PROJECT_HIGHLIGHTS.researchdigest.search,
         },
       ],
   },
@@ -108,9 +111,6 @@ const highlights = {
 };
 
 const header = 70;
-
-const shadowduration = 30;
-const driftduration = 60;
 
 const MotionContainer = motion(Container);
 const MotionBox = motion(Box);
@@ -156,20 +156,6 @@ const GalleryContainer = styled(Box)(({ theme }) => ({
   //boxSizing: 'border-box',
 }));
 
-const HoverOverlay = styled(MotionBox)(({ theme }) => ({
-  position: 'fixed',
-  width: '100dvw', height: '100dvh',
-  top: 0, left: 0,
-  pointerEvents: 'none',
-  zIndex: 5,
-  backgroundColor: (theme.vars || theme).palette.background.default,
-}));
-
-const overlayVars = {
-  inactive: { opacity: 0, },
-  active: { opacity: 0.2, },
-};
-
 function HoverGallery({ }) {
   const [activeImage, setActiveImage] = useState(null);
 
@@ -189,7 +175,7 @@ function HoverGallery({ }) {
       visible: isNormal ? "visible" : "static",
 
       header: isNormal ? "animate" : "static",
-      subheader: isNormal && activeImage ? "hidden" : "static",
+      subheader: isNormal && activeImage ? "hidden" : "initial",
 
       textshadow: !isNormal ? "static" : (activeImage ? "hidden" : "animate"),
       hover: isNormal ? "hover" : "static",
@@ -201,28 +187,29 @@ function HoverGallery({ }) {
   }, [mode, activeImage]);
 
   return (
-    <GalleryContainer
-      component={'section'}
-    >
-      <HoverOverlay
-        variants={overlayVars}
-        initial="inactive"
-        animate={animationConfig.active}
+    <GalleryContainer>
+      <TextLiquidFilter />
+      <AnimatedImages activeImage={activeImage}
+        animationConfig={animationConfig} handleActivatingImage={handleActivatingImage}
       />
       {Object.values(highlights).map((v, i) => (
         <AnimatedList key={v.id}
           proj={v} proji={i} animationConfig={animationConfig}
           activeImage={activeImage}
-          handleActivatingImage={handleActivatingImage} />
+          handleActivatingImage={handleActivatingImage}
+        />
       ))}
-      <FloatingImage image={activeImage}
-        animationConfig={animationConfig} handleActivatingImage={handleActivatingImage}
-      />
     </GalleryContainer>
   );
 };
 
-const ListContainer = styled(MotionBox)(({ theme, i }) => ({
+const ListContainer = styled(MotionBox)(({ theme }) => ({
+  position: 'relative',
+  width: '100%', //height: '80%',
+  backfaceVisibility: 'hidden',
+}));
+
+const ListContent = styled(MotionBox)(({ theme, i }) => ({
   position: 'relative',
   width: '100%', //height: '80%',
   display: 'flex', flexDirection: 'column',
@@ -240,33 +227,45 @@ const ListBorder = styled(MotionBox)(({ theme, i }) => ({
   left: i % 2 === 0 ? 0 : 'auto',
   right: i % 2 !== 0 ? 0 : 'auto',
   top: '10%',
-  width: '2px',
-  height: '80%',
-  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  transformOrigin: 'center',
-  //willChange: 'transform',
+  width: '2px', height: '80%',
+  borderRadius: '4px',
+  background: `linear-gradient(to bottom, 
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(100, 210, 255, 0.8) 50%, 
+    rgba(255, 255, 255, 0.1) 100%
+  )`,
+  backgroundSize: '100% 400%',
+  zIndex: 1,
   backfaceVisibility: 'hidden',
 }));
 
-const Header = styled(MotionBox)(({ theme, i }) => ({
+const HeaderWrapper = styled(MotionBox)(({ theme }) => ({
   position: 'absolute',
-  left: i % 2 === 0 ? 'auto' : '10%',
-  right: i % 2 === 0 ? '10%' : 'auto',
+  display: 'grid',
+  placeItems: 'center',
+  pointerEvents: 'none', userSelect: 'none',
+  zIndex: 1,
+  backfaceVisibility: 'hidden',
+}));
+
+const HeaderLayer = styled(MotionBox)(({ theme }) => ({
+  //position: 'absolute',
+  paddingBottom: '0.2em',
+  marginBottom: '-0.2em',
+  gridArea: '1 / 1',
   fontFamily: 'Antonio',
   fontSize: 'clamp(100px, 10vw, 120px)',
   fontWeight: 800,
-  lineHeight: 0.9, letterSpacing: '-5px',
-  color: '#0F172A',
+  lineHeight: 1.1, letterSpacing: '0.05rem',
+  color: 'transparent',
+  backgroundImage: 'linear-gradient(180deg, #F8FAFC 0%, #94A3B8 100%)',
+  backgroundClip: 'text',
+  WebkitBackgroundClip: 'text',
   alignSelf: 'center', textAlign: 'center',
-  pointerEvents: 'none', userSelect: 'none',
-  zIndex: -1,
-  opacity: 0.3,
-  mixBlendMode: 'overlay',
   WebkitFontSmoothing: 'antialiased',
   [theme.breakpoints.down('sm')]: {
     fontSize: 'clamp(60px, 20vw, 100px)',
   },
-  willChange: 'transform, opacity',
   backfaceVisibility: 'hidden',
 }));
 
@@ -276,93 +275,61 @@ const HeaderWord = styled(Box)(({ theme }) => ({
 
 const SubHeaderContainer = styled(MotionBox)(({ theme }) => ({
   position: 'relative',
-  display: 'inline-block',
-  //willChange: 'transform, opacity',
-  cursor: 'pointer',
   width: 'fit-content',
+  display: 'inline-block',
+  cursor: 'pointer',
+  zIndex: 5,
   backfaceVisibility: 'hidden',
 }));
 
-const SubHeader = styled(MotionBox)(({ theme }) => ({
-  position: 'relative',
+const SubHeaderBase = ({ theme }) => ({
+  width: 'fit-content',
+  display: 'inline-block',
   borderRadius: '8px',
-  fontWeight: 800,
-  fontFamily: 'Playfair Display',
-  letterSpacing: '2px',
-  fontSize: 'clamp(24px, 26px, 26px)',
-  color: '#E2E8F0',
+  fontFamily: 'Cormorant Garamond',
+  fontSize: 'clamp(28px, 2vw, 32px)',
+  fontWeight: 600,
+  fontStyle: 'italic',
+  letterSpacing: '0.25em',
+  pointerEvents: 'none',
   WebkitFontSmoothing: 'antialiased',
   MozOsxFontSmoothing: 'grayscale',
   backfaceVisibility: 'hidden',
   [theme.breakpoints.down('sm')]: {
-    fontSize: 'clamp(20px, 24px, 24px)',
+    fontSize: 'clamp(26px, 1vw, 30px)',
   },
-  display: 'inline-block',
-  //willChange: 'transform, opacity',
-  width: 'fit-content',
-  pointerEvents: 'none',
-}));
-
-const ShadowContainer = styled(MotionBox)(({ theme, top = '70%', height = '30%' }) => ({
-  position: 'absolute',
-  width: '100%', height: height,
-  top: top,
-  borderRadius: '25%',
-  willChange: 'transform',
-  backfaceVisibility: 'hidden',
-  zIndex: -1,
-}));
-
-const TextShadow = styled(MotionBox)(({ theme }) => ({
-  //position: 'absolute',
-  width: '100%', height: '100%',
-  //top: top, left: theme.spacing(1),
-  backgroundColor: 'rgba(0, 30, 60, 0.9)',
-  filter: 'blur(8px)',
-  //background: 'linear-gradient(to bottom, rgba(0, 30, 60, 0.6) 0%, rgba(0, 30, 60, 0) 100%)',
-  //boxShadow: '0 0 30px 10px rgba(0, 30, 60, 0.4)',
-  borderRadius: 'inherit',
-  //willChange: 'transform, opacity',
-  backfaceVisibility: 'hidden',
-  opacity: 'inherit',
-  //zIndex: -1,
-}));
+});
 
 const SubHeaderBlur = styled(MotionBox)(({ theme }) => ({
+  ...SubHeaderBase({ theme }),
   position: 'absolute',
-  borderRadius: '8px',
-  fontWeight: 'bold',
-  fontFamily: 'Playfair Display',
-  letterSpacing: '2px',
-  fontSize: 'clamp(24px, 26px, 26px)',
-  color: '#CBD5E1',
-  WebkitFontSmoothing: 'antialiased',
-  MozOsxFontSmoothing: 'grayscale',
-  backfaceVisibility: 'hidden',
-  [theme.breakpoints.down('sm')]: {
-    fontSize: 'clamp(20px, 24px, 24px)',
-  },
-  display: 'inline-block',
-  width: 'fit-content',
+  color: '#E2E8F0',
   filter: 'blur(4px)',
 }));
 
-const LetterMask = styled(MotionBox)({
+const SubHeaderText = styled(MotionBox)(({ theme }) => ({
+  ...SubHeaderBase({ theme }),
   position: 'relative',
-  display: 'inline-block',
-  overflow: 'hidden',
-  verticalAlign: 'bottom',
-  zIndex: 2,
-});
+  color: '#E2E8F0',
+}));
 
-const AnimatedLetter = styled(MotionBox)({
-  display: 'inline-block',
-  whiteSpace: 'pre',
-  transformOrigin: "bottom left",
-  willChange: 'transform',
-});
+const SubHeaderShadow = styled(MotionBox)(({ theme }) => ({
+  ...SubHeaderBase({ theme }),
+  position: 'absolute',
+  color: 'transparent',
+  textShadow: `
+    0 0 10px rgba(255, 255, 255, 0.4),
+    0 0 20px rgba(255, 255, 255, 0.2)
+  `,
+}));
 
 const listItemDelay = 0.45;
+
+const TRANSITIONCONFIG = {
+  listItemDelay: 0.45,
+
+  activeimage: { duration: 1.2, ease: "easeInOut", },
+};
 
 const containerVars = {
   hidden: { opacity: 0, },
@@ -373,201 +340,280 @@ const containerVars = {
       staggerChildren: listItemDelay,
     },
   },
-  static: { opacity: 1, transition: { duration: 0 } },
+  static: { opacity: 1 },
 };
 
 const borderVars = {
-  hidden: { scaleY: 0, },
-  visible: {
-    scaleY: 1,
+  initial: {
+    y: 0,
+    backgroundPosition: "0% 0%"
+  },
+  animate: {
+    // 1. Vertical Bobbing (Returns to start)
+    y: ["0%", "-3.5%", "1%", "-4.5%", "1.5%", "-3%", "0%"],
+
+    // 2. Continuous Sweep (Moves down to 400%, then back up to 0%)
+    backgroundPosition: ["0% 0%", "0% 400%", "0% 0%"],
+
+    scaleY: [1, 1.05, 1, 1.05, 1],
+
     transition: {
-      duration: 5,
-      ease: "easeOut",
+      y: {
+        duration: 35, // Very slow movement
+        repeat: Infinity,
+        ease: "easeInOut",
+      },
+      backgroundPosition: {
+        duration: 25, // Slow sweep
+        repeat: Infinity,
+        // The custom array of easings creates the variable-speed "flow"
+        ease: "easeInOut",
+      },
+      scaleY: {
+        duration: 25, // Matches the sweep duration
+        repeat: Infinity,
+        ease: "easeInOut",
+      }
     },
   },
-  static: { opacity: 1, transition: { duration: 0 } },
+  hidden: { opacity: 0, transition: TRANSITIONCONFIG.activeimage, },
+  static: {
+    y: 0,
+    backgroundPosition: "0% 0%"
+  },
 };
 
-const subheaderContainerVars = {
-  hidden: { opacity: 0, },
-  visible: {
-    opacity: 1,
-    transition: {
-      duration: 0.5,
-      ease: "easeOut"
-    }
-  },
-  static: { opacity: 1, transition: { duration: 0 } },
-};
-
-const subheaderTextVars = {
-  hover: {
-    opacity: 1,
-    x: 0, y: -10,
-    scale: 1.1,
-    transition: { duration: 0.2, ease: "easeOut", repeat: 0 }
-  },
-  hidden: { opacity: 0 },
-  static: { opacity: 1, x: 0, y: 0, scale: 1, transition: { duration: 0 } },
-};
-
-const driftVars = {
-  animate: (i) => ({
-    x: [0, 25, 50, 25, 0],
-    y: [0, -10, 0, 10, 0],
-    opacity: [0.2, 0.1, 0.2, 0.3, 0.2],
-    scale: [1, 0.9, 1, 1.1, 1],
-    transition: {
-      delay: i * -2.71,
-      duration: driftduration + ((i * 17) % 11),
-      repeat: Infinity,
-      ease: "easeInOut",
-    }
-  }),
-  hover: {
-    opacity: 0.5,
-    x: 0, y: -10,
-    scale: 1.1,
-    transition: { duration: 0.2, ease: "easeOut", repeat: 0 }
-  },
-  hidden: { opacity: 0 },
-  static: { opacity: 1, x: 0, y: 0, scale: 1, transition: { duration: 0 } },
-};
-
-const shadowopacityVars = {
-  initial: { opacity: 0 },
-  animate: {
-    opacity: 0.4,
-    transition: { delay: 2.5, duration: 2.5 }
-  },
-}
-
-const subheaderBlurVars = {
-  initial: { opacity: 0 },
-  blur: {
-    opacity: 1,
-    transition: {
-      duration: 0.15,
-      ease: "easeOut",
-    }
-  },
-  static: { opacity: 0, transition: { duration: 0 } },
-};
-
-const lettermaskVars = {
-  hidden: {
+const subheaderblurVars = {
+  initial: {
     opacity: 0,
+    transition: TRANSITIONCONFIG.activeimage,
   },
-  visible: ({ proji, itemi }) => ({
+  hover: {
+    opacity: 0,
+    transition: TRANSITIONCONFIG.activeimage,
+  },
+  hidden: {
     opacity: 1,
+    transition: TRANSITIONCONFIG.activeimage,
+  },
+  static: { opacity: 1, },
+};
+
+const subheaderVars = {
+  initial: {
+    opacity: 1,
+    x: 0, y: 0,
+    scale: 1,
+    transition: TRANSITIONCONFIG.activeimage,
+  },
+  hover: {
+    opacity: 1,
+    x: 0, y: -10,
+    scale: 1.2,
+    transition: TRANSITIONCONFIG.activeimage,
+  },
+  hidden: { opacity: 0, x: 0, y: 0, scale: 1, transition: TRANSITIONCONFIG.activeimage, },
+  static: { opacity: 1, x: 0, y: 0, scale: 1 },
+};
+
+const AnimatedList = memo(function AnimatedList({ proj, proji, animationConfig,
+  activeImage, handleActivatingImage }) {
+
+  const hoverProgress = useMotionValue(0);
+
+  const staticOpacity = useTransform(hoverProgress, [0, 1], [0.4, 0]);
+
+  const filterValue = useTransform(
+    hoverProgress,
+    [0, 1],
+    ['url(#liquid-ripple-text) opacity(0)', 'url(#liquid-ripple-text) opacity(0.6)']
+  );
+
+  return (
+    <ListContainer
+    //variants={containerVars}
+    //initial="hidden"
+    //whileInView={animationConfig.visible}
+    //viewport={{ once: false, amount: 0.2 }}
+    >
+      <ListContent
+        i={proji}
+        initial='initial'
+        whileHover={activeImage ? 'initial' : 'hover'}
+        onHoverStart={() => animate(hoverProgress, 1, { duration: 0.4, ease: "easeOut" })}
+        onHoverEnd={() => animate(hoverProgress, 0, { duration: 0.3, ease: "easeIn" })}
+      >
+        <ListBorder
+          i={proji}
+          variants={borderVars}
+          initial='initial'
+          whileInView={!activeImage ? 'animate' : 'hidden'}
+        />
+        <HeaderWrapper
+          animate={{ opacity: activeImage ? 0 : 1 }}
+          transition={TRANSITIONCONFIG.activeimage}
+          style={{
+            left: proji % 2 === 0 ? 'auto' : '10%',
+            right: proji % 2 === 0 ? '10%' : 'auto',
+          }}
+        >
+          <HeaderLayer style={{ opacity: staticOpacity }}>
+            {proj.projtitle.split(' ').map((w, i) => (
+              <HeaderWord key={i}>{w}</HeaderWord>
+            ))}
+          </HeaderLayer>
+          <HeaderLayer style={{ filter: filterValue }}>
+            {proj.projtitle.split(' ').map((w, i) => (
+              <HeaderWord key={i}>{w}</HeaderWord>
+            ))}
+          </HeaderLayer>
+        </HeaderWrapper>
+        {proj.items.map((item, itemi) => {
+          const isSelected = activeImage?.image === item.image;
+          return (
+            <SubHeaderContainer
+              key={item.id}
+              initial='initial'
+              animate={isSelected ? 'hover' : animationConfig.subheader}
+              onClick={() => handleActivatingImage(activeImage ? null : item)}
+            >
+              <SubHeaderBlur
+                variants={subheaderblurVars}
+              >
+                {item.title}
+              </SubHeaderBlur>
+              <SubHeaderShadow
+                variants={subheaderVars}
+              >
+                {item.title}
+              </SubHeaderShadow>
+              <SubHeaderText
+                variants={subheaderVars}
+                style={{
+                  filter: isSelected ? 'url(#liquid-ripple-text)' : 'none'
+                }}
+              >
+                <LetterWave
+                  text={item.title}
+                  proji={proji}
+                  itemi={itemi}
+                />
+              </SubHeaderText>
+            </SubHeaderContainer>
+          )
+        })}
+      </ListContent>
+    </ListContainer >
+  )
+});
+
+const LetterContainer = styled(MotionBox)({
+  position: 'relative',
+  display: 'inline-block',
+  zIndex: 2,
+  backfaceVisibility: 'hidden',
+});
+
+const AnimatedLetter = styled(MotionBox)({
+  display: 'inline-block',
+  whiteSpace: 'pre',
+  transformOrigin: "center",
+  backfaceVisibility: 'hidden',
+});
+
+const lettercontainerVars = {
+  visible: ({ proji, itemi }) => ({
     transition: {
       delayChildren: itemi * listItemDelay + 0.5,
-      staggerChildren: 0.07 + ((itemi * 7) % 5) * 0.01,
+      staggerChildren: 0.1,
       staggerDirection: (proji % 2 === 0) ? 1 : -1,
     }
   })
 };
 
 const letterVars = {
-  hidden: {
-    y: "110%", rotate: 15,
-  },
-  visible: (i) => ({
-    y: 0, rotate: 0,
+  visible: {
+    opacity: [0.9, 1, 1, 0.9],
+    scale: [1, 1.4, 1],
+    y: [0, -12, 0],
     transition: {
-      duration: 0.5 + (3 - i) * 0.1,
-      ease: [0.33, 1, 0.68, 1],
+      duration: 0.8,
+      times: [0, 0.5, 1],
+      ease: "easeInOut",
     }
-  })
+  },
+  static: {
+    opacity: 0.9,
+    scale: 1,
+    y: 0
+  }
 };
 
-const AnimatedList = memo(function AnimatedList({ proj, proji, animationConfig,
-  activeImage, handleActivatingImage }) {
-
+const LetterWave = memo(function LetterWave({ text, proji, itemi, isBlur = false }) {
   return (
-    <ListContainer
-      i={proji}
-      variants={containerVars}
-      initial="hidden"
-      whileInView={animationConfig.visible}
-      viewport={{ once: false, amount: 0.2 }}
+    <LetterContainer
+      variants={lettercontainerVars}
+      custom={{ proji, itemi }}
+      initial="static"
+      whileInView="visible"
     >
-      <ListBorder
-        i={proji}
-        variants={borderVars}
-      />
-      <Header
-        i={proji}
-        variants={driftVars}
-        custom={proji}
-        initial={animationConfig.header}
-        animate={animationConfig.header}
-      >
-        {proj.projtitle.split(' ').map((w, i) => (
-          <HeaderWord key={i}>{w}</HeaderWord>
-        ))}
-      </Header>
-      {proj.items.map((item, itemi) => {
-        const isHovered = activeImage === item.image;
-        return (
-          <SubHeaderContainer
-            key={item.id}
-            variants={subheaderContainerVars}
-            onClick={() => handleActivatingImage(isHovered ? null : item.image)}
-            animate={{
-              zIndex: isHovered ? 50 : 1,
-              transition: { duration: 0.35, ease: "easeOut" }
-            }}
-          >
-            <SubHeaderBlur
-              variants={subheaderBlurVars}
-              initial="initial"
-              animate={isHovered ? 'initial' : animationConfig.blur}
-            > {item.title}</SubHeaderBlur>
-            <SubHeader
-              variants={subheaderTextVars}
-              animate={isHovered ? 'hover' : animationConfig.subheader}
-            >
-              <ShadowContainer
-              //variants={driftVars}
-              //custom={itemi}
-              //initial='animate'
-              //animate={isHovered ? 'hover' : animationConfig.textshadow}
-              >
-                <TextShadow
-                  variants={shadowopacityVars}
-                  initial='initial'
-                  whileInView='animate'
-                />
-              </ShadowContainer>
-              <LetterMask
-                variants={lettermaskVars}
-                custom={{ proji, itemi }}
-                initial='hidden'
-                whileInView='visible'
-                viewport={{ once: false, amount: 0.2 }}
-              >
-                {item.title.split('').map((l, letteri) => (
-                  <AnimatedLetter
-                    key={letteri}
-                    custom={itemi}
-                    variants={letterVars}
-                  >
-                    {l === " " ? "\u00A0" : l}
-                  </AnimatedLetter>
-                ))}
-              </LetterMask>
-            </SubHeader>
-          </SubHeaderContainer>
-        )
-      })}
-    </ListContainer>
+      {text.split('').map((l, letteri) => (
+        <AnimatedLetter
+          key={letteri}
+          variants={letterVars}
+        >
+          {l === " " ? "\u00A0" : l}
+        </AnimatedLetter>
+      ))}
+    </LetterContainer>
   )
 });
 
 const Modal = styled(MotionBox)(({ theme }) => ({
   position: 'fixed', inset: 0,
   zIndex: 1,
+  backfaceVisibility: "hidden",
+}));
+
+const ThumbnailContainer = styled(MotionBox)(({ theme }) => ({
+  position: 'absolute',
+  top: '50%', left: '50%',
+  width: '90%',
+  display: 'flex', justifyContent: 'center', alignItems: 'center',
+  flexWrap: 'wrap',
+  gap: theme.spacing(4),
+  zIndex: -1,
+  pointerEvents: 'none',
+  backfaceVisibility: "hidden",
+}));
+
+const ImageContainer = styled(MotionBox)(({ theme }) => ({
+  height: '140px',
+  flexGrow: 1,
+  minWidth: '200px',
+  maxWidth: '350px',
+  borderRadius: '24px',
+  maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)',
+  backfaceVisibility: "hidden",
+}));
+
+const ImageEntrance = styled(MotionBox)(({ theme }) => ({
+  width: '100%', height: '100%',
+  borderRadius: 'inherit',
+  overflow: 'hidden',
+  backgroundColor: 'rgba(255,255,255,0.05)',
+  maskImage: 'radial-gradient(circle, black 50%, transparent 100%)',
+  filter: 'url(#liquid-emerge-thumbnail)',
+  backfaceVisibility: "hidden",
+}));
+
+const StyledImage = styled('img')(({ theme }) => ({
+  width: '100%', height: '100%',
+  display: 'block',
+  borderRadius: 'inherit',
+  objectFit: 'cover',
+  filter: 'brightness(0.6) contrast(1.2) saturate(1.4) grayscale(0.2)',
+  opacity: 0.6,
   backfaceVisibility: "hidden",
 }));
 
@@ -586,13 +632,47 @@ const ImageLayer = styled(MotionBox)(({ theme }) => ({
   originX: 0.5, originY: 0.5,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
-  filter: 'url(#liquid-ripple)',
+  filter: 'url(#liquid-ripple-bg)',
   backfaceVisibility: "hidden",
 }));
 
 const rippleduration = 8;
 const bgduration = rippleduration / 4;
 const BG_TRANSITION = { duration: bgduration, ease: 'easeInOut' };
+
+const thumbnailVars = {
+  initial: ({ i, col } = {}) => ({
+    opacity: 0.4,
+    y: col % 2 === 0 ? -100 : 100,
+    transition: BG_TRANSITION
+  }),
+  animate: ({ i, col } = {}) => ({
+    opacity: 1,
+    y: i % 2 === 0 ? -50 : 50,
+    transition: BG_TRANSITION
+  }),
+};
+
+const thumbnailentranceVars = {
+  initial: {
+    opacity: 0,
+    y: 120,          // Start deep below
+    rotateX: 45,     // Tilted back
+    scale: 0.9,
+  },
+  animate: (i) => ({
+    opacity: 1,
+    y: 0,            // Rise to surface
+    rotateX: 0,      // Flatten out
+    scale: 1,
+    transition: {
+      duration: 2.2,
+      ease: [0.2, 0.65, 0.3, 0.9], // Custom cubic-bezier for a "buoyant" feel
+      // Stagger the entrance based on index for a ripple effect across the grid
+      delay: i * 0.05
+    }
+  }),
+};
 
 const bgunderlayVars = {
   initial: { opacity: 0, transition: BG_TRANSITION },
@@ -605,25 +685,51 @@ const bgunderlayVars = {
 const bgVars = {
   inactive: {
     opacity: 0, zIndex: 0,
-    transition: BG_TRANSITION
+    transition: BG_TRANSITION,
+    transitionEnd: { display: "none" }
   },
   active: (o = 0.6) => ({
     opacity: o, zIndex: 1,
+    display: "block",
     transition: BG_TRANSITION
   }),
 };
 
-const FloatingImage = memo(function FloatingImage({ image, animationConfig, handleActivatingImage }) {
-  const [activeLayer, setActiveLayer] = useState(0);
-  const [image0, setImage0] = useState(image);
-  const [image1, setImage1] = useState(null);
+const getImages = () => {
+  return Object.values(highlights).flatMap(project =>
+    project.items
+  );
+};
+const imgarr = getImages();
+
+const getColumns = (containerRef, itemRef) => {
+  if (!containerRef.current || !itemRef.current) return 1;
+
+  const containerWidth = containerRef.current.offsetWidth + 32;
+  const itemWidth = itemRef.current.offsetWidth + 32;
+  const columns = Math.max(1, Math.floor(containerWidth / itemWidth));
+
+  return columns;
+};
+
+const AnimatedImages = memo(function AnimatedImages({ activeImage, animationConfig, handleActivatingImage }) {
+  const [columns, setColumns] = useState(1);
 
   const rippleParams = useMemo(() => ({
     randomScale: Math.round(getRandom(20, 50)),
     randomFreq: getRandom(0.02, 0.04).toFixed(3)
-  }), [image]);
+  }), [activeImage]);
 
+  const emergeprogress = useMotionValue(0);
   const rippleProgress = useMotionValue(0);
+
+  const triggerEmerge = useCallback(() => {
+    emergeprogress.set(0);
+    animate(emergeprogress, 1, {
+      duration: 4.2,
+      ease: [0.2, 0.65, 0.3, 0.9],
+    });
+  }, []);
 
   const triggerRipple = useCallback(() => {
     rippleProgress.set(0);
@@ -635,46 +741,80 @@ const FloatingImage = memo(function FloatingImage({ image, animationConfig, hand
 
   useEffect(() => {
     triggerRipple();
+  }, [activeImage]);
 
-    if (!image) return;
+  const containerRef = useRef(null);
+  const itemRef = useRef(null);
+  useLayoutEffect(() => {
+    const updateColumns = () => {
+      const cols = getColumns(containerRef, itemRef);
+      setColumns(cols);
+    };
 
-    if (activeLayer === 0) {
-      if (image !== image0) {
-        setImage1(image);
-        setActiveLayer(1);
-      }
-    } else {
-      if (image !== image1) {
-        setImage0(image);
-        setActiveLayer(0);
-      }
-    }
-  }, [image]);
+    updateColumns();
+
+    window.addEventListener('resize', updateColumns);
+    return () => window.removeEventListener('resize', updateColumns);
+  }, []);
 
   return (
-    <Modal style={{ pointerEvents: image ? 'auto' : 'none' }}>
-      <LiquidFilter progress={rippleProgress} rippleParams={rippleParams} />
+    <Modal style={{ pointerEvents: activeImage ? 'auto' : 'none' }}>
+      <ThumbnailLiquidFilter progress={emergeprogress} />
+      <BgLiquidFilter progress={rippleProgress} rippleParams={rippleParams} />
+      <ThumbnailContainer
+        ref={containerRef}
+        //animate={{ opacity: !activeImage ? 1 : 0 }}
+        style={{ x: '-50%', y: '-50%' }}
+      >
+        {imgarr.map((v, i) => {
+          const col = i % columns;
+
+          return (
+            <ImageContainer
+              key={v.id}
+              ref={(el) => { if (el) itemRef.current = el; }}
+              custom={{ i, col }}
+              variants={thumbnailVars}
+              initial='initial'
+              animate={!activeImage ? 'animate' : 'initial'}
+            >
+              <ImageEntrance
+                custom={i}
+                variants={thumbnailentranceVars}
+                initial='initial'
+                animate='initial'
+                whileInView={'animate'}
+                onViewportEnter={() => triggerEmerge()}
+                viewport={{ once: false, amount: 0.2 }}
+              >
+                <StyledImage
+                  src={v.image}
+                  alt={v.title}
+                />
+              </ImageEntrance>
+            </ImageContainer>
+          )
+        })}
+      </ThumbnailContainer>
       <BgUnderlay
         variants={bgunderlayVars}
         initial='initial'
-        animate={image ? 'animate' : 'initial'}
+        animate={activeImage ? 'animate' : 'initial'}
       />
-      <ImageLayer
-        custom={0.6}
-        variants={bgVars}
-        initial="inactive"
-        animate={image && activeLayer === 0 ? 'active' : 'inactive'}
-        style={{ backgroundImage: image0 ? `url(${image0})` : 'none' }}
-        onClick={() => handleActivatingImage(null)}
-      />
-      <ImageLayer
-        custom={0.6}
-        variants={bgVars}
-        initial="inactive"
-        animate={image && activeLayer === 1 ? 'active' : 'inactive'}
-        style={{ backgroundImage: image1 ? `url(${image1})` : 'none' }}
-        onClick={() => handleActivatingImage(null)}
-      />
+      <AnimatePresence>
+        {activeImage && (
+          <ImageLayer
+            key="active-full-screen"
+            custom={0.6}
+            variants={bgVars}
+            initial="inactive"
+            animate={'active'}
+            exit='inactive'
+            style={{ backgroundImage: `url(${activeImage?.image})` }}
+            onClick={() => handleActivatingImage(null)}
+          />
+        )}
+      </AnimatePresence>
     </Modal>
   );
 });
@@ -685,7 +825,70 @@ const StyledSvg = styled('svg')(({ theme }) => ({
   willChange: 'filter, opacity',
 }));
 
-const LiquidFilter = memo(function LiquidFilter({ progress, rippleParams }) {
+const TextLiquidFilter = memo(function TextLiquidFilter() {
+
+  return (
+    <StyledSvg>
+      <filter id="liquid-ripple-text" x="-10%" y="-10%" width="110%" height="110%">
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.01 0.015"
+          numOctaves="1"
+          result="noise"
+        >
+          <animate
+            attributeName="baseFrequency"
+            values="0.01 0.015; 0.015 0.02; 0.01 0.015"
+            dur="15s"
+            repeatCount="indefinite"
+          />
+        </feTurbulence>
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="noise"
+          scale='8'
+          xChannelSelector="R"
+          yChannelSelector="G"
+          result="displaced"
+        />
+        <feColorMatrix
+          in="displaced"
+          type="matrix"
+          values="1 0 0 0 0 
+                  0 1 0 0 0.05 
+                  0 0 1 0 0.1 
+                  0 0 0 1 0"
+        />
+      </filter>
+    </StyledSvg>
+  );
+});
+
+const ThumbnailLiquidFilter = memo(function ThumbnailLiquidFilter({ progress }) {
+  const matrixValues = useTransform(
+    progress,
+    [0, 1],
+    [
+      "0.1 0 0 0 -0.2  0 0.8 0 0 -0.1  0 0 2.0 0 0.1  0 0 0 1 0",
+      "1.0 0 0 0 0  0 1.0 0 0 0  0 0 1.0 0 0  0 0 0 1 0"
+    ]
+  );
+
+  return (
+    <StyledSvg>
+      <filter id='liquid-emerge-thumbnail' colorInterpolationFilters="sRGB"
+        x="-10%" y="-10%" width="110%" height="110%"
+      >
+        <motion.feColorMatrix
+          type="matrix"
+          values={matrixValues}
+        />
+      </filter>
+    </StyledSvg>
+  );
+});
+
+const BgLiquidFilter = memo(function LiquidFilter({ progress, rippleParams }) {
 
   const { randomScale, randomFreq } = rippleParams;
 
@@ -694,7 +897,7 @@ const LiquidFilter = memo(function LiquidFilter({ progress, rippleParams }) {
 
   return (
     <StyledSvg>
-      <filter id="liquid-ripple" x="-10%" y="-10%" width="110%" height="110%">
+      <filter id="liquid-ripple-bg" x="-10%" y="-10%" width="110%" height="110%">
         <motion.feTurbulence
           type="fractalNoise"
           baseFrequency={frequency}

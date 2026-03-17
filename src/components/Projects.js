@@ -10,13 +10,9 @@ import {
   useAnimation, useInView
 } from "motion/react";
 import { styled, useTheme } from '@mui/material/styles';
-import useMediaQuery from '@mui/material/useMediaQuery';
 import { useAnimateContext } from './AnimateContext';
 import GrainOverlay from './GrainOverlay';
 import GlassOverlay, { BevelGlassOverlay, BorderSheen } from './GlassOverlay';
-import IconButton from '@mui/material/IconButton';
-import ChevronLeftRounded from '@mui/icons-material/ChevronLeftRounded';
-import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
 
 
 const PROJECTSINFO = [
@@ -975,14 +971,14 @@ const ProjectCard = memo(function ProjectCard({ projinfo, isActive,
           variants={pulseVars}
           custom={{ oa: 0.9, ob: 0.4, d: borderConfig.duration }}
           initial='initial'
-          animate={'animate'}
+          animate={isActive ? 'animate' : 'initial'}
           bg={borderConfig.gradientA}
         />
         <HueRotateLayer
           variants={pulseVars}
           custom={{ oa: 0.4, ob: 0.9, d: borderConfig.duration }}
           initial='initial'
-          animate={'animate'}
+          animate={isActive ? 'animate' : 'initial'}
           bg={borderConfig.gradientB}
         />
       </HoverBorder>
@@ -1143,7 +1139,7 @@ function AnimatedTechChip({ i, isActive, text, animationConfig }) {
       custom={i}
       variants={chipwaveVars}
       initial={'static'}
-      animate={animationConfig.pulse}
+      whileInView={animationConfig.pulse}
     >
       <TechChip
         key={inView ? "in-view" : "not-in-view"}
@@ -1229,7 +1225,7 @@ const imageVars = {
   }),
   exit: {
     opacity: 0, scale: 1.05, x: '-50%', y: '-50%',
-    transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] }
+    transition: { duration: 1.5, ease: [0.33, 1, 0.68, 1] }
   },
   static: { opacity: 0, scale: 1, x: '-50%', y: '-50%', },
 };
@@ -1272,7 +1268,8 @@ const HoveredAnimation = memo(function HoveredAnimation({ hoveredProj, animation
         View <br /> Project
       </AnimatedToolTip>
       <ImageContainer
-        custom={{ o: 0.9 }}
+        key={'projects-bgimage'}
+        custom={{ o: 0.8 }}
         variants={imageVars}
         initial='initial'
         animate={animationConfig.image}
