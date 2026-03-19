@@ -7,7 +7,8 @@ import Container from '@mui/material/Container';
 import { styled, useTheme } from '@mui/material/styles';
 import {
   motion, useMotionValue, useSpring,
-  useTransform, AnimatePresence, animate
+  useTransform, AnimatePresence, animate,
+  useAnimation, useMotionValueEvent
 } from "motion/react";
 import { useAnimateContext } from './AnimateContext';
 import { PROJECT_HIGHLIGHTS } from "../pics/assets";
@@ -186,17 +187,21 @@ function HoverGallery({ }) {
     };
   }, [mode, activeImage]);
 
+  const hoveredId = useMotionValue(null);
+
   return (
     <GalleryContainer>
       <TextLiquidFilter />
       <AnimatedImages activeImage={activeImage}
         animationConfig={animationConfig} handleActivatingImage={handleActivatingImage}
+        hoveredId={hoveredId}
       />
       {Object.values(highlights).map((v, i) => (
         <AnimatedList key={v.id}
           proj={v} proji={i} animationConfig={animationConfig}
           activeImage={activeImage}
           handleActivatingImage={handleActivatingImage}
+          hoveredId={hoveredId}
         />
       ))}
     </GalleryContainer>
@@ -257,10 +262,7 @@ const HeaderLayer = styled(MotionBox)(({ theme }) => ({
   fontSize: 'clamp(100px, 10vw, 120px)',
   fontWeight: 800,
   lineHeight: 1.1, letterSpacing: '0.05rem',
-  color: 'transparent',
-  backgroundImage: 'linear-gradient(180deg, #F8FAFC 0%, #94A3B8 100%)',
-  backgroundClip: 'text',
-  WebkitBackgroundClip: 'text',
+  color: '#94A3B8',
   alignSelf: 'center', textAlign: 'center',
   WebkitFontSmoothing: 'antialiased',
   [theme.breakpoints.down('sm')]: {
@@ -273,60 +275,13 @@ const HeaderWord = styled(Box)(({ theme }) => ({
   alignSelf: 'center',
 }));
 
-const SubHeaderContainer = styled(MotionBox)(({ theme }) => ({
-  position: 'relative',
-  width: 'fit-content',
-  display: 'inline-block',
-  cursor: 'pointer',
-  zIndex: 5,
-  backfaceVisibility: 'hidden',
-}));
-
-const SubHeaderBase = ({ theme }) => ({
-  width: 'fit-content',
-  display: 'inline-block',
-  borderRadius: '8px',
-  fontFamily: 'Cormorant Garamond',
-  fontSize: 'clamp(28px, 2vw, 32px)',
-  fontWeight: 600,
-  fontStyle: 'italic',
-  letterSpacing: '0.25em',
-  pointerEvents: 'none',
-  WebkitFontSmoothing: 'antialiased',
-  MozOsxFontSmoothing: 'grayscale',
-  backfaceVisibility: 'hidden',
-  [theme.breakpoints.down('sm')]: {
-    fontSize: 'clamp(26px, 1vw, 30px)',
-  },
-});
-
-const SubHeaderBlur = styled(MotionBox)(({ theme }) => ({
-  ...SubHeaderBase({ theme }),
-  position: 'absolute',
-  color: '#E2E8F0',
-  filter: 'blur(4px)',
-}));
-
-const SubHeaderText = styled(MotionBox)(({ theme }) => ({
-  ...SubHeaderBase({ theme }),
-  position: 'relative',
-  color: '#E2E8F0',
-}));
-
-const SubHeaderShadow = styled(MotionBox)(({ theme }) => ({
-  ...SubHeaderBase({ theme }),
-  position: 'absolute',
-  color: 'transparent',
-  textShadow: `
-    0 0 10px rgba(255, 255, 255, 0.4),
-    0 0 20px rgba(255, 255, 255, 0.2)
-  `,
-}));
-
 const listItemDelay = 0.45;
 
 const TRANSITIONCONFIG = {
   listItemDelay: 0.45,
+
+  texthoverstart: { duration: 1.2, ease: "easeOut" },
+  texthoverend: { duration: 0.8, ease: "easeIn" },
 
   activeimage: { duration: 1.2, ease: "easeInOut", },
 };
@@ -383,6 +338,109 @@ const borderVars = {
   },
 };
 
+const AnimatedList = memo(function AnimatedList({ proj, proji, animationConfig,
+  activeImage, handleActivatingImage, hoveredId }) {
+
+  const HeaderProgress = useMotionValue(0);
+  const staticHeader = useTransform(HeaderProgress, [0, 1], [0.2, 0]);
+  const hoveredHeader = useTransform(
+    HeaderProgress,
+    [0, 1],
+    ['url(#liquid-ripple-text) opacity(0)', 'url(#liquid-ripple-text) opacity(0.4)']
+  );
+
+  return (
+    <ListContainer
+    //variants={containerVars}
+    //initial="hidden"
+    //whileInView={animationConfig.visible}
+    //viewport={{ once: false, amount: 0.2 }}
+    >
+      <ListContent
+        i={proji}
+        initial='initial'
+        whileHover={activeImage ? 'initial' : 'hover'}
+        onHoverStart={() => animate(HeaderProgress, 1, TRANSITIONCONFIG.texthoverstart)}
+        onHoverEnd={() => animate(HeaderProgress, 0, TRANSITIONCONFIG.texthoverend)}
+      >
+        <ListBorder
+          i={proji}
+          variants={borderVars}
+          initial='initial'
+          whileInView={!activeImage ? 'animate' : 'hidden'}
+        />
+        <HeaderWrapper
+          animate={{ opacity: !activeImage ? 1 : 0 }}
+          transition={TRANSITIONCONFIG.activeimage}
+          style={{
+            left: proji % 2 === 0 ? 'auto' : '10%',
+            right: proji % 2 === 0 ? '10%' : 'auto',
+          }}
+        >
+          <HeaderLayer style={{ opacity: staticHeader }}>
+            {proj.projtitle.split(' ').map((w, i) => (
+              <HeaderWord key={i}>{w}</HeaderWord>
+            ))}
+          </HeaderLayer>
+          <HeaderLayer style={{ filter: hoveredHeader }}>
+            {proj.projtitle.split(' ').map((w, i) => (
+              <HeaderWord key={i}>{w}</HeaderWord>
+            ))}
+          </HeaderLayer>
+        </HeaderWrapper>
+        {proj.items.map((item, itemi) => (
+          <SubHeaderItem
+            key={item.id}
+            item={item} itemi={itemi}
+            animationConfig={animationConfig}
+            activeImage={activeImage}
+            handleActivatingImage={handleActivatingImage}
+            hoveredId={hoveredId}
+          />
+        ))}
+      </ListContent>
+    </ListContainer >
+  )
+});
+
+const SubHeaderContainer = styled(MotionBox)(({ theme }) => ({
+  position: 'relative',
+  width: 'fit-content',
+  display: 'inline-block',
+  padding: theme.spacing(0, 1),
+  cursor: 'pointer',
+  zIndex: 5,
+  backfaceVisibility: 'hidden',
+}));
+
+const SubHeaderBase = ({ theme }) => ({
+  borderRadius: '8px',
+  fontFamily: 'Cormorant Garamond',
+  fontSize: 'clamp(28px, 2vw, 32px)',
+  fontWeight: 600,
+  fontStyle: 'italic',
+  letterSpacing: '0.25em',
+  pointerEvents: 'none',
+  backfaceVisibility: 'hidden',
+  [theme.breakpoints.down('sm')]: {
+    fontSize: 'clamp(26px, 1vw, 30px)',
+  },
+});
+
+const SubHeaderBlur = styled(MotionBox)(({ theme }) => ({
+  ...SubHeaderBase({ theme }),
+  position: 'absolute',
+  color: '#E2E8F0',
+  filter: 'blur(4px)',
+}));
+
+const SubHeaderText = styled(MotionBox)(({ theme }) => ({
+  ...SubHeaderBase({ theme }),
+  color: '#E2E8F0',
+  WebkitFontSmoothing: 'antialiased',
+  MozOsxFontSmoothing: 'grayscale',
+}));
+
 const subheaderblurVars = {
   initial: {
     opacity: 0,
@@ -416,156 +474,74 @@ const subheaderVars = {
   static: { opacity: 1, x: 0, y: 0, scale: 1 },
 };
 
-const AnimatedList = memo(function AnimatedList({ proj, proji, animationConfig,
-  activeImage, handleActivatingImage }) {
+const SubHeaderItem = memo(function SubHeaderItem({ item, itemi, animationConfig,
+  activeImage, handleActivatingImage, hoveredId }) {
 
-  const hoverProgress = useMotionValue(0);
-
-  const staticOpacity = useTransform(hoverProgress, [0, 1], [0.4, 0]);
-
-  const filterValue = useTransform(
-    hoverProgress,
+  const isSelected = activeImage?.image === item.image;
+  const SubheaderProgress = useMotionValue(0);
+  const staticSubheader = useTransform(SubheaderProgress, [0, 1], [1, 0]);
+  const hoveredSubheader = useTransform(
+    SubheaderProgress,
     [0, 1],
-    ['url(#liquid-ripple-text) opacity(0)', 'url(#liquid-ripple-text) opacity(0.6)']
+    ['url(#liquid-ripple-text) opacity(0)', 'url(#liquid-ripple-text) opacity(1)']
   );
 
+  const handleHoverStart = useCallback(() => {
+    if (activeImage) return;
+
+    hoveredId.set(`hovered-${item.id}`);
+    animate(SubheaderProgress, 1, TRANSITIONCONFIG.texthoverstart);
+  }, [activeImage]);
+
+  const handleHoverEnd = useCallback(() => {
+    if (activeImage) return;
+
+    hoveredId.set(null);
+    animate(SubheaderProgress, 0, TRANSITIONCONFIG.texthoverend);
+  }, [activeImage]);
+
+  const handleViewportEnter = useCallback(() => {
+    SubheaderProgress.set(0);
+    animate(SubheaderProgress, 1, TRANSITIONCONFIG.texthoverstart);
+
+    setTimeout(() => {
+      animate(SubheaderProgress, 0, TRANSITIONCONFIG.texthoverend);
+    }, 2000);
+  }, []);
+
   return (
-    <ListContainer
-    //variants={containerVars}
-    //initial="hidden"
-    //whileInView={animationConfig.visible}
-    //viewport={{ once: false, amount: 0.2 }}
+    <SubHeaderContainer
+      initial='initial'
+      animate={isSelected ? 'hover' : animationConfig.subheader}
+      onClick={() => handleActivatingImage(!activeImage ? item : null)}
+      onHoverStart={handleHoverStart}
+      onHoverEnd={handleHoverEnd}
+      onViewportEnter={handleViewportEnter}
     >
-      <ListContent
-        i={proji}
-        initial='initial'
-        whileHover={activeImage ? 'initial' : 'hover'}
-        onHoverStart={() => animate(hoverProgress, 1, { duration: 0.4, ease: "easeOut" })}
-        onHoverEnd={() => animate(hoverProgress, 0, { duration: 0.3, ease: "easeIn" })}
+      <SubHeaderBlur
+        variants={subheaderblurVars}
       >
-        <ListBorder
-          i={proji}
-          variants={borderVars}
-          initial='initial'
-          whileInView={!activeImage ? 'animate' : 'hidden'}
-        />
-        <HeaderWrapper
-          animate={{ opacity: activeImage ? 0 : 1 }}
-          transition={TRANSITIONCONFIG.activeimage}
-          style={{
-            left: proji % 2 === 0 ? 'auto' : '10%',
-            right: proji % 2 === 0 ? '10%' : 'auto',
-          }}
-        >
-          <HeaderLayer style={{ opacity: staticOpacity }}>
-            {proj.projtitle.split(' ').map((w, i) => (
-              <HeaderWord key={i}>{w}</HeaderWord>
-            ))}
-          </HeaderLayer>
-          <HeaderLayer style={{ filter: filterValue }}>
-            {proj.projtitle.split(' ').map((w, i) => (
-              <HeaderWord key={i}>{w}</HeaderWord>
-            ))}
-          </HeaderLayer>
-        </HeaderWrapper>
-        {proj.items.map((item, itemi) => {
-          const isSelected = activeImage?.image === item.image;
-          return (
-            <SubHeaderContainer
-              key={item.id}
-              initial='initial'
-              animate={isSelected ? 'hover' : animationConfig.subheader}
-              onClick={() => handleActivatingImage(activeImage ? null : item)}
-            >
-              <SubHeaderBlur
-                variants={subheaderblurVars}
-              >
-                {item.title}
-              </SubHeaderBlur>
-              <SubHeaderShadow
-                variants={subheaderVars}
-              >
-                {item.title}
-              </SubHeaderShadow>
-              <SubHeaderText
-                variants={subheaderVars}
-                style={{
-                  filter: isSelected ? 'url(#liquid-ripple-text)' : 'none'
-                }}
-              >
-                <LetterWave
-                  text={item.title}
-                  proji={proji}
-                  itemi={itemi}
-                />
-              </SubHeaderText>
-            </SubHeaderContainer>
-          )
-        })}
-      </ListContent>
-    </ListContainer >
-  )
-});
-
-const LetterContainer = styled(MotionBox)({
-  position: 'relative',
-  display: 'inline-block',
-  zIndex: 2,
-  backfaceVisibility: 'hidden',
-});
-
-const AnimatedLetter = styled(MotionBox)({
-  display: 'inline-block',
-  whiteSpace: 'pre',
-  transformOrigin: "center",
-  backfaceVisibility: 'hidden',
-});
-
-const lettercontainerVars = {
-  visible: ({ proji, itemi }) => ({
-    transition: {
-      delayChildren: itemi * listItemDelay + 0.5,
-      staggerChildren: 0.1,
-      staggerDirection: (proji % 2 === 0) ? 1 : -1,
-    }
-  })
-};
-
-const letterVars = {
-  visible: {
-    opacity: [0.9, 1, 1, 0.9],
-    scale: [1, 1.4, 1],
-    y: [0, -12, 0],
-    transition: {
-      duration: 0.8,
-      times: [0, 0.5, 1],
-      ease: "easeInOut",
-    }
-  },
-  static: {
-    opacity: 0.9,
-    scale: 1,
-    y: 0
-  }
-};
-
-const LetterWave = memo(function LetterWave({ text, proji, itemi, isBlur = false }) {
-  return (
-    <LetterContainer
-      variants={lettercontainerVars}
-      custom={{ proji, itemi }}
-      initial="static"
-      whileInView="visible"
-    >
-      {text.split('').map((l, letteri) => (
-        <AnimatedLetter
-          key={letteri}
-          variants={letterVars}
-        >
-          {l === " " ? "\u00A0" : l}
-        </AnimatedLetter>
-      ))}
-    </LetterContainer>
+        {item.title}
+      </SubHeaderBlur>
+      <SubHeaderText
+        variants={subheaderVars}
+        style={{
+          position: 'absolute',
+          filter: hoveredSubheader
+        }}
+      >
+        {item.title}
+      </SubHeaderText>
+      <SubHeaderText
+        variants={subheaderVars}
+        style={{
+          position: 'relative',
+          opacity: staticSubheader
+        }}
+      >
+        {item.title}
+      </SubHeaderText>
+    </SubHeaderContainer>
   )
 });
 
@@ -575,49 +551,20 @@ const Modal = styled(MotionBox)(({ theme }) => ({
   backfaceVisibility: "hidden",
 }));
 
-const ThumbnailContainer = styled(MotionBox)(({ theme }) => ({
+const ImageGrid = styled(MotionBox)(({ theme }) => ({
   position: 'absolute',
   top: '50%', left: '50%',
   width: '90%',
   display: 'flex', justifyContent: 'center', alignItems: 'center',
   flexWrap: 'wrap',
   gap: theme.spacing(4),
+  //filter: 'url(#liquid-emerge-image)',
   zIndex: -1,
   pointerEvents: 'none',
   backfaceVisibility: "hidden",
 }));
 
-const ImageContainer = styled(MotionBox)(({ theme }) => ({
-  height: '140px',
-  flexGrow: 1,
-  minWidth: '200px',
-  maxWidth: '350px',
-  borderRadius: '24px',
-  maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)',
-  backfaceVisibility: "hidden",
-}));
-
-const ImageEntrance = styled(MotionBox)(({ theme }) => ({
-  width: '100%', height: '100%',
-  borderRadius: 'inherit',
-  overflow: 'hidden',
-  backgroundColor: 'rgba(255,255,255,0.05)',
-  maskImage: 'radial-gradient(circle, black 50%, transparent 100%)',
-  filter: 'url(#liquid-emerge-thumbnail)',
-  backfaceVisibility: "hidden",
-}));
-
-const StyledImage = styled('img')(({ theme }) => ({
-  width: '100%', height: '100%',
-  display: 'block',
-  borderRadius: 'inherit',
-  objectFit: 'cover',
-  filter: 'brightness(0.6) contrast(1.2) saturate(1.4) grayscale(0.2)',
-  opacity: 0.6,
-  backfaceVisibility: "hidden",
-}));
-
-const BgUnderlay = styled(MotionBox)(({ theme }) => ({
+const BgImageUnderlay = styled(MotionBox)(({ theme }) => ({
   position: 'absolute', inset: '-5%',
   backgroundColor: (theme.vars || theme).palette.highlights.overlay,
   originX: 0.5, originY: 0.5,
@@ -627,7 +574,7 @@ const BgUnderlay = styled(MotionBox)(({ theme }) => ({
   backfaceVisibility: "hidden",
 }));
 
-const ImageLayer = styled(MotionBox)(({ theme }) => ({
+const BgImageLayer = styled(MotionBox)(({ theme }) => ({
   position: 'absolute', inset: '-5%',
   originX: 0.5, originY: 0.5,
   backgroundSize: 'cover',
@@ -639,40 +586,6 @@ const ImageLayer = styled(MotionBox)(({ theme }) => ({
 const rippleduration = 8;
 const bgduration = rippleduration / 4;
 const BG_TRANSITION = { duration: bgduration, ease: 'easeInOut' };
-
-const thumbnailVars = {
-  initial: ({ i, col } = {}) => ({
-    opacity: 0.4,
-    y: col % 2 === 0 ? -100 : 100,
-    transition: BG_TRANSITION
-  }),
-  animate: ({ i, col } = {}) => ({
-    opacity: 1,
-    y: i % 2 === 0 ? -50 : 50,
-    transition: BG_TRANSITION
-  }),
-};
-
-const thumbnailentranceVars = {
-  initial: {
-    opacity: 0,
-    y: 120,          // Start deep below
-    rotateX: 45,     // Tilted back
-    scale: 0.9,
-  },
-  animate: (i) => ({
-    opacity: 1,
-    y: 0,            // Rise to surface
-    rotateX: 0,      // Flatten out
-    scale: 1,
-    transition: {
-      duration: 2.2,
-      ease: [0.2, 0.65, 0.3, 0.9], // Custom cubic-bezier for a "buoyant" feel
-      // Stagger the entrance based on index for a ripple effect across the grid
-      delay: i * 0.05
-    }
-  }),
-};
 
 const bgunderlayVars = {
   initial: { opacity: 0, transition: BG_TRANSITION },
@@ -712,7 +625,8 @@ const getColumns = (containerRef, itemRef) => {
   return columns;
 };
 
-const AnimatedImages = memo(function AnimatedImages({ activeImage, animationConfig, handleActivatingImage }) {
+const AnimatedImages = memo(function AnimatedImages({ activeImage, animationConfig,
+  handleActivatingImage, hoveredId }) {
   const [columns, setColumns] = useState(1);
 
   const rippleParams = useMemo(() => ({
@@ -759,51 +673,33 @@ const AnimatedImages = memo(function AnimatedImages({ activeImage, animationConf
 
   return (
     <Modal style={{ pointerEvents: activeImage ? 'auto' : 'none' }}>
-      <ThumbnailLiquidFilter progress={emergeprogress} />
+      <ImageLiquidFilter progress={emergeprogress} />
       <BgLiquidFilter progress={rippleProgress} rippleParams={rippleParams} />
-      <ThumbnailContainer
+      <ImageGrid
         ref={containerRef}
-        //animate={{ opacity: !activeImage ? 1 : 0 }}
+        //onViewportEnter={() => triggerEmerge()}
         style={{ x: '-50%', y: '-50%' }}
       >
-        {imgarr.map((v, i) => {
-          const col = i % columns;
-
-          return (
-            <ImageContainer
-              key={v.id}
-              ref={(el) => { if (el) itemRef.current = el; }}
-              custom={{ i, col }}
-              variants={thumbnailVars}
-              initial='initial'
-              animate={!activeImage ? 'animate' : 'initial'}
-            >
-              <ImageEntrance
-                custom={i}
-                variants={thumbnailentranceVars}
-                initial='initial'
-                animate='initial'
-                whileInView={'animate'}
-                onViewportEnter={() => triggerEmerge()}
-                viewport={{ once: false, amount: 0.2 }}
-              >
-                <StyledImage
-                  src={v.image}
-                  alt={v.title}
-                />
-              </ImageEntrance>
-            </ImageContainer>
-          )
-        })}
-      </ThumbnailContainer>
-      <BgUnderlay
+        <RippleEffect />
+        {imgarr.map((v, i) => (
+          <ImageItem
+            key={v.id}
+            itemRef={itemRef}
+            v={v} i={i}
+            columns={columns}
+            hoveredId={hoveredId}
+            activeImage={activeImage}
+          />
+        ))}
+      </ImageGrid>
+      <BgImageUnderlay
         variants={bgunderlayVars}
         initial='initial'
         animate={activeImage ? 'animate' : 'initial'}
       />
       <AnimatePresence>
         {activeImage && (
-          <ImageLayer
+          <BgImageLayer
             key="active-full-screen"
             custom={0.6}
             variants={bgVars}
@@ -819,10 +715,231 @@ const AnimatedImages = memo(function AnimatedImages({ activeImage, animationConf
   );
 });
 
+const RippleContainer = styled(MotionBox)(({ theme }) => ({
+  position: 'absolute',
+  width: '100%', height: '100%',
+  display: 'flex', justifyContent: 'center', alignItems: 'center',
+}));
+
+const RippleItem = styled(MotionBox)(({ theme }) => ({
+  position: 'absolute',
+  width: '50px', height: '50px',
+  borderRadius: '50%',
+  border: '2px solid rgba(255, 255, 255, 0.5)',
+}));
+
+const ripplesVars = {
+  animate: {
+    transition: {
+      staggerChildren: 1.3
+    },
+  },
+};
+
+const rippleVars = {
+  initial: {
+    scale: 0,
+    opacity: 0,
+  },
+  animate: {
+    scale: 4,
+    opacity: [0.6, 0],
+    transition: {
+      duration: 4,      // Adjust for "slowness"
+      //repeat: Infinity,
+      ease: "easeOut",
+    },
+  },
+};
+
+const RippleEffect = memo(function RippleEffect() {
+  // Define how many rings you want visible at once
+  const ripples = [0, 1, 2];
+
+  return (
+    <RippleContainer
+      variants={ripplesVars}
+      initial='initial'
+      whileInView="animate"
+    >
+      {ripples.map((_, i) => (
+        <RippleItem
+          key={i}
+          variants={rippleVars}
+        />
+      ))}
+    </RippleContainer>
+  );
+});
+
+const ImageContainer = styled(MotionBox)(({ theme }) => ({
+  height: '140px',
+  flexGrow: 1,
+  minWidth: '200px',
+  maxWidth: '350px',
+  borderRadius: '24px',
+  maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)',
+  backfaceVisibility: "hidden",
+}));
+
+const ImageEntrance = styled(MotionBox)(({ theme }) => ({
+  width: '100%', height: '100%',
+  //display: 'flex', justifyContent: 'center', alignItems: 'center',
+  borderRadius: 'inherit',
+  backfaceVisibility: "hidden",
+}));
+
+const UnHoveredLayer = styled(MotionBox)(({ theme }) => ({
+  width: '50px', height: '50px',
+  borderRadius: '50%',
+  background: `
+    radial-gradient(
+      circle at 30% 30%, 
+      rgba(255, 255, 255, 0.9) 0%, 
+      rgba(255, 255, 255, 0) 25%
+    ),
+    radial-gradient(
+      circle at 70% 70%, 
+      rgba(173, 216, 230, 0.4) 0%, 
+      rgba(255, 255, 255, 0) 50%
+    ),
+    radial-gradient(
+      circle at center, 
+      rgba(135, 206, 235, 0.2) 10%, 
+      rgba(0, 119, 190, 0.5) 100%
+    )
+  `,
+  // Optional: Add a subtle border to define the "surface tension"
+  border: '1px solid rgba(255, 255, 255, 0.3)',
+  //boxShadow: 'inset -5px -5px 15px rgba(0, 0, 0, 0.1), 0 10px 20px rgba(0, 0, 0, 0.1)',
+}));
+
+const ImageHovered = styled(MotionBox)(({ theme }) => ({
+  width: '100%', height: '100%',
+  borderRadius: 'inherit',
+  maskImage: `radial-gradient(
+    circle at 50% 50%, 
+    black var(--stop-1, 0%), 
+    transparent var(--stop-2, 30%)
+  )`,
+  WebkitMaskImage: `radial-gradient(
+    circle at 50% 50%, 
+    black var(--stop-1, 0%), 
+    transparent var(--stop-2, 30%)
+  )`,
+  backfaceVisibility: "hidden",
+}));
+
+const StyledImage = styled('img')(({ theme }) => ({
+  width: '100%', height: '100%',
+  display: 'block',
+  borderRadius: 'inherit',
+  objectFit: 'cover',
+  filter: 'brightness(0.6) contrast(1.2) saturate(1.4) grayscale(0.2)',
+  backfaceVisibility: "hidden",
+}));
+
+const imageVars = {
+  initial: ({ i, col } = {}) => ({
+    opacity: 0.4,
+    y: col % 2 === 0 ? -100 : 100,
+    transition: BG_TRANSITION
+  }),
+  animate: ({ i, col } = {}) => ({
+    opacity: 1,
+    y: i % 2 === 0 ? -50 : 50,
+    transition: BG_TRANSITION
+  }),
+};
+
+const imageentranceVars = {
+  initial: {
+    opacity: 0,
+  },
+  animate: (i) => ({
+    opacity: 1,
+    transition: {
+      duration: 2.4,
+      ease: [0.2, 0.65, 0.3, 0.9],
+      delay: i * 0.08,
+    }
+  }),
+};
+
+const imagehoveredVars = {
+  initial: {
+    opacity: 0, scale: 0.5,
+    filter: 'blur(4px)',
+    '--stop-1': '0%',
+    '--stop-2': '10%',
+    transition: {
+      duration: 1.2,
+      ease: [0.2, 0.65, 0.3, 0.9],
+    }
+  },
+  animate: {
+    opacity: 0.6, scale: 1,
+    filter: 'blur(0px)',
+    '--stop-1': '40%',
+    '--stop-2': '95%',
+    transition: {
+      duration: 1.2,
+      ease: [0.2, 0.65, 0.3, 0.9],
+      '--stop-2': {
+        duration: 1.8,
+        delay: 0.1
+      }
+    },
+  },
+};
+
+const ImageItem = memo(function ImageItem({ itemRef, v, i,
+  columns, hoveredId, activeImage }) {
+
+  const col = i % columns;
+  const controls = useAnimation();
+
+  useMotionValueEvent(hoveredId, "change", (latest) => {
+    const isHovered = latest === `hovered-${v.id}`;
+    controls.start(isHovered ? 'animate' : 'initial');
+  });
+
+  return (
+    <ImageContainer
+      ref={(el) => { if (el) itemRef.current = el; }}
+      custom={{ i, col }}
+      variants={imageVars}
+      initial='initial'
+      animate={!activeImage ? 'animate' : 'initial'}
+    >
+      <ImageEntrance
+        custom={i}
+        variants={imageentranceVars}
+        initial='initial'
+        animate='initial'
+        whileInView={'animate'}
+        viewport={{ once: false, amount: 0.2 }}
+      >
+        <ImageHovered
+          variants={imagehoveredVars}
+          initial='initial'
+          animate={controls}
+        >
+          <StyledImage
+            src={v.image}
+            alt={v.title}
+          />
+        </ImageHovered>
+      </ImageEntrance>
+    </ImageContainer>
+  )
+});
+
 const StyledSvg = styled('svg')(({ theme }) => ({
   position: 'absolute',
   width: 0, height: 0,
   willChange: 'filter, opacity',
+  backfaceVisibility: "hidden",
 }));
 
 const TextLiquidFilter = memo(function TextLiquidFilter() {
@@ -856,7 +973,7 @@ const TextLiquidFilter = memo(function TextLiquidFilter() {
           type="matrix"
           values="1 0 0 0 0 
                   0 1 0 0 0.05 
-                  0 0 1 0 0.1 
+                  0 0 1 0 0.4 
                   0 0 0 1 0"
         />
       </filter>
@@ -864,7 +981,7 @@ const TextLiquidFilter = memo(function TextLiquidFilter() {
   );
 });
 
-const ThumbnailLiquidFilter = memo(function ThumbnailLiquidFilter({ progress }) {
+const ImageLiquidFilter = memo(function ImageLiquidFilter({ progress }) {
   const matrixValues = useTransform(
     progress,
     [0, 1],
@@ -876,7 +993,7 @@ const ThumbnailLiquidFilter = memo(function ThumbnailLiquidFilter({ progress }) 
 
   return (
     <StyledSvg>
-      <filter id='liquid-emerge-thumbnail' colorInterpolationFilters="sRGB"
+      <filter id='liquid-emerge-image' colorInterpolationFilters="sRGB"
         x="-10%" y="-10%" width="110%" height="110%"
       >
         <motion.feColorMatrix
