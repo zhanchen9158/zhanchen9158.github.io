@@ -1081,7 +1081,7 @@ const ProjectCard = memo(function ProjectCard({ projinfo, isActive,
 const TechChipWrapper = styled(MotionBox)(({ theme }) => ({
   position: 'relative',
   borderRadius: '20px',
-  padding: theme.spacing(1, 0),
+  padding: theme.spacing(1, 1),
   backfaceVisibility: "hidden",
 }));
 

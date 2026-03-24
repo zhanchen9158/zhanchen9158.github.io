@@ -13,6 +13,7 @@ import {
 import { useAnimateContext } from './AnimateContext';
 import { PROJECT_HIGHLIGHTS } from "../pics/assets";
 import getRandom from '../functions/getRandom';
+import bg from '../pics/background2.webp';
 
 
 const highlights = {
@@ -253,8 +254,7 @@ const HeaderWrapper = styled(MotionBox)(({ theme }) => ({
   backfaceVisibility: 'hidden',
 }));
 
-const HeaderLayer = styled(MotionBox)(({ theme }) => ({
-  //position: 'absolute',
+const HeaderBase = ({ theme }) => ({
   paddingBottom: '0.2em',
   marginBottom: '-0.2em',
   gridArea: '1 / 1',
@@ -262,28 +262,59 @@ const HeaderLayer = styled(MotionBox)(({ theme }) => ({
   fontSize: 'clamp(100px, 10vw, 120px)',
   fontWeight: 800,
   lineHeight: 1.1, letterSpacing: '0.05rem',
-  color: '#94A3B8',
+  color: '#050B14',
   alignSelf: 'center', textAlign: 'center',
   WebkitFontSmoothing: 'antialiased',
   [theme.breakpoints.down('sm')]: {
     fontSize: 'clamp(60px, 20vw, 100px)',
   },
   backfaceVisibility: 'hidden',
+});
+
+const HeaderStatic = styled(MotionBox)(({ theme }) => ({
+  ...HeaderBase({ theme }),
+  backgroundColor: '#050B14',
+  backgroundImage: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(255,255,255,0.05) 100%)',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  textShadow: '0px 1px 1px rgba(255,255,255,0.1)',
+}));
+
+const HeaderRipple = styled(MotionBox)(({ theme }) => ({
+  ...HeaderBase({ theme }),
 }));
 
 const HeaderWord = styled(Box)(({ theme }) => ({
   alignSelf: 'center',
 }));
 
+//svg filter ripple
 const listItemDelay = 0.45;
+const rippleduration = 8;
+const bgduration = rippleduration / 4;
+
+//entrance ripple
+const vmax = Math.max(window.innerWidth, window.innerHeight);
+const speedPxPerSecond = 50;
+const distanceToTravel = (0.6 * vmax) - (0.2 * vmax);
+const calculatedDuration = distanceToTravel / speedPxPerSecond;
 
 const TRANSITIONCONFIG = {
   listItemDelay: 0.45,
 
   texthoverstart: { duration: 1.2, ease: "easeOut" },
   texthoverend: { duration: 0.8, ease: "easeIn" },
+  textactiveimage: { duration: 1.2, ease: "easeInOut", },
 
-  activeimage: { duration: 1.2, ease: "easeInOut", },
+  imagehoverstart: {
+    duration: 1.2,
+    ease: [0.2, 0.65, 0.3, 0.9],
+  },
+  imagehoverend: {
+    duration: 0.6,
+    ease: [0.3, 0, 0.7, 0.3],
+  },
+  imageactiveimage: { duration: bgduration, ease: 'easeInOut' },
 };
 
 const containerVars = {
@@ -291,8 +322,7 @@ const containerVars = {
   visible: {
     opacity: 1,
     transition: {
-      delayChildren: 0.25,
-      staggerChildren: listItemDelay,
+      duration: calculatedDuration / 2,
     },
   },
   static: { opacity: 1 },
@@ -304,34 +334,31 @@ const borderVars = {
     backgroundPosition: "0% 0%"
   },
   animate: {
-    // 1. Vertical Bobbing (Returns to start)
     y: ["0%", "-3.5%", "1%", "-4.5%", "1.5%", "-3%", "0%"],
 
-    // 2. Continuous Sweep (Moves down to 400%, then back up to 0%)
     backgroundPosition: ["0% 0%", "0% 400%", "0% 0%"],
 
     scaleY: [1, 1.05, 1, 1.05, 1],
 
     transition: {
       y: {
-        duration: 35, // Very slow movement
+        duration: 35,
         repeat: Infinity,
         ease: "easeInOut",
       },
       backgroundPosition: {
-        duration: 25, // Slow sweep
+        duration: 25,
         repeat: Infinity,
-        // The custom array of easings creates the variable-speed "flow"
         ease: "easeInOut",
       },
       scaleY: {
-        duration: 25, // Matches the sweep duration
+        duration: 25,
         repeat: Infinity,
         ease: "easeInOut",
       }
     },
   },
-  hidden: { opacity: 0, transition: TRANSITIONCONFIG.activeimage, },
+  hidden: { opacity: 0, transition: TRANSITIONCONFIG.textactiveimage, },
   static: {
     y: 0,
     backgroundPosition: "0% 0%"
@@ -342,7 +369,7 @@ const AnimatedList = memo(function AnimatedList({ proj, proji, animationConfig,
   activeImage, handleActivatingImage, hoveredId }) {
 
   const HeaderProgress = useMotionValue(0);
-  const staticHeader = useTransform(HeaderProgress, [0, 1], [0.2, 0]);
+  const staticHeader = useTransform(HeaderProgress, [0, 1], [0.5, 0]);
   const hoveredHeader = useTransform(
     HeaderProgress,
     [0, 1],
@@ -351,10 +378,10 @@ const AnimatedList = memo(function AnimatedList({ proj, proji, animationConfig,
 
   return (
     <ListContainer
-    //variants={containerVars}
-    //initial="hidden"
-    //whileInView={animationConfig.visible}
-    //viewport={{ once: false, amount: 0.2 }}
+      variants={containerVars}
+      initial="hidden"
+      whileInView={animationConfig.visible}
+      viewport={{ once: false, amount: 0.2 }}
     >
       <ListContent
         i={proji}
@@ -371,22 +398,22 @@ const AnimatedList = memo(function AnimatedList({ proj, proji, animationConfig,
         />
         <HeaderWrapper
           animate={{ opacity: !activeImage ? 1 : 0 }}
-          transition={TRANSITIONCONFIG.activeimage}
+          transition={TRANSITIONCONFIG.textactiveimage}
           style={{
             left: proji % 2 === 0 ? 'auto' : '10%',
             right: proji % 2 === 0 ? '10%' : 'auto',
           }}
         >
-          <HeaderLayer style={{ opacity: staticHeader }}>
+          <HeaderStatic style={{ opacity: staticHeader }}>
             {proj.projtitle.split(' ').map((w, i) => (
               <HeaderWord key={i}>{w}</HeaderWord>
             ))}
-          </HeaderLayer>
-          <HeaderLayer style={{ filter: hoveredHeader }}>
+          </HeaderStatic>
+          <HeaderRipple style={{ filter: hoveredHeader }}>
             {proj.projtitle.split(' ').map((w, i) => (
               <HeaderWord key={i}>{w}</HeaderWord>
             ))}
-          </HeaderLayer>
+          </HeaderRipple>
         </HeaderWrapper>
         {proj.items.map((item, itemi) => (
           <SubHeaderItem
@@ -417,7 +444,7 @@ const SubHeaderBase = ({ theme }) => ({
   borderRadius: '8px',
   fontFamily: 'Cormorant Garamond',
   fontSize: 'clamp(28px, 2vw, 32px)',
-  fontWeight: 600,
+  fontWeight: 800,
   fontStyle: 'italic',
   letterSpacing: '0.25em',
   pointerEvents: 'none',
@@ -434,9 +461,23 @@ const SubHeaderBlur = styled(MotionBox)(({ theme }) => ({
   filter: 'blur(4px)',
 }));
 
+const SubHeaderRipple = styled(MotionBox)(({ theme }) => ({
+  ...SubHeaderBase({ theme }),
+  position: 'absolute',
+  color: '#E2E8F0',
+  WebkitFontSmoothing: 'antialiased',
+  MozOsxFontSmoothing: 'grayscale',
+}));
+
 const SubHeaderText = styled(MotionBox)(({ theme }) => ({
   ...SubHeaderBase({ theme }),
+  position: 'relative',
   color: '#E2E8F0',
+  textShadow: `
+    0px 1px 2px rgba(0, 0, 0, 0.8),
+    0px 4px 8px rgba(0, 0, 0, 0.4),
+    0px 12px 24px rgba(0, 0, 0, 0.3)
+  `,
   WebkitFontSmoothing: 'antialiased',
   MozOsxFontSmoothing: 'grayscale',
 }));
@@ -444,15 +485,15 @@ const SubHeaderText = styled(MotionBox)(({ theme }) => ({
 const subheaderblurVars = {
   initial: {
     opacity: 0,
-    transition: TRANSITIONCONFIG.activeimage,
+    transition: TRANSITIONCONFIG.textactiveimage,
   },
   hover: {
     opacity: 0,
-    transition: TRANSITIONCONFIG.activeimage,
+    transition: TRANSITIONCONFIG.textactiveimage,
   },
   hidden: {
     opacity: 1,
-    transition: TRANSITIONCONFIG.activeimage,
+    transition: TRANSITIONCONFIG.textactiveimage,
   },
   static: { opacity: 1, },
 };
@@ -462,15 +503,15 @@ const subheaderVars = {
     opacity: 1,
     x: 0, y: 0,
     scale: 1,
-    transition: TRANSITIONCONFIG.activeimage,
+    transition: TRANSITIONCONFIG.textactiveimage,
   },
   hover: {
     opacity: 1,
     x: 0, y: -10,
     scale: 1.2,
-    transition: TRANSITIONCONFIG.activeimage,
+    transition: TRANSITIONCONFIG.textactiveimage,
   },
-  hidden: { opacity: 0, x: 0, y: 0, scale: 1, transition: TRANSITIONCONFIG.activeimage, },
+  hidden: { opacity: 0, x: 0, y: 0, scale: 1, transition: TRANSITIONCONFIG.textactiveimage, },
   static: { opacity: 1, x: 0, y: 0, scale: 1 },
 };
 
@@ -486,15 +527,27 @@ const SubHeaderItem = memo(function SubHeaderItem({ item, itemi, animationConfig
     ['url(#liquid-ripple-text) opacity(0)', 'url(#liquid-ripple-text) opacity(1)']
   );
 
+  useEffect(() => {
+    if (!activeImage) {
+      animate(SubheaderProgress, 0, TRANSITIONCONFIG.textactiveimage);
+    }
+  }, [activeImage]);
+
   const handleHoverStart = useCallback(() => {
-    if (activeImage) return;
+    if (activeImage) {
+      hoveredId.set(null);
+      return;
+    }
 
     hoveredId.set(`hovered-${item.id}`);
     animate(SubheaderProgress, 1, TRANSITIONCONFIG.texthoverstart);
   }, [activeImage]);
 
   const handleHoverEnd = useCallback(() => {
-    if (activeImage) return;
+    if (activeImage) {
+      hoveredId.set(null);
+      return;
+    }
 
     hoveredId.set(null);
     animate(SubheaderProgress, 0, TRANSITIONCONFIG.texthoverend);
@@ -523,23 +576,24 @@ const SubHeaderItem = memo(function SubHeaderItem({ item, itemi, animationConfig
       >
         {item.title}
       </SubHeaderBlur>
-      <SubHeaderText
+      <SubHeaderRipple
         variants={subheaderVars}
         style={{
-          position: 'absolute',
           filter: hoveredSubheader
         }}
       >
         {item.title}
-      </SubHeaderText>
+      </SubHeaderRipple>
       <SubHeaderText
         variants={subheaderVars}
-        style={{
-          position: 'relative',
-          opacity: staticSubheader
-        }}
       >
-        {item.title}
+        <motion.div
+          style={{
+            opacity: staticSubheader
+          }}
+        >
+          {item.title}
+        </motion.div>
       </SubHeaderText>
     </SubHeaderContainer>
   )
@@ -583,28 +637,24 @@ const BgImageLayer = styled(MotionBox)(({ theme }) => ({
   backfaceVisibility: "hidden",
 }));
 
-const rippleduration = 8;
-const bgduration = rippleduration / 4;
-const BG_TRANSITION = { duration: bgduration, ease: 'easeInOut' };
-
 const bgunderlayVars = {
-  initial: { opacity: 0, transition: BG_TRANSITION },
+  initial: { opacity: 0, transition: TRANSITIONCONFIG.imageactiveimage },
   animate: {
     opacity: 1,
-    transition: BG_TRANSITION
+    transition: TRANSITIONCONFIG.imageactiveimage
   },
 };
 
 const bgVars = {
   inactive: {
     opacity: 0, zIndex: 0,
-    transition: BG_TRANSITION,
+    transition: TRANSITIONCONFIG.imageactiveimage,
     transitionEnd: { display: "none" }
   },
   active: (o = 0.6) => ({
     opacity: o, zIndex: 1,
     display: "block",
-    transition: BG_TRANSITION
+    transition: TRANSITIONCONFIG.imageactiveimage
   }),
 };
 
@@ -634,16 +684,7 @@ const AnimatedImages = memo(function AnimatedImages({ activeImage, animationConf
     randomFreq: getRandom(0.02, 0.04).toFixed(3)
   }), [activeImage]);
 
-  const emergeprogress = useMotionValue(0);
   const rippleProgress = useMotionValue(0);
-
-  const triggerEmerge = useCallback(() => {
-    emergeprogress.set(0);
-    animate(emergeprogress, 1, {
-      duration: 4.2,
-      ease: [0.2, 0.65, 0.3, 0.9],
-    });
-  }, []);
 
   const triggerRipple = useCallback(() => {
     rippleProgress.set(0);
@@ -673,7 +714,6 @@ const AnimatedImages = memo(function AnimatedImages({ activeImage, animationConf
 
   return (
     <Modal style={{ pointerEvents: activeImage ? 'auto' : 'none' }}>
-      <ImageLiquidFilter progress={emergeprogress} />
       <BgLiquidFilter progress={rippleProgress} rippleParams={rippleParams} />
       <ImageGrid
         ref={containerRef}
@@ -723,7 +763,7 @@ const RippleContainer = styled(MotionBox)(({ theme }) => ({
 
 const RippleItem = styled(MotionBox)(({ theme }) => ({
   position: 'absolute',
-  width: '50px', height: '50px',
+  width: '20vmax', height: '20vmax',
   borderRadius: '50%',
   border: '2px solid rgba(255, 255, 255, 0.5)',
 }));
@@ -742,18 +782,16 @@ const rippleVars = {
     opacity: 0,
   },
   animate: {
-    scale: 4,
+    scale: 3,
     opacity: [0.6, 0],
     transition: {
-      duration: 4,      // Adjust for "slowness"
-      //repeat: Infinity,
+      duration: calculatedDuration,
       ease: "easeOut",
     },
   },
 };
 
 const RippleEffect = memo(function RippleEffect() {
-  // Define how many rings you want visible at once
   const ripples = [0, 1, 2];
 
   return (
@@ -778,55 +816,133 @@ const ImageContainer = styled(MotionBox)(({ theme }) => ({
   minWidth: '200px',
   maxWidth: '350px',
   borderRadius: '24px',
-  maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)',
   backfaceVisibility: "hidden",
 }));
 
 const ImageEntrance = styled(MotionBox)(({ theme }) => ({
+  position: 'relative',
   width: '100%', height: '100%',
-  //display: 'flex', justifyContent: 'center', alignItems: 'center',
+  display: 'flex', justifyContent: 'center', alignItems: 'center',
   borderRadius: 'inherit',
   backfaceVisibility: "hidden",
 }));
 
-const UnHoveredLayer = styled(MotionBox)(({ theme }) => ({
-  width: '50px', height: '50px',
-  borderRadius: '50%',
-  background: `
-    radial-gradient(
-      circle at 30% 30%, 
-      rgba(255, 255, 255, 0.9) 0%, 
-      rgba(255, 255, 255, 0) 25%
-    ),
-    radial-gradient(
-      circle at 70% 70%, 
-      rgba(173, 216, 230, 0.4) 0%, 
-      rgba(255, 255, 255, 0) 50%
-    ),
-    radial-gradient(
-      circle at center, 
-      rgba(135, 206, 235, 0.2) 10%, 
-      rgba(0, 119, 190, 0.5) 100%
-    )
-  `,
-  // Optional: Add a subtle border to define the "surface tension"
-  border: '1px solid rgba(255, 255, 255, 0.3)',
-  //boxShadow: 'inset -5px -5px 15px rgba(0, 0, 0, 0.1), 0 10px 20px rgba(0, 0, 0, 0.1)',
+const DriftWrapper = styled(MotionBox)(({ theme, p = {} }) => {
+
+  const {
+    totalduration,
+    delay
+  } = p;
+
+  return {
+    position: 'relative',
+    width: '100%', height: '100%',
+    display: 'flex', justifyContent: 'center', alignItems: 'center',
+    borderRadius: 'inherit',
+    animation: `bokendrift ${totalduration}s ${delay}s ease-in-out infinite`,
+    '@keyframes bokendrift': {
+      '0%': {
+        transform: 'translate(0, 0)',
+      },
+      '25%': {
+        transform: `translate(var(--drift-x), var(--drift-y))`,
+
+      },
+      '100%': {
+        transform: 'translate(0, 0)',
+      },
+    },
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
+  }
+});
+
+const UnHoveredImage = styled(MotionBox)(({ theme }) => ({
+  position: 'absolute',
+  display: 'flex', justifyContent: 'center', alignItems: 'center',
+  zIndex: -1,
+  pointerEvents: 'none',
+  backfaceVisibility: 'hidden',
 }));
 
-const ImageHovered = styled(MotionBox)(({ theme }) => ({
+const Bokeh = styled(MotionBox)(({ theme, p = {} }) => {
+
+  const {
+    totalduration,
+    animationduration,
+    delay,
+    opacity,
+    color = '255,255,255'
+  } = p;
+
+  const sharedStyles = {
+    content: '""',
+    position: 'absolute',
+    inset: '-1px',
+    borderRadius: '50%',
+    background: 'transparent',
+    filter: 'blur(0.5px)',
+    zIndex: 1,
+    //mixBlendMode: 'screen',
+  };
+
+  return {
+    position: 'absolute',
+    top: '50%', left: '50%',
+    width: '100%', height: '100%',
+    borderRadius: '50%',
+    background: `radial-gradient(circle, 
+      rgba(${color}, 1) 0%, 
+      rgba(${color}, 0.9) 60%, 
+      rgba(${color}, 0.2) 100%
+    )`,
+    border: '0.5px solid rgba(255, 255, 255, 0.2)',
+    zIndex: -1,
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
+    transform: `translate(-50%, -50%) rotate(var(--bokeh-angle))`,
+    animation: `lensShift ${totalduration}s ${delay}s ease-in-out infinite backwards`,
+    '@keyframes lensShift': {
+      '0%': {
+        transform: `translate(-50%, -50%) rotate(var(--bokeh-angle)) scale(0.1)`,
+        opacity: 0,
+      },
+      '5%': { opacity: opacity },
+      '20%': { opacity: opacity },
+      '25%': {
+        transform: `translate(-50%, -50%) rotate(var(--bokeh-angle)) scale(1.4)`,
+        opacity: 0,
+      },
+      '100%': {
+        transform: `translate(-50%, -50%) rotate(var(--bokeh-angle)) scale(1.4)`,
+        opacity: 0,
+      },
+    },
+
+    '&::before': {
+      ...sharedStyles,
+      borderRight: '1.5px solid rgba(255, 60, 100, 0.8)',
+      boxShadow: 'inset -4px 0 6px rgba(255, 60, 100, 0.6)',
+      animation: `fringePulse ${totalduration}s ${delay}s ease-in-out infinite`,
+    },
+    '&::after': {
+      ...sharedStyles,
+      borderLeft: '1.5px solid rgba(0, 200, 255, 0.8)',
+      boxShadow: 'inset 4px 0 6px rgba(0, 200, 255, 0.6)',
+      animation: `fringePulse ${totalduration}s ${delay}s ease-in-out infinite`,
+    },
+    '@keyframes fringePulse': {
+      '0%, 100%': { transform: 'scale(1)' },
+      '25%': { transform: 'scale(1.05)' },
+    },
+  }
+});
+
+const HoveredImage = styled(MotionBox)(({ theme }) => ({
+  //position: 'absolute',
   width: '100%', height: '100%',
   borderRadius: 'inherit',
-  maskImage: `radial-gradient(
-    circle at 50% 50%, 
-    black var(--stop-1, 0%), 
-    transparent var(--stop-2, 30%)
-  )`,
-  WebkitMaskImage: `radial-gradient(
-    circle at 50% 50%, 
-    black var(--stop-1, 0%), 
-    transparent var(--stop-2, 30%)
-  )`,
+  zIndex: 1,
   backfaceVisibility: "hidden",
 }));
 
@@ -835,6 +951,7 @@ const StyledImage = styled('img')(({ theme }) => ({
   display: 'block',
   borderRadius: 'inherit',
   objectFit: 'cover',
+  maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)',
   filter: 'brightness(0.6) contrast(1.2) saturate(1.4) grayscale(0.2)',
   backfaceVisibility: "hidden",
 }));
@@ -843,12 +960,12 @@ const imageVars = {
   initial: ({ i, col } = {}) => ({
     opacity: 0.4,
     y: col % 2 === 0 ? -100 : 100,
-    transition: BG_TRANSITION
+    transition: TRANSITIONCONFIG.imageactiveimage
   }),
   animate: ({ i, col } = {}) => ({
     opacity: 1,
     y: i % 2 === 0 ? -50 : 50,
-    transition: BG_TRANSITION
+    transition: TRANSITIONCONFIG.imageactiveimage
   }),
 };
 
@@ -866,16 +983,24 @@ const imageentranceVars = {
   }),
 };
 
+const imageunhoveredVars = {
+  initial: {
+    opacity: 1, scale: 1,
+    transition: TRANSITIONCONFIG.imagehoverstart,
+  },
+  animate: {
+    opacity: 0, scale: 10,
+    transition: TRANSITIONCONFIG.imagehoverend,
+  },
+};
+
 const imagehoveredVars = {
   initial: {
     opacity: 0, scale: 0.5,
     filter: 'blur(4px)',
     '--stop-1': '0%',
     '--stop-2': '10%',
-    transition: {
-      duration: 1.2,
-      ease: [0.2, 0.65, 0.3, 0.9],
-    }
+    transition: TRANSITIONCONFIG.imagehoverend
   },
   animate: {
     opacity: 0.6, scale: 1,
@@ -883,8 +1008,7 @@ const imagehoveredVars = {
     '--stop-1': '40%',
     '--stop-2': '95%',
     transition: {
-      duration: 1.2,
-      ease: [0.2, 0.65, 0.3, 0.9],
+      ...TRANSITIONCONFIG.imagehoverstart,
       '--stop-2': {
         duration: 1.8,
         delay: 0.1
@@ -893,16 +1017,80 @@ const imagehoveredVars = {
   },
 };
 
+const particlecolor = [
+  '255, 250, 240'
+];
+const duration = 20;
+const total = imgarr.length;
+const indices = Array.from({ length: total }, (_, i) => i);
+const schedule = indices.sort(() => Math.random() - 0.5);
+const particles = Array.from({ length: imgarr.length }).map((_, i) => {
+  const randomColor = particlecolor[Math.floor(Math.random() * particlecolor.length)];
+
+  return {
+    id: i,
+    size: Math.round(Math.random() * 5 + 20),
+    top: Math.round(Math.random() * 25 + 50),
+    left: Math.round(Math.random() * 50 + 25),
+    color: randomColor,
+    opacity: +(Math.random() * 0.4 + 0.5).toFixed(2),
+    totalduration: 4 * duration,
+    animationduration: duration,
+    delay: (schedule[i] / total) * 4 * duration,
+  };
+});
+
+const centerX = window.innerWidth / 2;
+const centerY = window.innerHeight * 2.5;
+
 const ImageItem = memo(function ImageItem({ itemRef, v, i,
   columns, hoveredId, activeImage }) {
 
+  const p = particles[i] ||
+  {
+    size: 20,
+    top: 50, left: 50,
+    color: '255, 250, 230',
+    opacity: 0.5, angle: 0,
+    duration: 10, delay: 0,
+  };
   const col = i % columns;
-  const controls = useAnimation();
+  const hoveredcontrols = useAnimation();
 
   useMotionValueEvent(hoveredId, "change", (latest) => {
     const isHovered = latest === `hovered-${v.id}`;
-    controls.start(isHovered ? 'animate' : 'initial');
+    hoveredcontrols.start(isHovered ? 'animate' : 'initial');
   });
+
+  const bokehRef = useRef(null);
+  const driftRef = useRef(null);
+  useLayoutEffect(() => {
+    const getDrift = () => {
+      if (!bokehRef.current) return;
+      const rect = bokehRef.current.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+
+      const angleRad = Math.atan2(y - centerY, x - centerX);
+      const angleDeg = angleRad * (180 / Math.PI);
+      console.log(y, centerY, angleDeg);
+      bokehRef.current.style.setProperty('--bokeh-angle', `${angleDeg}deg`);
+
+      if (!driftRef.current) return;
+      const mag = 30;
+      const dist = Math.hypot(y - centerY, x - centerX) || 1;
+      const ux = (x - centerX) / dist * mag;
+      const uy = (y - centerY) / dist * mag;
+
+      driftRef.current.style.setProperty('--drift-x', `${ux}px`);
+      driftRef.current.style.setProperty('--drift-y', `${uy}px`);
+    };
+
+    getDrift();
+
+    window.addEventListener('resize', getDrift);
+    return () => window.removeEventListener('resize', getDrift);
+  }, []);
 
   return (
     <ImageContainer
@@ -920,16 +1108,42 @@ const ImageItem = memo(function ImageItem({ itemRef, v, i,
         whileInView={'animate'}
         viewport={{ once: false, amount: 0.2 }}
       >
-        <ImageHovered
-          variants={imagehoveredVars}
-          initial='initial'
-          animate={controls}
+        <DriftWrapper
+          ref={driftRef}
+          p={p}
         >
-          <StyledImage
-            src={v.image}
-            alt={v.title}
-          />
-        </ImageHovered>
+          <UnHoveredImage
+            variants={imageunhoveredVars}
+            initial={'initial'}
+            animate={hoveredcontrols}
+            style={{
+              width: p.size, height: p.size,
+              top: `${p.top}%`, left: `${p.left}%`,
+              x: '-50%', y: '-50%',
+              transformOrigin: 'center',
+            }}
+          >
+            <Bokeh
+              ref={bokehRef}
+              p={p}
+            />
+          </UnHoveredImage>
+          <HoveredImage
+            variants={imagehoveredVars}
+            initial='initial'
+            animate={hoveredcontrols}
+            style={{
+              transformOrigin: `${p.left}% ${p.top}%`,
+              maskImage: `radial-gradient(circle at ${p.left}% ${p.top}%, black var(--stop-1), transparent var(--stop-2))`,
+              WebkitMaskImage: `radial-gradient(circle at ${p.left}% ${p.top}%, black var(--stop-1), transparent var(--stop-2))`,
+            }}
+          >
+            <StyledImage
+              src={v.image}
+              alt={v.title}
+            />
+          </HoveredImage>
+        </DriftWrapper>
       </ImageEntrance>
     </ImageContainer>
   )
@@ -972,8 +1186,8 @@ const TextLiquidFilter = memo(function TextLiquidFilter() {
           in="displaced"
           type="matrix"
           values="1 0 0 0 0 
-                  0 1 0 0 0.05 
-                  0 0 1 0 0.4 
+                  0 1 0 0 0.02 
+                  0 0 1 0 0.1 
                   0 0 0 1 0"
         />
       </filter>
