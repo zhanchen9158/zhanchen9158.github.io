@@ -3,7 +3,7 @@ import { createTheme, alpha } from '@mui/material/styles';
 
 const defaultTheme = createTheme();
 
-const bgimport = import.meta.glob('../pics/background*.*', {
+const bgimport = import.meta.glob('../pics/bg*.*', {
   eager: true,
   query: '?url'
 });

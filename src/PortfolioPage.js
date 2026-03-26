@@ -11,7 +11,8 @@ import CustomizedSpeedDial from './components/CustomizedSpeedDial';
 import { styled } from '@mui/material/styles';
 import { AnimateProvider } from './components/AnimateContext';
 import GrainOverlay from './components/GrainOverlay';
-
+import entrancebg1 from './pics/entrancebg1.webp';
+import entrancebg2 from './pics/entrancebg2.webp';
 
 const MotionBox = motion(Box);
 
@@ -88,7 +89,7 @@ const ScrollPageContainer = styled(Box)(({ theme }) => ({
   width: "100dvw", height: "100dvh",
   scrollSnapAlign: "start",
   perspective: "1000px",
-  transformStyle: "flat",
+  transformStyle: 'preserve-3d',
   backfaceVisibility: "hidden",
   WebkitBackfaceVisibility: "hidden",
   overflow: "hidden",
@@ -106,7 +107,6 @@ const ScrollPage = styled(MotionBox)(({ theme }) => ({
   position: 'absolute',
   width: "100dvw", height: "100dvh",
   transformOrigin: "center center",
-  //willChange: "transform, opacity",
   WebkitFontSmoothing: "antialiased",
   backfaceVisibility: 'hidden',
 }));
@@ -114,7 +114,6 @@ const ScrollPage = styled(MotionBox)(({ theme }) => ({
 const ScrollContent = styled(MotionBox)(({ theme }) => ({
   width: '100%', height: '100%',
   display: "flex", alignItems: "center", justifyContent: "center",
-  //willChange: "transform, opacity",
   backfaceVisibility: 'hidden',
 }));
 
@@ -194,6 +193,17 @@ const Page = memo(function Page({ id, sectionRef, containerRef, i, activesection
   );
 });
 
+const EntranceBg = styled(MotionBox)(({ theme }) => ({
+  position: 'absolute',
+  inset: 0,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  backgroundRepeat: 'no-repeat',
+  //zIndex: -1,
+  pointerEvents: 'none',
+  backfaceVisibility: 'hidden',
+}));
+
 const ScrollBackground = styled(MotionBox)(({ theme }) => ({
   position: 'absolute',
   inset: 0,
@@ -201,19 +211,32 @@ const ScrollBackground = styled(MotionBox)(({ theme }) => ({
   backgroundPosition: 'center',
   backgroundRepeat: 'no-repeat',
   zIndex: -1,
-  willChange: "transform, opacity",
+  backfaceVisibility: 'hidden',
 }));
 
+const entrancebg = [];
 const AnimatedBackground = memo(function AnimatedBackground({ i, bgScale }) {
 
   return (
-    <ScrollBackground
-      style={{
-        scale: bgScale,
-      }}
-      sx={(theme) => ({
-        backgroundImage: (theme.vars || theme).palette.background.images[i],
-      })}
-    />
+    <>
+      <EntranceBg
+        initial={{ opacity: 1 }}
+        whileInView={{ opacity: 0 }}
+        viewport={{ once: false, amount: 0.2 }}
+        transition={{ duration: 4 }}
+        style={{
+          scale: bgScale,
+          backgroundImage: i === 1 ? `url(${entrancebg1})` : i === 2 ? `url(${entrancebg2})` : 'none',
+        }}
+      />
+      <ScrollBackground
+        style={{
+          scale: bgScale,
+        }}
+        sx={(theme) => ({
+          backgroundImage: (theme.vars || theme).palette.background.images[i],
+        })}
+      />
+    </>
   );
 });

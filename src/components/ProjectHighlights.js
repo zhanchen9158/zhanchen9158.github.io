@@ -13,7 +13,6 @@ import {
 import { useAnimateContext } from './AnimateContext';
 import { PROJECT_HIGHLIGHTS } from "../pics/assets";
 import getRandom from '../functions/getRandom';
-import bg from '../pics/background2.webp';
 
 
 const highlights = {
@@ -141,7 +140,7 @@ export default function ProjectHighlights({ refProps, handleViewport }) {
   );
 }
 
-const GalleryContainer = styled(Box)(({ theme }) => ({
+const GalleryContainer = styled(MotionBox)(({ theme }) => ({
   position: 'relative',
   width: '80%', height: `calc(100dvh - ${header * 2}px)`,
   paddingTop: theme.spacing(4),
@@ -190,11 +189,21 @@ function HoverGallery({ }) {
 
   const hoveredId = useMotionValue(null);
 
+  const entryTimeRef = useRef(0);
+
+  const handleViewportEnter = useCallback(() => {
+    entryTimeRef.current = Date.now();
+  }, [])
+
   return (
-    <GalleryContainer>
+    <GalleryContainer
+      onViewportEnter={handleViewportEnter}
+      viewport={{ once: false, amount: 0.2 }}
+    >
       <TextLiquidFilter />
-      <AnimatedImages activeImage={activeImage}
-        animationConfig={animationConfig} handleActivatingImage={handleActivatingImage}
+      <AnimatedImages
+        animationConfig={animationConfig}
+        activeImage={activeImage} handleActivatingImage={handleActivatingImage}
         hoveredId={hoveredId}
       />
       {Object.values(highlights).map((v, i) => (
@@ -203,6 +212,7 @@ function HoverGallery({ }) {
           activeImage={activeImage}
           handleActivatingImage={handleActivatingImage}
           hoveredId={hoveredId}
+          entryTimeRef={entryTimeRef}
         />
       ))}
     </GalleryContainer>
@@ -258,15 +268,15 @@ const HeaderBase = ({ theme }) => ({
   paddingBottom: '0.2em',
   marginBottom: '-0.2em',
   gridArea: '1 / 1',
-  fontFamily: 'Antonio',
-  fontSize: 'clamp(100px, 10vw, 120px)',
+  fontFamily: 'Lora',
+  fontSize: 'clamp(80px, 10vw, 100px)',
+  fontStyle: 'italic',
   fontWeight: 800,
   lineHeight: 1.1, letterSpacing: '0.05rem',
   color: '#050B14',
-  alignSelf: 'center', textAlign: 'center',
   WebkitFontSmoothing: 'antialiased',
   [theme.breakpoints.down('sm')]: {
-    fontSize: 'clamp(60px, 20vw, 100px)',
+    fontSize: 'clamp(60px, 20vw, 80px)',
   },
   backfaceVisibility: 'hidden',
 });
@@ -295,7 +305,7 @@ const bgduration = rippleduration / 4;
 
 //entrance ripple
 const vmax = Math.max(window.innerWidth, window.innerHeight);
-const speedPxPerSecond = 50;
+const speedPxPerSecond = 40;
 const distanceToTravel = (0.6 * vmax) - (0.2 * vmax);
 const calculatedDuration = distanceToTravel / speedPxPerSecond;
 
@@ -322,7 +332,8 @@ const containerVars = {
   visible: {
     opacity: 1,
     transition: {
-      duration: calculatedDuration / 2,
+      delay: 0.35,
+      duration: calculatedDuration / 4,
     },
   },
   static: { opacity: 1 },
@@ -366,7 +377,7 @@ const borderVars = {
 };
 
 const AnimatedList = memo(function AnimatedList({ proj, proji, animationConfig,
-  activeImage, handleActivatingImage, hoveredId }) {
+  activeImage, handleActivatingImage, hoveredId, entryTimeRef }) {
 
   const HeaderProgress = useMotionValue(0);
   const staticHeader = useTransform(HeaderProgress, [0, 1], [0.5, 0]);
@@ -402,6 +413,7 @@ const AnimatedList = memo(function AnimatedList({ proj, proji, animationConfig,
           style={{
             left: proji % 2 === 0 ? 'auto' : '10%',
             right: proji % 2 === 0 ? '10%' : 'auto',
+            textAlign: proji % 2 === 0 ? 'right' : 'left',
           }}
         >
           <HeaderStatic style={{ opacity: staticHeader }}>
@@ -423,6 +435,7 @@ const AnimatedList = memo(function AnimatedList({ proj, proji, animationConfig,
             activeImage={activeImage}
             handleActivatingImage={handleActivatingImage}
             hoveredId={hoveredId}
+            entryTimeRef={entryTimeRef}
           />
         ))}
       </ListContent>
@@ -442,9 +455,9 @@ const SubHeaderContainer = styled(MotionBox)(({ theme }) => ({
 
 const SubHeaderBase = ({ theme }) => ({
   borderRadius: '8px',
-  fontFamily: 'Cormorant Garamond',
+  fontFamily: 'Spectral',
   fontSize: 'clamp(28px, 2vw, 32px)',
-  fontWeight: 800,
+  fontWeight: 600,
   fontStyle: 'italic',
   letterSpacing: '0.25em',
   pointerEvents: 'none',
@@ -465,6 +478,11 @@ const SubHeaderRipple = styled(MotionBox)(({ theme }) => ({
   ...SubHeaderBase({ theme }),
   position: 'absolute',
   color: '#E2E8F0',
+  textShadow: `
+    0px 1px 2px rgba(0, 0, 0, 0.8),
+    0px 4px 8px rgba(0, 0, 0, 0.6),
+    0px 12px 24px rgba(0, 0, 0, 0.4)
+  `,
   WebkitFontSmoothing: 'antialiased',
   MozOsxFontSmoothing: 'grayscale',
 }));
@@ -474,9 +492,8 @@ const SubHeaderText = styled(MotionBox)(({ theme }) => ({
   position: 'relative',
   color: '#E2E8F0',
   textShadow: `
-    0px 1px 2px rgba(0, 0, 0, 0.8),
-    0px 4px 8px rgba(0, 0, 0, 0.4),
-    0px 12px 24px rgba(0, 0, 0, 0.3)
+    0px 1px 2px rgba(0, 0, 0, 0.6),
+    0px 4px 8px rgba(0, 0, 0, 0.4)
   `,
   WebkitFontSmoothing: 'antialiased',
   MozOsxFontSmoothing: 'grayscale',
@@ -516,7 +533,7 @@ const subheaderVars = {
 };
 
 const SubHeaderItem = memo(function SubHeaderItem({ item, itemi, animationConfig,
-  activeImage, handleActivatingImage, hoveredId }) {
+  activeImage, handleActivatingImage, hoveredId, entryTimeRef }) {
 
   const isSelected = activeImage?.image === item.image;
   const SubheaderProgress = useMotionValue(0);
@@ -539,6 +556,10 @@ const SubHeaderItem = memo(function SubHeaderItem({ item, itemi, animationConfig
       return;
     }
 
+    const currentTime = Date.now();
+    const waitPeriod = 1000;
+    if (currentTime - entryTimeRef.current < waitPeriod) return;
+
     hoveredId.set(`hovered-${item.id}`);
     animate(SubheaderProgress, 1, TRANSITIONCONFIG.texthoverstart);
   }, [activeImage]);
@@ -553,13 +574,13 @@ const SubHeaderItem = memo(function SubHeaderItem({ item, itemi, animationConfig
     animate(SubheaderProgress, 0, TRANSITIONCONFIG.texthoverend);
   }, [activeImage]);
 
-  const handleViewportEnter = useCallback(() => {
-    SubheaderProgress.set(0);
-    animate(SubheaderProgress, 1, TRANSITIONCONFIG.texthoverstart);
+  const opacityValue = useMotionValue(0);
 
+  const handleViewportEnter = useCallback(() => {
+    opacityValue.set(0);
     setTimeout(() => {
-      animate(SubheaderProgress, 0, TRANSITIONCONFIG.texthoverend);
-    }, 2000);
+      animate(opacityValue, 1, TRANSITIONCONFIG.texthoverstart);
+    }, 1000)
   }, []);
 
   return (
@@ -570,6 +591,7 @@ const SubHeaderItem = memo(function SubHeaderItem({ item, itemi, animationConfig
       onHoverStart={handleHoverStart}
       onHoverEnd={handleHoverEnd}
       onViewportEnter={handleViewportEnter}
+      style={{ opacity: opacityValue }}
     >
       <SubHeaderBlur
         variants={subheaderblurVars}
@@ -765,13 +787,27 @@ const RippleItem = styled(MotionBox)(({ theme }) => ({
   position: 'absolute',
   width: '20vmax', height: '20vmax',
   borderRadius: '50%',
-  border: '2px solid rgba(255, 255, 255, 0.5)',
 }));
+
+const FragmentedRipple = styled(MotionBox)(({ theme, thickness = 1.5,
+  degree = '135deg', mag = '40%' }) => ({
+    position: 'absolute', inset: 0,
+    borderRadius: 'inherit',
+    padding: `${thickness}px`,
+    background: `linear-gradient(${degree}, 
+      rgba(255,255,255,1), 
+      rgba(255,255,255,0) ${mag}
+    )`,
+    WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+    maskComposite: 'exclude',
+    pointerEvents: 'none',
+    backfaceVisibility: "hidden",
+  }));
 
 const ripplesVars = {
   animate: {
     transition: {
-      staggerChildren: 1.3
+      staggerChildren: 1.2
     },
   },
 };
@@ -783,7 +819,7 @@ const rippleVars = {
   },
   animate: {
     scale: 3,
-    opacity: [0.6, 0],
+    opacity: [0.8, 0],
     transition: {
       duration: calculatedDuration,
       ease: "easeOut",
@@ -792,7 +828,11 @@ const rippleVars = {
 };
 
 const RippleEffect = memo(function RippleEffect() {
-  const ripples = [0, 1, 2];
+  const ripples = [
+    [{ d: '90deg', m: '20%' }, { d: '270deg', m: '60%' }],
+    [{ d: '45deg', m: '40%' }, { d: '270deg', m: '20%' }],
+    [{ d: '90deg', m: '25%' }, { d: '-30deg', m: '20%' }, { d: '240deg', m: '25%' }]
+  ];
 
   return (
     <RippleContainer
@@ -800,11 +840,19 @@ const RippleEffect = memo(function RippleEffect() {
       initial='initial'
       whileInView="animate"
     >
-      {ripples.map((_, i) => (
+      {ripples.map((ripple, i) => (
         <RippleItem
           key={i}
           variants={rippleVars}
-        />
+        >
+          {ripple.map((prop, _) => (
+            <FragmentedRipple
+              degree={prop.d}
+              mag={prop.m}
+              thickness={3}
+            />
+          ))}
+        </RippleItem>
       ))}
     </RippleContainer>
   );
@@ -1177,7 +1225,7 @@ const TextLiquidFilter = memo(function TextLiquidFilter() {
         <feDisplacementMap
           in="SourceGraphic"
           in2="noise"
-          scale='8'
+          scale='12'
           xChannelSelector="R"
           yChannelSelector="G"
           result="displaced"

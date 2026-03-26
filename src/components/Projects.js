@@ -11,8 +11,8 @@ import {
 } from "motion/react";
 import { styled, useTheme } from '@mui/material/styles';
 import { useAnimateContext } from './AnimateContext';
+import GlassOverlay from './GlassOverlay';
 import GrainOverlay from './GrainOverlay';
-import GlassOverlay, { BevelGlassOverlay, BorderSheen } from './GlassOverlay';
 
 
 const PROJECTSINFO = [
@@ -398,13 +398,12 @@ const AnimatedProjectHeader = memo(function AnimatedProjectHeader({ proj,
   );
 });
 
-const CarouselItem = styled(MotionBox)(({ theme, isActive }) => ({
+const CarouselItem = styled(MotionBox)(({ theme }) => ({
   width: '100%', height: '100%',
   borderRadius: 'inherit',
   display: 'flex', justifyContent: 'center', alignItems: 'center',
   backfaceVisibility: "hidden",
   isolation: 'isolate',
-  zIndex: isActive ? 10 : 1,
 }));
 
 const AnimatedCarouselItem = motion(forwardRef(function AnimatedCarouselItem({ projindex,
@@ -420,7 +419,9 @@ const AnimatedCarouselItem = motion(forwardRef(function AnimatedCarouselItem({ p
         duration: TRANSITIONCONFIG.carouselduration,
         ease: [0.22, 1, 0.36, 1],
       }}
-      isActive={isActive}
+      style={{
+        zIndex: isActive ? 10 : 1,
+      }}
     >
       <ProjectCard projinfo={PROJECTSINFO[projindex]} isActive={isActive}
         hoveredProj={hoveredProj} handleHovering={handleHovering}
@@ -430,7 +431,7 @@ const AnimatedCarouselItem = motion(forwardRef(function AnimatedCarouselItem({ p
   );
 }));
 
-const CardContainer = styled(MotionBox)(({ theme, isActive }) => ({
+const CardContainer = styled(MotionBox)(({ theme }) => ({
   position: 'relative',
   width: '100%', height: CARDH,
   display: 'flex', justifyContent: 'center', alignItems: 'center',
@@ -443,7 +444,6 @@ const CardContainer = styled(MotionBox)(({ theme, isActive }) => ({
   '@media (max-height: 600px)': {
     height: CARDHsm,
   },
-  cursor: isActive ? 'none' : 'default',
 }));
 
 const RestBorder = styled(MotionBox)(({ theme }) => ({
@@ -541,12 +541,11 @@ const GlassBg = styled(MotionBox)(({ theme, opacity = 1,
     borderRadius: "inherit",
     backgroundColor: bgcolor || color,
     boxShadow: `
-      inset 0 0 0 1px rgba(255, 255, 255, 0.1), // Bright inner edge
-      0 4px 24px -1px rgba(0, 0, 0, 0.2)        // Soft outer drop
+      inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+      0 4px 24px -1px rgba(0, 0, 0, 0.2)
     `,
     opacity: opacity,
-    backdropFilter: 'blur(20px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+    mixBlendMode: 'overlay',
     backfaceVisibility: "hidden",
   };
 });
@@ -950,19 +949,10 @@ const ProjectCard = memo(function ProjectCard({ projinfo, isActive,
       variants={cardcontainerVars}
       initial="initial"
       animate={hoveredProj ? (isActive ? 'hover' : 'hidden') : 'initial'}
-      isActive={isActive}
+      style={{
+        cursor: isActive ? 'none' : 'default',
+      }}
     >
-      {/*<RestBorder
-        custom={{ io: 1, ho: 0 }}
-        variants={borderwrapperVars}
-      >
-        <BorderSheen
-          custom={{ oa: 0.8, ob: 0.3, d: borderConfig.duration }}
-          variants={pulseVars}
-          initial='initial'
-          animate={isActive ? 'hidden' : 'animate'}
-        />
-      </RestBorder>*/}
       <HoverBorder
         custom={{ io: 0, ho: 1 }}
         variants={borderwrapperVars}
@@ -992,6 +982,10 @@ const ProjectCard = memo(function ProjectCard({ projinfo, isActive,
           variants={glassbgVars}
         />
         <GlassOverlay opacity={0.4} />
+        <GrainOverlay
+          opacity={0.1}
+          bgcolor={'rgba(30,30,30,1)'}
+        />
       </BgWrapper>
       <BloomBg
         variants={bloomVars}
@@ -1002,8 +996,8 @@ const ProjectCard = memo(function ProjectCard({ projinfo, isActive,
       >
         <CardContent
           ref={cardRef}
-          onMouseEnter={() => isActive ? handleHovering(projinfo) : null}
-          onMouseLeave={() => handleHovering(null)}
+          onHoverStart={() => isActive ? handleHovering(projinfo) : null}
+          onHoverEnd={() => handleHovering(null)}
           onClick={handleClick}
         >
           {isActive ?
@@ -1185,11 +1179,10 @@ const ImageContainer = styled(MotionBox)(({ theme }) => ({
   pointerEvents: 'none',
 }));
 
-const ImageOverlay = styled(MotionBox)(({ theme, opacity = 0.1 }) => ({
+const ImageOverlay = styled(MotionBox)(({ theme }) => ({
   position: 'absolute', inset: 0,
   background: '#000000',
   borderRadius: 'inherit',
-  opacity: opacity,
   backfaceVisibility: "hidden",
 }));
 
@@ -1275,7 +1268,9 @@ const HoveredAnimation = memo(function HoveredAnimation({ hoveredProj, animation
         animate={animationConfig.image}
         exit='exit'
       >
-        <ImageOverlay />
+        <ImageOverlay
+          style={{ opacity: 0.1 }}
+        />
         <StyledImage src={hoveredProj.img} />
       </ImageContainer>
     </AnimatePresence>

@@ -61,7 +61,7 @@ const itemVars = {
 const colorgradient = [
   'linear-gradient(to bottom right, #6366F1, #38BDF8)',
   'linear-gradient(to right, rgba(15, 23, 42, 0.1), rgba(47, 71, 94, 0.6), rgba(15, 23, 42, 0.1))',
-  'linear-gradient(to bottom right, #6366F1, #38BDF8)',
+  'linear-gradient(135deg, #f59e0b 0%, #6366f1 50%, #0ea5e9 100%)',
   'linear-gradient(to bottom right, #6366F1, #38BDF8)',
 ];
 
