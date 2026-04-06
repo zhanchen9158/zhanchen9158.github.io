@@ -1,18 +1,18 @@
-import React, { useState, useCallback, useMemo, memo } from 'react';
+import React, { useState, useRef, useCallback, useMemo, memo } from 'react';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import AWSIcon from '../icons/aws.svg';
 import MicrosoftIcon from '../icons/microsoft.svg';
 import FreecodecampIcon from '../icons/freecodecamp.svg';
-import { motion, AnimatePresence } from "motion/react";
-import Avatar from '@mui/material/Avatar';
+import { motion, AnimatePresence, useInView } from "motion/react";
 import { styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useAnimateContext } from './AnimateContext';
 import Pagination from '@mui/material/Pagination';
 import Grid from '@mui/material/Grid';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import useSectionReporting from '../functions/useSectionReporting';
 
 
 const Floating3DCanvas = React.lazy(() => import('./Floating3DCanvas'));
@@ -164,7 +164,6 @@ const itemVars = {
 
 export default function Certifications({ refProps, handleViewport }) {
   const [cards, setCards] = useState(items);
-  const [isInView, setIsInView] = useState(false);
 
   const theme = useTheme();
   const greaterThanMd = useMediaQuery(theme.breakpoints.up('md'));
@@ -177,6 +176,12 @@ export default function Certifications({ refProps, handleViewport }) {
       hoverscale: greaterThanSm ? 1.1 : 1.05
     };
   }, [greaterThanMd, greaterThanSm]);
+
+  const containerRef = useRef(null);
+  const isInView = useInView(containerRef, {
+    amount: 0.5,
+    once: false
+  });
 
   const { manual, system } = useAnimateContext();
   const mode = system || manual;
@@ -198,16 +203,13 @@ export default function Certifications({ refProps, handleViewport }) {
     });
   };
 
-  const handleInView = useCallback((v) => {
-    handleViewport('certifications', v);
-    setIsInView(v);
-  }, [handleViewport]);
+  const { onEnter, onLeave } = useSectionReporting('certifications', handleViewport);
 
   return (
     <SectionContainer
-      //ref={el => refProps.current['certifications'] = el}
-      onViewportEnter={() => handleInView(true)}
-      onViewportLeave={() => handleInView(false)}
+      ref={containerRef}
+      onViewportEnter={onEnter}
+      onViewportLeave={onLeave}
       viewport={{ amount: 0.5 }}
       id="certifications"
       maxWidth="lg"

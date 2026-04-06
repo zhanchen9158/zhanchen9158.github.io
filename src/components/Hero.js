@@ -1,10 +1,10 @@
 import React, { useMemo, memo } from 'react';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
-import ScrollDown from './ScrollDown';
 import { styled, useTheme } from '@mui/material/styles';
 import { motion } from "motion/react";
 import SkillsCard from './SkillsCard';
+import useSectionReporting from '../functions/useSectionReporting';
 
 
 const NAVIGATION_DATA = [
@@ -53,24 +53,20 @@ const PageContainer = styled(Box)(({ theme }) => ({
 
 export default function Hero({ refProps, handleViewport, handleScrollsection }) {
 
+  const { onEnter, onLeave } = useSectionReporting('introduction', handleViewport);
+
   return (
     <SectionContainer
       id="introduction"
       //ref={el => refProps.current['introduction'] = el}
-      onViewportEnter={() => handleViewport('introduction', true)}
-      onViewportLeave={() => handleViewport('introduction', false)}
+      onViewportEnter={onEnter}
+      onViewportLeave={onLeave}
       viewport={{ amount: 0.5 }}
       maxWidth="lg"
     >
       <PageContainer>
         <SkillsCard />
         <AnimatedNavigation handleScrollsection={handleScrollsection} />
-        {/*<ScrollDown
-          sx={{
-            //height: { xs: `${0.9 * scrolldown}px`, md: `${1.5 * scrolldown}px` },
-            transform: { xs: 'scale(0.9)', md: 'scale(1)' },
-          }}
-        />*/}
       </PageContainer>
     </SectionContainer>
   );

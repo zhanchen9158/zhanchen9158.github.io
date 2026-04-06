@@ -223,7 +223,7 @@ const AnimatedBackground = memo(function AnimatedBackground({ i, bgScale }) {
         initial={{ opacity: 1 }}
         whileInView={{ opacity: 0 }}
         viewport={{ once: false, amount: 0.2 }}
-        transition={{ duration: 4 }}
+        transition={{ duration: 6, ease: 'easeInOut' }}
         style={{
           scale: bgScale,
           backgroundImage: i === 1 ? `url(${entrancebg1})` : i === 2 ? `url(${entrancebg2})` : 'none',

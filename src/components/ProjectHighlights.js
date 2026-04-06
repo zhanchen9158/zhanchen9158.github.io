@@ -8,11 +8,13 @@ import { styled, useTheme } from '@mui/material/styles';
 import {
   motion, useMotionValue, useSpring,
   useTransform, AnimatePresence, animate,
-  useAnimation, useMotionValueEvent
+  useAnimation, useMotionValueEvent, useInView
 } from "motion/react";
 import { useAnimateContext } from './AnimateContext';
 import { PROJECT_HIGHLIGHTS } from "../pics/assets";
 import getRandom from '../functions/getRandom';
+import CanvasRipples from "./CanvasRipples";
+import useSectionReporting from '../functions/useSectionReporting';
 
 
 const highlights = {
@@ -126,15 +128,46 @@ const SectionContainer = styled(MotionContainer)(({ theme }) => ({
 
 export default function ProjectHighlights({ refProps, handleViewport }) {
 
+  const containerRef = useRef(null);
+  const isInView = useInView(containerRef, {
+    amount: 0.5,
+    once: false
+  });
+
+  const { manual, system } = useAnimateContext();
+  const isNormal = (system || manual) === 'normal';
+
+  const ripplesRef = useRef(null);
+  const lastPos = useRef({ x: 0, y: 0 });
+
+  const handleMouseMove = (e) => {
+    if (!isInView || !isNormal || !ripplesRef.current) return;
+
+    const dist = Math.hypot(
+      e.clientX - lastPos.current.x,
+      e.clientY - lastPos.current.y
+    );
+
+    // Only trigger if we've moved enough (saves CPU)
+    if (dist > 45 && ripplesRef.current) {
+      ripplesRef.current.addRipple(e.clientX, e.clientY);
+      lastPos.current = { x: e.clientX, y: e.clientY };
+    }
+  };
+
+  const { onEnter, onLeave } = useSectionReporting('highlights', handleViewport);
+
   return (
     <SectionContainer
-      //ref={el => refProps.current['highlights'] = el}
-      onViewportEnter={() => handleViewport('highlights', true)}
-      onViewportLeave={() => handleViewport('highlights', false)}
+      ref={containerRef}
+      onViewportEnter={onEnter}
+      onViewportLeave={onLeave}
       viewport={{ amount: 0.5 }}
       id="highlights"
       maxWidth="lg"
+      onMouseMove={handleMouseMove}
     >
+      {isInView && isNormal && <CanvasRipples ref={ripplesRef} />}
       <HoverGallery />
     </SectionContainer>
   );
@@ -193,7 +226,7 @@ function HoverGallery({ }) {
 
   const handleViewportEnter = useCallback(() => {
     entryTimeRef.current = Date.now();
-  }, [])
+  }, []);
 
   return (
     <GalleryContainer
@@ -849,7 +882,7 @@ const RippleEffect = memo(function RippleEffect() {
             <FragmentedRipple
               degree={prop.d}
               mag={prop.m}
-              thickness={3}
+              thickness={2}
             />
           ))}
         </RippleItem>

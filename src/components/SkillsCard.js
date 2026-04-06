@@ -4,7 +4,7 @@ import { styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import {
     motion, AnimatePresence, useMotionValue,
-    useSpring, useTransform,
+    useSpring, useTransform, animate, useInView
 } from "motion/react";
 import Box from '@mui/material/Box';
 import { useAnimateContext } from './AnimateContext';
@@ -112,7 +112,8 @@ const GridContainerSm = styled(MotionBox)(({ theme }) => ({
         "b"
         "c"
         "d"
-      `
+    `,
+    backfaceVisibility: 'hidden',
 }));
 
 const GridContainer = styled(MotionBox)(({ theme }) => ({
@@ -122,7 +123,8 @@ const GridContainer = styled(MotionBox)(({ theme }) => ({
     gridTemplateAreas: `
         "a a b c"
         "a a d d"
-      `,
+    `,
+    backfaceVisibility: 'hidden',
 }));
 
 const containerVars = {
@@ -134,6 +136,28 @@ const containerVars = {
         },
     },
     static: { opacity: 1 },
+};
+
+const SPRINGCONFIG = {
+    bg: { stiffness: 50, damping: 20, mass: 0.5 },
+    parallax: { stiffness: 50, damping: 20, mass: 0.5 },
+    griditem3d: { stiffness: 150, damping: 20, mass: 0.1 },
+};
+
+const ringdelay = 1.8;
+const hover = 0.5;
+const layoutduration = 0.8;
+const TRANSITIONCONFIG = {
+    ringentrance: { duration: 2, ease: [0.16, 1, 0.3, 1] },
+    canvasentrance: { duration: 2, delay: 4, ease: 'easeOut' },
+
+    hoverstart: { duration: 2.5 * hover, ease: 'easeOut' },
+    hoverend: { duration: hover, ease: 'easeOut' },
+
+    layoutbg: {
+        delay: layoutduration, duration: layoutduration / 2, ease: 'easeOut'
+    },
+    layoutanimate: { duration: layoutduration, ease: 'easeOut' },
 };
 
 export default function SkillsCard() {
@@ -152,6 +176,19 @@ export default function SkillsCard() {
         };
     }, [mode]);
 
+    const x = useMotionValue(0);
+    const y = useMotionValue(0);
+
+    useEffect(() => {
+        const handleGlobalMouseMove = (e) => {
+            x.set(e.clientX / window.innerWidth);
+            y.set(e.clientY / window.innerHeight);
+        };
+
+        window.addEventListener('mousemove', handleGlobalMouseMove);
+        return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
+    }, [x, y]);
+
     if (lesserThanSm) {
         return (
             <GridContainerSm
@@ -160,7 +197,10 @@ export default function SkillsCard() {
                 whileInView={animationConfig.visible}
                 viewport={{ once: false, amount: 0.5 }}
             >
-                <BentoGrid />
+                <BentoGrid
+                    globalMouseX={x}
+                    globalMouseY={y}
+                />
             </GridContainerSm>
         )
     }
@@ -172,12 +212,785 @@ export default function SkillsCard() {
             whileInView={animationConfig.visible}
             viewport={{ once: false, amount: 0.5 }}
         >
-            <BentoGrid />
+            <ParallaxShapes
+                mouseX={x}
+                mouseY={y}
+
+            />
+            <BentoGrid
+                globalMouseX={x}
+                globalMouseY={y}
+            />
         </GridContainer>
     );
 }
 
-const BentoGrid = memo(function BentoGrid() {
+const ParallaxContainer = styled(MotionBox)(({ theme }) => ({
+    position: 'fixed', inset: 0,
+    display: 'flex', justifyContent: 'center', alignItems: 'center',
+    zIndex: -1,
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
+}));
+
+const RingContainer = styled(MotionBox)(({ theme }) => ({
+    //position: 'absolute', inset: 0,
+    width: '100%', height: '100%',
+    display: 'flex', justifyContent: 'center', alignItems: 'center',
+    perspective: '1000px',
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
+}));
+
+const r = 50;
+const RING_CONFIGS = [
+    {
+        id: 'outer', order: 2,
+        radius: 72, strokeWidth: 1,
+        r: r, windowr: r - 1.5,
+        windowdasharray: "2, 1, 4, 2",
+        datar: r - 2.5,
+        rotX: [30, -30], rotY: [-30, 30], rotZ: 45,
+        z: [0, -150],
+        opacity: [1, 0.25],
+    },
+    {
+        id: 'middle', order: 1,
+        radius: 45, strokeWidth: 3,
+        r: r, windowr: r - 3,
+        windowdasharray: "2, 1, 4, 2",
+        datar: r - 5,
+        rotX: [-40, 40], rotY: [-40, 40], rotZ: 90,
+        z: [0, 0],
+        opacity: [1, 0.5],
+    },
+    {
+        id: 'inner', order: 0,
+        radius: 18, strokeWidth: 6,
+        r: r, windowr: r - 7,
+        windowdasharray: "6, 2, 4, 10",
+        datar: r - 14,
+        rotX: [-50, 50], rotY: [50, -50], rotZ: 180,
+        z: [0, 150],
+        opacity: [1, 0.75],
+    }
+];
+
+const ParallaxShapes = memo(function ParallaxShapes({ mouseX, mouseY }) {
+
+    const ringRef = useRef(null);
+    const isInView = useInView(ringRef, { amount: 0.1, margin: "100px" });
+
+    return (
+        <ParallaxContainer>
+            <PlexusCanvas
+                mouseX={mouseX}
+                mouseY={mouseY}
+                isInView={isInView}
+            />
+            <RingContainer
+                ref={ringRef}
+            >
+                {RING_CONFIGS.map((config) => (
+                    <ParallaxRing
+                        key={config.id}
+                        config={config}
+                        mouseX={mouseX}
+                        mouseY={mouseY}
+                        isInView={isInView}
+                    />
+                ))}
+            </RingContainer>
+        </ParallaxContainer>
+    );
+});
+
+const StyledCanvas = styled('canvas')(({ theme }) => ({
+    position: 'fixed', inset: 0,
+    zIndex: -5,
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
+}));
+
+const TAU = 6.283;
+const NODE_SIZE = [1, 2, 2.1, 3, 4];
+const NODE_COLORS = [
+    '#FFFFFF',
+    '#FF6464',
+    '#FF6464',
+    '#BE963C',
+    '#64C8FF',
+];
+const determineProperties = (zValue) => {
+    if (zValue < 0.2) return { color: NODE_COLORS[0], size: NODE_SIZE[0] };
+    if (zValue < 0.4) return { color: NODE_COLORS[1], size: NODE_SIZE[1] };
+    if (zValue < 0.6) return { color: NODE_COLORS[2], size: NODE_SIZE[2] };
+    if (zValue < 0.8) return { color: NODE_COLORS[3], size: NODE_SIZE[3] };
+    return { color: NODE_COLORS[4], size: NODE_SIZE[4] };
+};
+const getApproxDist = (dx, dy) => {
+    dx = Math.abs(dx);
+    dy = Math.abs(dy);
+    return (dx > dy) ? (dx + 0.337 * dy) : (dy + 0.337 * dx);
+};
+const createParticle = (width, height) => {
+    const zValue = Math.random();
+    let x = Math.random() * width;
+    let y = Math.random() * height;
+    const { color, size } = determineProperties(zValue);
+
+    let speed = 0;
+    if (size === 1) { speed = 0; }
+    else if (size === 2) { speed = 0.4; }
+    else if (size === 2.1) { speed = 0.3; }
+    else if (size === 3) { speed = 0.2; }
+    else { speed = 0.0005; }
+
+    const centerX = width >> 1;
+    const centerY = height >> 1;
+    const vmin = Math.min(width, height) / 100;
+    const innerRadius = (RING_CONFIGS.find(ring => ring.id === 'inner')?.radius / 2 || 9) * vmin;
+    const outerRadius = (RING_CONFIGS.find(ring => ring.id === 'outer')?.radius / 2 || 36) * vmin;
+
+    const dx = centerX - x;
+    const dy = centerY - y;
+    const dist = getApproxDist(dx, dy);
+    let unitX = dist > 0 ? dx / dist : 0;
+    let unitY = dist > 0 ? dy / dist : 0;
+
+    let vx = (Math.random() - 0.5) * speed;
+    let vy = (Math.random() - 0.5) * speed;
+
+    let orbitRadius = 0;
+    let orbitAngle = 0;
+
+    if (size === 2 || size === 3) {
+        vx = unitX * speed;
+        vy = unitY * speed;
+    } else if (size === 2.1) {
+        const angle = Math.random() * TAU;
+        unitX = -unitX; unitY = -unitY;
+
+        x = centerX + Math.cos(angle) * innerRadius;
+        y = centerY + Math.sin(angle) * innerRadius;
+        vx = unitX * speed;
+        vy = unitY * speed;
+    } else if (size === 4) {
+        const minOrb = innerRadius + 5 * vmin;
+        const maxOrb = outerRadius - 5 * vmin;
+        orbitRadius = minOrb + Math.random() * (maxOrb - minOrb);
+        orbitAngle = Math.random() * TAU;
+
+        x = centerX + Math.cos(orbitAngle) * orbitRadius;
+        y = centerY + Math.sin(orbitAngle) * orbitRadius;
+        vx = -Math.sin(orbitAngle) * speed;
+        vy = Math.cos(orbitAngle) * speed;
+        unitX = -Math.cos(orbitAngle);
+        unitY = -Math.sin(orbitAngle);
+    }
+
+    let pulseSpeed = 0.001, pulseMag = 0.1, tailLen = 15, tAlpha = 0.4;
+    if (size === 2 || size === 2.1) {
+        pulseSpeed = 0.002; pulseMag = 0.2; tailLen = 20; tAlpha = 0.6;
+    } else if (size === 3) {
+        pulseSpeed = 0.0015; pulseMag = 0.15; tailLen = 15; tAlpha = 0.3;
+    }
+
+    return {
+        x, y, vx, vy, unitX, unitY, size, color, zValue, speed,
+        pulseSpeed, pulseMag, tailLen, tAlpha,
+        centerX, centerY, vmin, innerRadius, outerRadius,
+        orbitRadius, orbitAngle
+    };
+};
+
+const resetShuttle = (p, width, height) => {
+    const side = Math.floor(Math.random() * 4);
+    if (side === 0) { p.x = 0; p.y = Math.random() * height; }
+    if (side === 1) { p.x = width; p.y = Math.random() * height; }
+    if (side === 2) { p.x = Math.random() * width; p.y = 0; }
+    if (side === 3) { p.x = Math.random() * width; p.y = height; }
+
+    const dx = p.centerX - p.x;
+    const dy = p.centerY - p.y;
+    const dist = getApproxDist(dx, dy);
+    p.unitX = dx / dist;
+    p.unitY = dy / dist;
+    p.vx = dist > 0 ? p.unitX * p.speed : 0;
+    p.vy = dist > 0 ? p.unitY * p.speed : 0;
+};
+
+const resetShuttle2 = (p, width, height) => {
+    const angle = Math.random() * TAU;
+
+    p.x = p.centerX + Math.cos(angle) * p.innerRadius;
+    p.y = p.centerY + Math.sin(angle) * p.innerRadius;
+
+    const dx = p.x - p.centerX;
+    const dy = p.y - p.centerY;
+    const dist = getApproxDist(dx, dy);
+    p.unitX = dx / dist;
+    p.unitY = dy / dist;
+    p.vx = dist > 0 ? p.unitX * p.speed : 0;
+    p.vy = dist > 0 ? p.unitY * p.speed : 0;
+};
+
+const drawShuttleShape = (ctx, p, radius, alpha, time) => {
+
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = alpha;
+
+    ctx.beginPath();
+    if (p.size === 1) {
+        ctx.arc(p.x, p.y, radius, 0, TAU);
+    }
+    else if (p.size === 3) {
+        ctx.moveTo(p.x + p.unitX * radius * 1.5, p.y + p.unitY * radius * 1.5);
+        ctx.lineTo(p.x + p.unitY * radius, p.y - p.unitX * radius);
+        ctx.lineTo(p.x - p.unitX * radius, p.y - p.unitY * radius);
+        ctx.lineTo(p.x - p.unitY * radius, p.y + p.unitX * radius);
+        ctx.closePath();
+    } else if (p.size === 2 || p.size === 2.1) {
+        ctx.moveTo(p.x + p.unitX * p.size * 2, p.y + p.unitY * p.size * 2);
+        ctx.lineTo(p.x - p.unitX * p.size + p.unitY * p.size, p.y - p.unitY * p.size - p.unitX * p.size);
+        ctx.lineTo(p.x - p.unitX * p.size - p.unitY * p.size, p.y - p.unitY * p.size + p.unitX * p.size);
+        ctx.closePath();
+    } else if (p.size === 4) {
+        ctx.globalAlpha = alpha * 0.5;
+        ctx.arc(p.x, p.y, radius, 0, TAU);
+        ctx.fill();
+
+        const baseRadius = radius * 1.2;
+        const spin1 = Math.abs(Math.sin(time * 0.001 + p.zValue * 10));
+        const spin2 = Math.abs(Math.cos(time * 0.0005 + p.zValue * 10));
+
+        ctx.lineWidth = 0.8;
+        ctx.strokeStyle = p.color;
+        ctx.globalAlpha = alpha * 0.8;
+
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, baseRadius, baseRadius * spin1, 0, 0, TAU);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, baseRadius * spin2, baseRadius, 0, 0, TAU);
+        ctx.stroke();
+
+        ctx.globalAlpha = 1.0;
+        return;
+    }
+
+    ctx.fill();
+    ctx.globalAlpha = 1.0;
+};
+
+const drawShuttleTrail = (ctx, p, pulse, radius) => {
+    if (p.speed >= 0.2) {
+        const dynamicTailLen = p.tailLen * pulse;
+        const endX = Math.round(p.x - p.unitX * dynamicTailLen);
+        const endY = Math.round(p.y - p.unitY * dynamicTailLen);
+
+        const grad = ctx.createLinearGradient(p.x, p.y, endX, endY);
+        grad.addColorStop(0, p.color);
+        grad.addColorStop(1, 'transparent');
+
+        ctx.strokeStyle = grad;
+        ctx.lineCap = 'butt';
+
+        if (p.size === 2 || p.size === 2.1) {
+            const offset = p.size * 0.9;
+            const nx = p.unitY * offset;
+            const ny = -p.unitX * offset;
+
+            ctx.globalAlpha = p.tAlpha * pulse * 0.3;
+            ctx.lineWidth = p.size * 1.2;
+            ctx.beginPath();
+            ctx.moveTo(p.x + nx, p.y + ny); ctx.lineTo(endX + nx, endY + ny);
+            ctx.moveTo(p.x - nx, p.y - ny); ctx.lineTo(endX - nx, endY - ny);
+            ctx.stroke();
+
+            ctx.globalAlpha = p.tAlpha * pulse;
+            ctx.lineWidth = p.size * 0.3;
+            ctx.stroke();
+
+        } else {
+            const plumeWidth = radius * 1.5;
+            const rx = p.unitY * plumeWidth;
+            const ry = -p.unitX * plumeWidth;
+
+            ctx.globalAlpha = p.tAlpha * pulse;
+            ctx.fillStyle = grad;
+
+            ctx.beginPath();
+            ctx.moveTo(p.x + rx, p.y + ry);
+            ctx.lineTo(p.x - rx, p.y - ry);
+            ctx.lineTo(endX, endY);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.lineWidth = radius * 0.5;
+            ctx.globalAlpha = p.tAlpha * pulse * 1.2;
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+        }
+    }
+}
+
+const canvasVars = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: TRANSITIONCONFIG.canvasentrance },
+    static: { opacity: 1 },
+};
+
+const PlexusCanvas = memo(function PlexusCanvas({
+    mouseX, mouseY,
+    nodeCount = 20, threshold = 180,
+    isInView = true
+}) {
+    const canvasRef = useRef(null);
+    const requestRef = useRef();
+    const particlesRef = useRef([]);
+    const thresholdSq = threshold * threshold;
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        let width, height;
+
+        const resize = () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            init();
+        };
+
+        const init = () => {
+            particlesRef.current = Array.from({ length: nodeCount }, () =>
+                createParticle(width, height)
+            );
+        };
+
+        const animate = () => {
+            if (!isInView) return;
+
+            ctx.clearRect(0, 0, width, height);
+            ctx.globalCompositeOperation = 'lighter';
+
+            const currentMouseX = mouseX.get() * width;
+            const currentMouseY = mouseY.get() * height;
+
+            const time = performance.now();
+
+            const particles = particlesRef.current;
+            const len = particles.length;
+
+            for (let i = 0; i < len; i++) {
+                const p = particles[i];
+                if (p.size === 1) {
+
+                }
+                else if (p.size === 2 || p.size === 3) {
+                    const dx = p.centerX - p.x;
+                    const dy = p.centerY - p.y;
+                    const distSq = dx * dx + dy * dy;
+                    const innerlimit = (p.innerRadius - p.vmin) * (p.innerRadius - p.vmin);
+
+                    if (distSq < innerlimit) {
+                        resetShuttle(p, width, height);
+                    } else {
+                        p.x += p.unitX * p.speed;
+                        p.y += p.unitY * p.speed;
+                    }
+                }
+                else if (p.size === 2.1) {
+                    if (p.x < 0 || p.x > width || p.y < 0 || p.y > height) {
+                        resetShuttle2(p, width, height);
+                    } else {
+                        p.x += p.vx;
+                        p.y += p.vy;
+                    }
+                }
+                else if (p.size === 4) {
+                    p.orbitAngle += p.speed;
+
+                    p.x = p.centerX + Math.cos(p.orbitAngle) * p.orbitRadius;
+                    p.y = p.centerY + Math.sin(p.orbitAngle) * p.orbitRadius;
+
+                    p.unitX = -Math.cos(p.orbitAngle);
+                    p.unitY = -Math.sin(p.orbitAngle);
+                } else {
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    if (p.x < 0 || p.x > width) p.vx *= -1;
+                    if (p.y < 0 || p.y > height) p.vy *= -1;
+                }
+
+                const pulse = 1 + Math.sin((time * p.pulseSpeed) + (p.zValue * 10)) * p.pulseMag;
+                const dynamicAlpha = Math.min(((1 - p.zValue) * 0.8 + 0.2) * pulse, 1.0);
+                const currentRadius = (p.size === 3) ? (p.size * pulse) : p.size;
+
+                drawShuttleShape(ctx, p, currentRadius, dynamicAlpha, time);
+                drawShuttleTrail(ctx, p, pulse, currentRadius);
+
+                const mDx = p.x - currentMouseX;
+                const mDy = p.y - currentMouseY;
+                const mDistSq = mDx * mDx + mDy * mDy;
+
+                if (mDistSq < thresholdSq) {
+                    const lineAlpha = (1 - (mDistSq / thresholdSq)) * 0.4;
+                    ctx.beginPath();
+                    ctx.strokeStyle = p.color;
+                    ctx.globalAlpha = lineAlpha;
+                    ctx.lineWidth = 0.6;
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(currentMouseX, currentMouseY);
+                    ctx.stroke();
+                }
+
+                ctx.globalAlpha = 1.0;
+            };
+
+            requestRef.current = requestAnimationFrame(animate);
+        };
+
+        if (isInView) {
+            window.addEventListener('resize', resize);
+            resize();
+            animate();
+        }
+
+        return () => {
+            window.removeEventListener('resize', resize);
+            cancelAnimationFrame(requestRef.current);
+        };
+    }, [isInView, mouseX, mouseY, nodeCount, threshold]);
+
+    return (
+        <motion.div
+            variants={canvasVars}
+            initial={'hidden'}
+            animate={isInView ? 'visible' : 'hidden'}
+        >
+            <StyledCanvas
+                ref={canvasRef}
+            />
+        </motion.div>
+    );
+});
+
+const RingLayer = styled(motion.div)(({ theme, config }) => ({
+    position: 'absolute', //inset: 0,
+    width: `${config.radius}vmin`,
+    height: `${config.radius}vmin`,
+    display: 'flex', justifyContent: 'center', alignItems: 'center',
+    borderRadius: '50%',
+    transformStyle: 'preserve-3d',
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
+}));
+
+const RingStack = styled(motion.div)(({ theme }) => ({
+    position: 'absolute', inset: 0,
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
+}));
+
+const RingSvg = styled('svg')(({ theme }) => ({
+    width: '100%', height: '100%',
+    overflow: 'visible',
+    backfaceVisibility: 'hidden',
+}));
+
+const RingStructure = styled('circle')({
+    backfaceVisibility: 'hidden',
+});
+
+const Ring3DHull = styled('circle')({
+    backfaceVisibility: 'hidden',
+});
+
+const RingGlow = styled('circle')({
+    filter: 'blur(2px)',
+    opacity: 0.6,
+    backfaceVisibility: 'hidden',
+});
+
+const RingEtching = styled('circle')({
+    filter: 'blur(0.5px)',
+    //mixBlendMode: 'overlay',
+    backfaceVisibility: 'hidden',
+});
+
+const RingGlint = styled('circle')({
+    mixBlendMode: 'plus-lighter',
+    backfaceVisibility: 'hidden',
+});
+
+const RingRibs = styled('circle')({
+    mixBlendMode: 'overlay',
+    backfaceVisibility: 'hidden',
+});
+
+const RingPlating = styled('circle')({
+    backfaceVisibility: 'hidden',
+});
+
+const RingBeacons = styled('circle')({
+    backfaceVisibility: 'hidden',
+    animation: 'beaconPulse 2s infinite ease-in-out',
+    '@keyframes beaconPulse': {
+        '0%, 100%': {
+            opacity: 0.2,
+            filter: 'brightness(1) blur(0px)',
+        },
+        '50%': {
+            opacity: 1,
+            filter: 'brightness(2.5) blur(1px)',
+        },
+    },
+});
+
+const RingWindows = styled('circle')(({ theme, i = 0, isInView = true }) => ({
+    opacity: 0,
+    backfaceVisibility: 'hidden',
+    animation: isInView
+        ? `startupFlicker 1.5s ${4 + i * 0.5}s ease-out forwards`
+        : 'none',
+    '@keyframes startupFlicker': {
+        '0%': { opacity: 0 },
+        '10%, 15%': { opacity: 1 },
+        '20%, 25%': { opacity: 0 },
+        '40%': { opacity: 1, filter: 'brightness(5)', },
+        '100%': { opacity: 1, filter: 'brightness(1)', },
+    },
+}));
+
+const RingDataTube = styled('circle')({
+    backfaceVisibility: 'hidden',
+    animation: 'dataFlow 3s linear infinite',
+    '@keyframes dataFlow': {
+        'from': {
+            strokeDashoffset: 50,
+        },
+        'to': {
+            strokeDashoffset: 0,
+        },
+    },
+});
+
+const getVisualStroke = (base, radius) => (base * 50) / radius;
+const getVisualBlur = (baseBlur, radius) => (baseBlur * 50) / radius;
+
+const ParallaxRing = memo(function ParallaxRing({ config,
+    mouseX, mouseY, isInView
+}) {
+
+    const gradientId = `ringGradient-${config.id}`;
+    const rotateX = useSpring(
+        useTransform(mouseY, [0, 1], config.rotX),
+        SPRINGCONFIG.parallax
+    );
+    const rotateY = useSpring(
+        useTransform(mouseX, [0, 1], config.rotY),
+        SPRINGCONFIG.parallax
+    );
+    const distanceTransform = useTransform(
+        [mouseX, mouseY],
+        ([latestX, latestY]) => {
+            const dx = latestX - 0.5;
+            const dy = latestY - 0.5;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+    );
+    const spinTransform = useTransform(
+        [distanceTransform, mouseX],
+        ([distance, x]) => {
+            const direction = x > 0.5 ? 1 : -1;
+            const degrees = (distance / 0.707) * (-config.rotZ);
+            return degrees * direction;
+        }
+    );
+
+    const entranceProgress = useMotionValue(0);
+    const animationRef = useRef(null);
+    const timerRef = useRef(null);
+    const handleViewportEnter = useCallback(() => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+        if (animationRef.current) animationRef.current.stop();
+
+        const delay = config.order * 400 + ringdelay * 1000;
+        timerRef.current = setTimeout(() => {
+            animationRef.current = animate(entranceProgress, 1, {
+                ...TRANSITIONCONFIG.ringentrance,
+                onComplete: () => {
+                    animationRef.current = null;
+                }
+            });
+        }, delay);
+    }, []);
+    const handleViewportLeave = useCallback(() => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+        if (animationRef.current) animationRef.current.stop();
+        entranceProgress.set(0);
+    }, []);
+
+    const rotateZ = useSpring(useTransform(
+        [spinTransform, entranceProgress],
+        ([parallaxDeg, progress]) => {
+            const entranceOffset = (1 - progress) * -180;
+            return entranceOffset + parallaxDeg;
+        }
+    ), SPRINGCONFIG.parallax);
+    const springOpacity = useSpring(useTransform(
+        [distanceTransform, entranceProgress],
+        ([distance, progress]) => {
+            const [minOpacity, maxOpacity] = config.opacity;
+            const parallaxOpacity = minOpacity + (distance / 0.707) * (maxOpacity - minOpacity);
+            return progress * parallaxOpacity;
+        }
+    ), SPRINGCONFIG.parallax);
+    const springScale = useSpring(
+        useTransform(entranceProgress, [0, 1], [0.1, 1]),
+        SPRINGCONFIG.parallax
+    );
+
+    useEffect(() => {
+        if (isInView) {
+            handleViewportEnter();
+        } else {
+            handleViewportLeave();
+        }
+    }, [isInView]);
+
+    const inverseZ = useTransform(rotateZ, (v) => `${-v}deg`);
+
+    return (
+        <RingLayer
+            config={config}
+            style={{
+                rotateX,
+                rotateY,
+                rotateZ,
+                scale: springScale,
+                '--inverse-z': inverseZ,
+            }}
+        >
+            {[...Array(3)].map((_, i) => (
+                <RingStack
+                    style={{
+                        z: i * -10,
+                        opacity: springOpacity,
+                        filter: i > 0 ? `brightness(${0.7 - i * 0.1})` : 'none',
+                    }}
+                >
+                    <RingSvg
+                        viewBox="0 0 100 100"
+                        style={{ filter: `drop-shadow(0 0 12px rgba(238, 178, 128, 0.5))` }}
+                    >
+                        <defs>
+                            <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="rgba(40, 44, 52, 1)" />
+                                <stop offset="45%" stopColor="rgba(200, 220, 255, 1)" />
+                                <stop offset="50%" stopColor="rgba(255, 255, 255, 1)" />
+                                <stop offset="55%" stopColor="rgba(200, 220, 255, 1)" />
+                                <stop offset="100%" stopColor="rgba(70, 75, 90, 1)" />
+                            </linearGradient>
+                        </defs>
+                        <RingStructure
+                            cx="50" cy="50" r={config.r}
+                            fill="none"
+                            stroke={`url(#${gradientId})`}
+                            strokeWidth={config.strokeWidth}
+                        />
+                        <Ring3DHull
+                            cx="50" cy="50" r={config.r}
+                            fill="none"
+                            stroke={i === 0 ? `url(#${gradientId})` : `rgba(30, 40, 50, ${0.8 - i * 0.1})`}
+                            strokeWidth={i === 0 ? config.strokeWidth : config.strokeWidth * 1.5}
+                            strokeDasharray={i === 0 ? "1, 4, 1, 4, 1, 303" : "none"}
+                        />
+                        {i === 1 &&
+                            <RingGlow
+                                cx="50" cy="50" r={config.r}
+                                fill="none"
+                                stroke="rgba(0, 210, 255, 0.15)"
+                                strokeWidth={config.strokeWidth * 3}
+                            />
+                        }
+                        <RingRibs
+                            cx="50" cy="50" r={config.r}
+                            fill="none"
+                            stroke="rgba(255, 255, 255, 0.3)"
+                            strokeWidth={config.strokeWidth + 0.5}
+                            strokeDasharray="1, 4"
+                        />
+                        <RingPlating
+                            cx="50" cy="50" r={config.r}
+                            fill="none"
+                            stroke="rgba(0, 0, 0, 0.5)"
+                            strokeWidth={config.strokeWidth + 0.1}
+                            strokeDasharray="17, 35"
+                        />
+                        <RingGlint
+                            cx="50" cy="50" r={config.r}
+                            fill="none"
+                            stroke="rgba(255, 255, 255, 0.9)"
+                            strokeWidth={getVisualStroke(3, config.radius)}
+                            strokeDasharray={`${(5 * config.radius) / 50}, 314`}
+                            strokeLinecap="round"
+                            style={{
+                                filter: `blur(${getVisualBlur(1, config.radius)}px)`,
+                                transform: 'rotate(var(--inverse-z)) rotate(-145deg)',
+                                transformOrigin: 'center'
+                            }}
+                        />
+                        {i === 0 &&
+                            <>
+                                <RingEtching
+                                    cx="50" cy="50" r={config.r}
+                                    fill="none"
+                                    stroke="rgba(255, 255, 255, 0.7)"
+                                    strokeWidth={0.2}
+                                    strokeDasharray="2, 11"
+                                />
+                                <RingBeacons
+                                    cx="50" cy="50" r={config.r}
+                                    fill="none"
+                                    stroke="#ff3e3e"
+                                    strokeWidth={1.2}
+                                    strokeDasharray="1, 5, 1, 4, 1, 314"
+                                    strokeDashoffset='1'
+                                    strokeLinecap="round"
+                                />
+                                <RingWindows
+                                    cx="50" cy="50" r={config.windowr}
+                                    fill="none"
+                                    stroke="rgba(255, 240, 150, 0.4)"
+                                    strokeWidth={0.3}
+                                    strokeDasharray={config.windowdasharray}
+                                    i={config.order}
+                                    isInView={isInView}
+                                    style={{ filter: 'drop-shadow(0 0 2px rgba(255, 200, 50, 0.8))' }}
+                                />
+                                <RingDataTube
+                                    cx="50" cy="50" r={config.datar}
+                                    fill="none"
+                                    stroke="rgba(0, 255, 255, 0.2)"
+                                    strokeWidth={0.2}
+                                    strokeDasharray="1, 9"
+                                />
+                            </>
+                        }
+                    </RingSvg>
+                </RingStack>
+            ))}
+        </RingLayer>
+    );
+});
+
+const BentoGrid = memo(function BentoGrid({ globalMouseX, globalMouseY }) {
     const [selectedId, setSelectedId] = useState(null);
     const [lastSelectedId, setLastSelectedId] = useState(null);
 
@@ -207,11 +1020,14 @@ const BentoGrid = memo(function BentoGrid() {
                     selectedId={selectedId} lastSelectedId={lastSelectedId}
                     handleItemSelect={handleItemSelect}
                     handleGridAnimationComplete={handleGridAnimationComplete}
+                    globalMouseX={globalMouseX}
+                    globalMouseY={globalMouseY}
                 />
             ))}
 
             {selectedId && (
                 <AnimatedModal
+                    key={'animatedmodal'}
                     selectedItem={selectedItem}
                     handleItemSelect={handleItemSelect}
                 />
@@ -233,23 +1049,8 @@ const GridItemContainer = styled(MotionBox)(({ theme }) => ({
     isolation: 'isolate',
 }));
 
-const itemVars = {
-    hidden: {
-        opacity: 1,
-    },
-    visible: {
-        opacity: 1,
-        transition: {
-            //delay: 0.65,
-            duration: 1.85,
-            ease: [0.33, 1, 0.68, 1],
-        }
-    },
-    static: { opacity: 1, transition: { duration: 0 } },
-};
-
 const AnimatedGridItem = memo(function AnimatedGridItem({ item, selectedId, lastSelectedId,
-    handleItemSelect, handleGridAnimationComplete }) {
+    handleItemSelect, handleGridAnimationComplete, globalMouseX, globalMouseY }) {
 
     return (
         <GridItemContainer
@@ -258,16 +1059,22 @@ const AnimatedGridItem = memo(function AnimatedGridItem({ item, selectedId, last
             layoutId={`skillgriditem-${item.id}`}
             layout
             onLayoutAnimationComplete={() => handleGridAnimationComplete(item.id)}
+            transition={{
+                layout: TRANSITIONCONFIG.layoutanimate,
+            }}
             onClick={() => handleItemSelect(item.id)}
             whileHover={{
                 zIndex: 99,
             }}
-            sx={{
+            style={{
                 gridArea: gridMap[item.id] || 'a',
                 zIndex: (selectedId === item.id || lastSelectedId === item.id) ? 10 : 1,
             }}
         >
-            <AnimatedGridItem3D item={item} handleGridAnimationComplete={handleGridAnimationComplete} />
+            <AnimatedGridItem3D item={item}
+                globalMouseX={globalMouseX}
+                globalMouseY={globalMouseY}
+            />
         </GridItemContainer>
     );
 });
@@ -330,25 +1137,21 @@ const Spotlight = styled(motion.div)({
     pointerEvents: 'none',
 });
 
-const hover = 0.5;
-const HOVERBG_CONFIG = { duration: hover, ease: 'easeOut' };
-const HOVERCONTENT_CONFIG = { duration: 2.5 * hover, ease: 'easeOut' };
-
 const item3dVars = {
     initial: {
         z: 0,
         scale: 1,
-        transition: HOVERBG_CONFIG,
+        transition: TRANSITIONCONFIG.hoverend,
     },
     hover: {
         z: 60,
         scale: 1.02,
-        transition: HOVERCONTENT_CONFIG,
+        transition: TRANSITIONCONFIG.hoverstart,
     },
     rest: {
         z: 0,
         scale: 1,
-        transition: HOVERBG_CONFIG,
+        transition: TRANSITIONCONFIG.hoverend,
     },
     static: { z: 0, scale: 1 },
 };
@@ -356,7 +1159,7 @@ const item3dVars = {
 const griditemhoverVars = {
     initial: {
         opacity: 0,
-        transition: HOVERBG_CONFIG,
+        transition: TRANSITIONCONFIG.hoverend,
     },
     hover: ({ o = 1, d = hover } = {}) => ({
         opacity: o,
@@ -364,49 +1167,38 @@ const griditemhoverVars = {
     }),
     rest: {
         opacity: 0,
-        transition: HOVERBG_CONFIG,
+        transition: TRANSITIONCONFIG.hoverend,
     },
     static: { opacity: 1, },
 };
 
-const SPRING3D_CONFIG = { stiffness: 150, damping: 20, mass: 0.1 };
+const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, globalMouseX, globalMouseY }) {
+    const [isEntrancing, setIsEntrancing] = useState(true);
+    const timerRef = useRef(null);
 
-const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item }) {
+    const handleViewportEnter = useCallback(() => {
+        if (timerRef.current) clearTimeout(timerRef.current);
 
-    const lesserThanSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
-    const containerRef = useRef(null);
-
-    const x = useMotionValue(0);
-    const y = useMotionValue(0);
-
-    const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [-12, 12]), SPRING3D_CONFIG);
-    const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [12, -12]), SPRING3D_CONFIG);
-
-    const handleMouseEnter = useCallback((e) => {
-        containerRef.current = e.currentTarget.getBoundingClientRect();
+        timerRef.current = setTimeout(() => {
+            setIsEntrancing(false);
+        }, 2000);
     }, []);
 
-    const handleMouseMove = useCallback((e) => {
-        const dimension = containerRef.current;
-        if (!dimension) return;
+    const handleViewportLeave = useCallback(() => {
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+        setIsEntrancing(true);
+    }, []);
 
-        const { left, top, width, height } = dimension;
-        const mouseX = e.clientX - left;
-        const mouseY = e.clientY - top;
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, []);
 
-        e.currentTarget.style.setProperty('--mouse-x', `${mouseX}px`);
-        e.currentTarget.style.setProperty('--mouse-y', `${mouseY}px`);
-
-        x.set(mouseX / width - 0.5);
-        y.set(mouseY / height - 0.5);
-    }, [x, y]);
-
-    const handleMouseLeave = useCallback((e) => {
-        x.set(0);
-        y.set(0);
-        //e.currentTarget.style.setProperty('--mouse-x', `0px`);
-        //e.currentTarget.style.setProperty('--mouse-y', `0px`);
-    }, [x, y]);
+    const lesserThanSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
 
     const { manual, system } = useAnimateContext();
     const mode = system || manual;
@@ -424,20 +1216,90 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item }) {
         };
     }, [mode]);
 
+    const itemRef = useRef(null);
+    const rectRef = useRef(null);
+
+    const localX = useTransform(globalMouseX, (latestX) => {
+        if (!itemRef.current || !rectRef.current) return 0;
+        const rect = rectRef.current;
+
+        const pixelX = latestX * window.innerWidth;
+
+        const isInside = pixelX >= rect.left && pixelX <= rect.right;
+        if (!isInside) return 0;
+
+        const relativeX = pixelX - rect.left;
+        const value = (relativeX / rect.width) - 0.5;
+
+        return Math.max(-0.5, Math.min(0.5, value));
+    });
+
+    const localY = useTransform(globalMouseY, (latestY) => {
+        if (!itemRef.current || !rectRef.current) return 0;
+        const rect = rectRef.current;
+
+        const pixelY = latestY * window.innerHeight;
+
+        const isInside = pixelY >= rect.top && pixelY <= rect.bottom;
+        if (!isInside) return 0;
+
+        const relativeY = pixelY - rect.top;
+        const value = (relativeY / rect.height) - 0.5;
+
+        return Math.max(-0.5, Math.min(0.5, value));
+    });
+
+    const springX = useSpring(useTransform(localY, [-0.5, 0.5], [12, -12]), SPRINGCONFIG.griditem3d);
+    const springY = useSpring(useTransform(localX, [-0.5, 0.5], [-12, 12]), SPRINGCONFIG.griditem3d);
+
+    const tiltStrength = useMotionValue(0);
+
+    const handleMouseEnter = useCallback(() => {
+        if (isEntrancing) return;
+        if (itemRef.current) {
+            rectRef.current = itemRef.current.getBoundingClientRect();
+        }
+        animate(tiltStrength, 1, { duration: 0.3, ease: "easeOut" });
+    }, [isEntrancing]);
+
+    const handleMouseLeave = useCallback(() => {
+        animate(tiltStrength, 0, { duration: 0.5, ease: "easeInOut" });
+    }, []);
+
+    const rotateX = useTransform([springX, tiltStrength], ([val, s]) => val * s);
+    const rotateY = useTransform([springY, tiltStrength], ([val, s]) => val * s);
+
+    const mousePX = useTransform(globalMouseX, (v) => {
+        if (!rectRef.current) return '0px';
+        const pixelX = (v * window.innerWidth) - rectRef.current.left;
+        return `${pixelX}px`;
+    });
+
+    const mousePY = useTransform(globalMouseY, (v) => {
+        if (!rectRef.current) return '0px';
+        const pixelY = (v * window.innerHeight) - rectRef.current.top;
+        return `${pixelY}px`;
+    });
+
     return (
         <GridItem3D
-            onMouseEnter={lesserThanSm ? null : handleMouseEnter}
-            onMouseMove={lesserThanSm ? null : handleMouseMove}
-            onMouseLeave={lesserThanSm ? null : handleMouseLeave}
+            ref={itemRef}
+            onHoverStart={handleMouseEnter}
+            onHoverEnd={handleMouseLeave}
             style={{
                 rotateX: lesserThanSm ? 0 : rotateX,
                 rotateY: lesserThanSm ? 0 : rotateY,
+                '--mouse-x': mousePX,
+                '--mouse-y': mousePY
             }}
             variants={item3dVars}
             initial={animationConfig.initial}
             animate={animationConfig.rest}
             whileInView={animationConfig.visible}
-            whileHover={animationConfig.hover}
+            whileHover={isEntrancing ? undefined : animationConfig.hover}
+            onViewportEnter={handleViewportEnter}
+            onViewportLeave={handleViewportLeave}
+            viewport={{ once: false, amount: 0.2 }}
         >
             <GridItemBorder
                 variants={griditemhoverVars}
@@ -465,15 +1327,34 @@ const GridItemContent = styled(MotionBox)(({ theme }) => ({
     cursor: 'pointer',
     display: 'flex', flexDirection: 'column-reverse',
     justifyContent: 'space-between', alignItems: 'center',
-    //overflow: 'hidden',
     transformStyle: "preserve-3d",
     backfaceVisibility: "hidden",
     WebkitBackfaceVisibility: "hidden",
     WebkitFontSmoothing: "antialiased",
-    //zIndex: 2,
     [theme.breakpoints.down('sm')]: {
         padding: theme.spacing(2),
     },
+    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%)',
+    //backdropFilter: 'blur(15px) saturate(150%)', 
+    border: '1px solid rgba(255, 255, 255, 0.15)',
+
+    // The "Machined Frame" look
+    boxShadow: `
+        inset 0 0 0 2px rgba(0, 0, 0, 0.3),    /* Inner frame shadow */
+        inset 0 0 15px rgba(255, 255, 255, 0.05), /* Glass depth */
+        0 20px 40px rgba(0, 0, 0, 0.4)         /* Outer shadow for 3D float */
+    `,
+
+    '&::after': {
+        content: '""',
+        position: 'absolute',
+        inset: 0,
+        borderRadius: 'inherit',
+        // This creates the "Glass Glare" that stays fixed as you tilt
+        background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.08) 55%, transparent 60%)',
+        backgroundSize: '200% 200%',
+        pointerEvents: 'none',
+    }
 }));
 
 const TextHover = styled(MotionBox)(({ theme, align = 'auto' }) => ({
@@ -534,15 +1415,15 @@ const pagedelay = 1.6;
 const itemcontentVars = {
     initial: {
         z: 0,
-        transition: HOVERBG_CONFIG,
+        transition: TRANSITIONCONFIG.hoverend,
     },
     hover: {
         z: 60,
-        transition: HOVERCONTENT_CONFIG,
+        transition: TRANSITIONCONFIG.hoverstart,
     },
     rest: {
         z: 0,
-        transition: HOVERBG_CONFIG,
+        transition: TRANSITIONCONFIG.hoverend,
     },
     static: { z: 0, },
 };
@@ -555,12 +1436,12 @@ const texthoverVars = {
         z: 90,
         transition: {
             delay: i * 0.35,
-            ...HOVERBG_CONFIG
+            ...TRANSITIONCONFIG.hoverend
         },
     }),
     rest: {
         z: 0,
-        transition: HOVERBG_CONFIG,
+        transition: TRANSITIONCONFIG.hoverend,
     },
     static: { z: 0, transition: { duration: 0 } },
 };
@@ -590,7 +1471,7 @@ const textshadowVars = {
         scale: 1.10,
         transition: {
             delay: i * 0.45,
-            ...HOVERBG_CONFIG
+            ...TRANSITIONCONFIG.hoverend
         },
     }),
     static: { opacity: 0, z: 0, scale: 1 },
@@ -677,12 +1558,10 @@ const Modal = styled(MotionBox)(({ theme }) => ({
     backfaceVisibility: "hidden",
 }));
 
-const ModalContent = styled(MotionBox)(({ theme, bgcolor }) => ({
+const ModalContent = styled(MotionBox)(({ theme }) => ({
     position: 'relative',
     width: '80%', maxWidth: 675, height: 450,
     borderRadius: '32px', padding: 0,
-    //background: bgcolor,
-    //backdropFilter: 'blur(20px) saturate(180%)',
     display: 'flex', justifyContent: 'center', alignItems: 'center',
     [theme.breakpoints.down('sm')]: {
         width: '100%',
@@ -727,17 +1606,24 @@ const TitleGlow = styled(MotionBox)(({ theme }) => ({
     //willChange: 'transform, opacity',
 }));
 
-const layoutduration = 0.5;
-
 const modalVars = {
     initial: {
         opacity: 0,
     },
     animate: {
         opacity: 1,
-        transition: {
-            opacity: { duration: 0.3 }
-        }
+        transition: { duration: 0.3 }
+    },
+};
+
+const modalbgVars = {
+    initial: {
+        opacity: 0,
+        transition: TRANSITIONCONFIG.layoutbg
+    },
+    animate: {
+        opacity: 1,
+        transition: TRANSITIONCONFIG.layoutbg
     },
 };
 
@@ -763,21 +1649,16 @@ const AnimatedModal = memo(function AnimatedModal({ selectedItem, handleItemSele
             onClick={() => handleItemSelect(null)}
         >
             <ModalBg
+                variants={modalbgVars}
                 bgcolor={hexToRgba(selectedItem.cardcolors[1], 0.15)}
             />
             <ModalContent
                 layoutId={`skillgriditem-${selectedItem.id}`}
                 layout
                 transition={{
-                    layout: {
-                        duration: layoutduration,
-                        ease: "easeOut"
-                    },
+                    layout: TRANSITIONCONFIG.layoutanimate
                 }}
-            //bgcolor={hexToRgba(selectedItem.cardcolors[1], 0.7)}
             >
-
-
                 <GrainOverlay />
                 {/*<SvgSplitShadow />*/}
                 {/*<SvgSplitColor color={selectedItem.cardcolors[0]} />*/}
@@ -786,7 +1667,6 @@ const AnimatedModal = memo(function AnimatedModal({ selectedItem, handleItemSele
                     borderColor={selectedItem.cardcolors[0]}
                 />*/}
                 <ModalTitle
-
                     sx={{
                         color: selectedItem.color,
                     }}
