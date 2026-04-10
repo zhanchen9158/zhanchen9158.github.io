@@ -1334,27 +1334,6 @@ const GridItemContent = styled(MotionBox)(({ theme }) => ({
     [theme.breakpoints.down('sm')]: {
         padding: theme.spacing(2),
     },
-    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%)',
-    //backdropFilter: 'blur(15px) saturate(150%)', 
-    border: '1px solid rgba(255, 255, 255, 0.15)',
-
-    // The "Machined Frame" look
-    boxShadow: `
-        inset 0 0 0 2px rgba(0, 0, 0, 0.3),    /* Inner frame shadow */
-        inset 0 0 15px rgba(255, 255, 255, 0.05), /* Glass depth */
-        0 20px 40px rgba(0, 0, 0, 0.4)         /* Outer shadow for 3D float */
-    `,
-
-    '&::after': {
-        content: '""',
-        position: 'absolute',
-        inset: 0,
-        borderRadius: 'inherit',
-        // This creates the "Glass Glare" that stays fixed as you tilt
-        background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.08) 55%, transparent 60%)',
-        backgroundSize: '200% 200%',
-        pointerEvents: 'none',
-    }
 }));
 
 const TextHover = styled(MotionBox)(({ theme, align = 'auto' }) => ({

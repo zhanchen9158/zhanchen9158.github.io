@@ -6,13 +6,21 @@ import Certifications from './components/Certifications';
 import ProjectHighlights from './components/ProjectHighlights';
 import Projects from './components/Projects';
 import Footer from './components/Footer';
-import { motion, useScroll, useTransform, useSpring, cubicBezier, animate } from "motion/react";
+import {
+  motion, useScroll, useTransform, useSpring, cubicBezier, animate,
+  AnimatePresence
+} from "motion/react";
 import CustomizedSpeedDial from './components/CustomizedSpeedDial';
 import { styled } from '@mui/material/styles';
 import { AnimateProvider } from './components/AnimateContext';
 import GrainOverlay from './components/GrainOverlay';
+import entrancehero from './pics/entrancehero1.webp';
+import entrancehero2 from './pics/entrancehero2.webp';
+import entrancehero3 from './pics/entrancehero3.webp';
 import entrancebg1 from './pics/entrancebg1.webp';
 import entrancebg2 from './pics/entrancebg2.webp';
+import svggrit from './pics/ionizationmask.webp';
+
 
 const MotionBox = motion(Box);
 
@@ -63,6 +71,7 @@ export default function PortfolioPage({ }) {
   return (
     <AnimateProvider>
       <AnimatedAppBar activesection={activesection} />
+      <HeroEntrance />
       <ScrollContainer
         ref={scrollContainerRef}
       >
@@ -83,6 +92,134 @@ export default function PortfolioPage({ }) {
     </AnimateProvider>
   );
 }
+
+const WindowGlass = styled(MotionBox)(({ theme }) => ({
+  position: 'fixed', inset: 0,
+  zIndex: 10,
+  backgroundColor: 'rgba(255, 255, 255, 0.02)',
+  background: `linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, 
+    rgba(255, 255, 255, 0.01) 100%),
+    linear-gradient(115deg, 
+      transparent 10%, 
+      rgba(255,255,255,0.08) 12%, transparent 15%,   /* Streak 1 (Thin) */
+      transparent 25%, 
+      rgba(255,255,255,0.06) 30%, transparent 35%,   /* Streak 2 */
+      transparent 45%, 
+      rgba(255,255,255,0.1) 50%, transparent 55%,    /* Streak 3 (Brightest) */
+      transparent 70%, 
+      rgba(255,255,255,0.04) 75%, transparent 80%,   /* Streak 4 (Soft) */
+      transparent 90%
+    )
+  `,
+  pointerEvents: 'none',
+  backfaceVisibility: 'hidden',
+}));
+
+const HeroBlurBg = styled(MotionBox)(({ theme }) => ({
+  position: 'fixed', inset: 0,
+  zIndex: 30,
+  backgroundImage: `url(${entrancehero})`,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  pointerEvents: 'none',
+  backfaceVisibility: 'hidden',
+}));
+
+const HeroBg = styled(MotionBox)(({ theme }) => ({
+  position: 'fixed', inset: 0,
+  zIndex: 20,
+  backgroundImage: `url(${entrancehero2})`,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  pointerEvents: 'none',
+  backfaceVisibility: 'hidden',
+}));
+
+const IonizedLayer = styled(MotionBox)({
+  position: 'fixed', inset: 0,
+  zIndex: 10,
+  pointerEvents: 'none',
+  backfaceVisibility: 'hidden',
+  willChange: 'transform, opacity, mask-size',
+  transform: 'translateZ(0)',
+
+  maskImage: `url(${svggrit})`,
+  maskRepeat: 'repeat',
+  maskPosition: 'center',
+  WebkitMaskPosition: 'center',
+  //maskSize: '100px',
+});
+
+const MaskedImage = styled(MotionBox)(({ theme }) => ({
+  width: '100%', height: '100%',
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  pointerEvents: 'none',
+  backfaceVisibility: 'hidden',
+}));
+
+const HeroEntrance = memo(function HeroEntrance({ }) {
+  const [isMounted, setIsMounted] = useState(true);
+
+  const handleAnimationComplete = useCallback(() => {
+    setIsMounted(false);
+  }, []);
+
+  return (
+    <AnimatePresence>
+      {isMounted && (
+        <>
+          <WindowGlass
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 0 }}
+            transition={{ duration: 8, ease: 'easeInOut' }}
+          />
+          <HeroBlurBg
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 0 }}
+            transition={{ duration: 3, ease: 'easeInOut' }}
+          />
+          <HeroBg
+            initial={{
+              opacity: 1,
+            }}
+            animate={{
+              opacity: [1, 0.2, 0],
+            }}
+            transition={{
+              delay: 2,
+              duration: 2,
+              times: [0, 0.5, 1],
+              ease: "easeInOut",
+            }}
+          />
+          <IonizedLayer
+            initial={{
+              opacity: 1,
+              scale: 1,
+            }}
+            animate={{
+              opacity: [1, 1, 0],
+              scale: 2,
+            }}
+            transition={{
+              delay: 2.5,
+              duration: 6,
+              times: [0, 0.4, 1],
+              ease: "easeIn"
+            }}
+            onAnimationComplete={handleAnimationComplete}
+            style={{ maskSize: '100px' }}
+          >
+            <MaskedImage
+              style={{ backgroundImage: `url(${entrancehero3})` }}
+            />
+          </IonizedLayer>
+        </>
+      )}
+    </AnimatePresence>
+  );
+});
 
 const ScrollPageContainer = styled(Box)(({ theme }) => ({
   position: 'relative',
@@ -194,8 +331,7 @@ const Page = memo(function Page({ id, sectionRef, containerRef, i, activesection
 });
 
 const EntranceBg = styled(MotionBox)(({ theme }) => ({
-  position: 'absolute',
-  inset: 0,
+  position: 'absolute', inset: 0,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundRepeat: 'no-repeat',
@@ -205,8 +341,7 @@ const EntranceBg = styled(MotionBox)(({ theme }) => ({
 }));
 
 const ScrollBackground = styled(MotionBox)(({ theme }) => ({
-  position: 'absolute',
-  inset: 0,
+  position: 'absolute', inset: 0,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundRepeat: 'no-repeat',

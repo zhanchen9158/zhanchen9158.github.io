@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SVG Mask Baker</title>
+    <style>
+        body { background: #1a1a1a; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 50px; }
+        canvas { border: 1px solid #444; background: #000; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        button { padding: 12px 24px; background: #ff9500; border: none; border-radius: 4px; color: black; font-weight: bold; cursor: pointer; }
+        button:hover { background: #ffb142; }
+    </style>
+</head>
+<body>
+    <h2>Ionized Grit Baker</h2>
+    <p>Rendering @ 100x100 for maximum grain detail</p>
+    
+    <canvas id="canvas" width="100" height="100" style="width: 100px; height: 100px;"></canvas>
+    <br>
+    <button onclick="download()">Download Static PNG</button>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Your exact SVG filter logic
+        const svgString = `
+        <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+            <filter id="n">
+                <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3" seed="${Math.random()}"/>
+                <feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 -9.5 -9.5 -9.5 0 10"/>
+            </filter>
+            <rect width="100%" height="100%" filter="url(#n)"/>
+        </svg>`;
+
+        const img = new Image();
+        const svg = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
+        const url = URL.createObjectURL(svg);
+
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0);
+            URL.revokeObjectURL(url);
+        };
+        img.src = url;
+
+        function download() {
+            const link = document.createElement('a');
+            link.download = 'ionized-grit-mask.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</body>
+</html>

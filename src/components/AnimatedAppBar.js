@@ -79,7 +79,7 @@ const AnimatedAppBar = memo(function AnimatedAppBar({ activesection }) {
     const index = sectionToIndex[s] ?? 0;
     return {
       key: s,
-      name: s === 'introduction' ? "zhan chen's portfolio" : s,
+      name: s === 'introduction' ? "Portfolio - Zhan Chen" : s,
       textcolor: colorgradient[index]
     };
   }, [activesection]);

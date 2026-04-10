@@ -1,10 +1,11 @@
-import React, { useMemo, memo } from 'react';
+import React, { useState, useLayoutEffect, useRef, useMemo, memo } from 'react';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import { styled, useTheme } from '@mui/material/styles';
 import { motion } from "motion/react";
 import SkillsCard from './SkillsCard';
 import useSectionReporting from '../functions/useSectionReporting';
+import GrainOverlay from './GrainOverlay';
 
 
 const NAVIGATION_DATA = [
@@ -40,7 +41,30 @@ const SectionContainer = styled(MotionContainer)(({ theme }) => ({
   overflow: 'hidden',
 }));
 
+const WindowGlass = styled(Box)(({ theme }) => ({
+  position: 'absolute', inset: 0,
+  borderRadius: 'inherit',
+  backgroundColor: 'rgba(255, 255, 255, 0.02)',
+  background: `linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, 
+    rgba(255, 255, 255, 0.01) 100%),
+    linear-gradient(115deg, 
+      transparent 10%, 
+      rgba(255,255,255,0.08) 12%, transparent 15%,   /* Streak 1 (Thin) */
+      transparent 25%, 
+      rgba(255,255,255,0.06) 30%, transparent 35%,   /* Streak 2 */
+      transparent 45%, 
+      rgba(255,255,255,0.1) 50%, transparent 55%,    /* Streak 3 (Brightest) */
+      transparent 70%, 
+      rgba(255,255,255,0.04) 75%, transparent 80%,   /* Streak 4 (Soft) */
+      transparent 90%
+    )
+  `,
+  pointerEvents: 'none',
+  backfaceVisibility: 'hidden',
+}));
+
 const PageContainer = styled(Box)(({ theme }) => ({
+  position: 'relative', boxSizing: 'border-box',
   width: '100%',
   display: 'flex', justifyContent: 'flex-start', alignItems: 'center',
   flexDirection: 'column',
@@ -48,7 +72,7 @@ const PageContainer = styled(Box)(({ theme }) => ({
   paddingBottom: theme.spacing(10),
   [theme.breakpoints.down('md')]: {
     paddingBottom: theme.spacing(9),
-  }
+  },
 }));
 
 export default function Hero({ refProps, handleViewport, handleScrollsection }) {
