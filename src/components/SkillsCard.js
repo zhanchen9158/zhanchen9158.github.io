@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo, memo } from 'react';
 import Typography from '@mui/material/Typography';
-import { styled, useTheme } from '@mui/material/styles';
+import { duration, styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import {
     motion, AnimatePresence, useMotionValue,
@@ -144,7 +144,7 @@ const SPRINGCONFIG = {
     griditem3d: { stiffness: 150, damping: 20, mass: 0.1 },
 };
 
-const ringdelay = 1.8;
+const ringdelay = 2.2;
 const hover = 0.5;
 const layoutduration = 0.8;
 const TRANSITIONCONFIG = {
@@ -281,6 +281,51 @@ const ParallaxShapes = memo(function ParallaxShapes({ mouseX, mouseY }) {
     const ringRef = useRef(null);
     const isInView = useInView(ringRef, { amount: 0.1, margin: "100px" });
 
+    const distanceTransform = useTransform(
+        [mouseX, mouseY],
+        ([latestX, latestY]) => {
+            const dx = latestX - 0.5;
+            const dy = latestY - 0.5;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+    );
+
+    const entranceProgress = useMotionValue(0);
+    const animationRef = useRef(null);
+    const timerRef = useRef(null);
+    const handleViewportEnter = useCallback(() => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+        if (animationRef.current) animationRef.current.stop();
+
+        const delay = ringdelay * 1000;
+        timerRef.current = setTimeout(() => {
+            animationRef.current = animate(entranceProgress, 1, {
+                ...TRANSITIONCONFIG.ringentrance,
+                onComplete: () => {
+                    animationRef.current = null;
+                }
+            });
+        }, delay);
+    }, []);
+    const handleViewportLeave = useCallback(() => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+        if (animationRef.current) animationRef.current.stop();
+        entranceProgress.set(0);
+    }, []);
+    const springScale = useSpring(
+        useTransform(entranceProgress, [0, 1], [0.1, 1]),
+        SPRINGCONFIG.parallax
+    );
+
+    useEffect(() => {
+        if (isInView) {
+            handleViewportEnter();
+        } else {
+            handleViewportLeave();
+        }
+    }, [isInView]);
+
+
     return (
         <ParallaxContainer>
             <PlexusCanvas
@@ -295,8 +340,10 @@ const ParallaxShapes = memo(function ParallaxShapes({ mouseX, mouseY }) {
                     <ParallaxRing
                         key={config.id}
                         config={config}
-                        mouseX={mouseX}
-                        mouseY={mouseY}
+                        mouseX={mouseX} mouseY={mouseY}
+                        distanceTransform={distanceTransform}
+                        entranceProgress={entranceProgress}
+                        springScale={springScale}
                         isInView={isInView}
                     />
                 ))}
@@ -738,16 +785,15 @@ const RingPlating = styled('circle')({
 });
 
 const RingBeacons = styled('circle')({
+    filter: 'blur(1px)',
     backfaceVisibility: 'hidden',
     animation: 'beaconPulse 2s infinite ease-in-out',
     '@keyframes beaconPulse': {
         '0%, 100%': {
             opacity: 0.2,
-            filter: 'brightness(1) blur(0px)',
         },
         '50%': {
             opacity: 1,
-            filter: 'brightness(2.5) blur(1px)',
         },
     },
 });
@@ -784,10 +830,13 @@ const getVisualStroke = (base, radius) => (base * 50) / radius;
 const getVisualBlur = (baseBlur, radius) => (baseBlur * 50) / radius;
 
 const ParallaxRing = memo(function ParallaxRing({ config,
-    mouseX, mouseY, isInView
+    mouseX, mouseY,
+    distanceTransform, entranceProgress,
+    springScale, isInView
 }) {
 
     const gradientId = `ringGradient-${config.id}`;
+
     const rotateX = useSpring(
         useTransform(mouseY, [0, 1], config.rotX),
         SPRINGCONFIG.parallax
@@ -796,14 +845,7 @@ const ParallaxRing = memo(function ParallaxRing({ config,
         useTransform(mouseX, [0, 1], config.rotY),
         SPRINGCONFIG.parallax
     );
-    const distanceTransform = useTransform(
-        [mouseX, mouseY],
-        ([latestX, latestY]) => {
-            const dx = latestX - 0.5;
-            const dy = latestY - 0.5;
-            return Math.sqrt(dx * dx + dy * dy);
-        }
-    );
+
     const spinTransform = useTransform(
         [distanceTransform, mouseX],
         ([distance, x]) => {
@@ -812,30 +854,6 @@ const ParallaxRing = memo(function ParallaxRing({ config,
             return degrees * direction;
         }
     );
-
-    const entranceProgress = useMotionValue(0);
-    const animationRef = useRef(null);
-    const timerRef = useRef(null);
-    const handleViewportEnter = useCallback(() => {
-        if (timerRef.current) clearTimeout(timerRef.current);
-        if (animationRef.current) animationRef.current.stop();
-
-        const delay = config.order * 400 + ringdelay * 1000;
-        timerRef.current = setTimeout(() => {
-            animationRef.current = animate(entranceProgress, 1, {
-                ...TRANSITIONCONFIG.ringentrance,
-                onComplete: () => {
-                    animationRef.current = null;
-                }
-            });
-        }, delay);
-    }, []);
-    const handleViewportLeave = useCallback(() => {
-        if (timerRef.current) clearTimeout(timerRef.current);
-        if (animationRef.current) animationRef.current.stop();
-        entranceProgress.set(0);
-    }, []);
-
     const rotateZ = useSpring(useTransform(
         [spinTransform, entranceProgress],
         ([parallaxDeg, progress]) => {
@@ -843,6 +861,8 @@ const ParallaxRing = memo(function ParallaxRing({ config,
             return entranceOffset + parallaxDeg;
         }
     ), SPRINGCONFIG.parallax);
+    const inverseZ = useTransform(rotateZ, (v) => `${-v}deg`);
+
     const springOpacity = useSpring(useTransform(
         [distanceTransform, entranceProgress],
         ([distance, progress]) => {
@@ -851,20 +871,6 @@ const ParallaxRing = memo(function ParallaxRing({ config,
             return progress * parallaxOpacity;
         }
     ), SPRINGCONFIG.parallax);
-    const springScale = useSpring(
-        useTransform(entranceProgress, [0, 1], [0.1, 1]),
-        SPRINGCONFIG.parallax
-    );
-
-    useEffect(() => {
-        if (isInView) {
-            handleViewportEnter();
-        } else {
-            handleViewportLeave();
-        }
-    }, [isInView]);
-
-    const inverseZ = useTransform(rotateZ, (v) => `${-v}deg`);
 
     return (
         <RingLayer
@@ -882,12 +888,11 @@ const ParallaxRing = memo(function ParallaxRing({ config,
                     style={{
                         z: i * -10,
                         opacity: springOpacity,
-                        filter: i > 0 ? `brightness(${0.7 - i * 0.1})` : 'none',
                     }}
                 >
                     <RingSvg
                         viewBox="0 0 100 100"
-                        style={{ filter: `drop-shadow(0 0 12px rgba(238, 178, 128, 0.5))` }}
+                    //style={{ filter: `drop-shadow(0 0 12px rgba(238, 178, 128, 0.5))` }}
                     >
                         <defs>
                             <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -911,6 +916,17 @@ const ParallaxRing = memo(function ParallaxRing({ config,
                             strokeWidth={i === 0 ? config.strokeWidth : config.strokeWidth * 1.5}
                             strokeDasharray={i === 0 ? "1, 4, 1, 4, 1, 303" : "none"}
                         />
+                        {i > 0 && (
+                            <circle
+                                cx="50" cy="50" r={config.r}
+                                fill="none"
+                                stroke="black"
+                                strokeWidth={config.strokeWidth}
+                                style={{
+                                    opacity: 0.4 + i * 0.1,
+                                }}
+                            />
+                        )}
                         {i === 1 &&
                             <RingGlow
                                 cx="50" cy="50" r={config.r}
@@ -967,12 +983,12 @@ const ParallaxRing = memo(function ParallaxRing({ config,
                                 <RingWindows
                                     cx="50" cy="50" r={config.windowr}
                                     fill="none"
-                                    stroke="rgba(255, 240, 150, 0.4)"
+                                    stroke="rgba(255, 200, 50, 0.6)"
                                     strokeWidth={0.3}
                                     strokeDasharray={config.windowdasharray}
                                     i={config.order}
                                     isInView={isInView}
-                                    style={{ filter: 'drop-shadow(0 0 2px rgba(255, 200, 50, 0.8))' }}
+                                    //style={{ filter: 'drop-shadow(0 0 2px rgba(255, 200, 50, 0.8))' }}
                                 />
                                 <RingDataTube
                                     cx="50" cy="50" r={config.datar}
@@ -1336,11 +1352,17 @@ const GridItemContent = styled(MotionBox)(({ theme }) => ({
     },
 }));
 
-const TextHover = styled(MotionBox)(({ theme, align = 'auto' }) => ({
+const TextContainer = styled(MotionBox)(({ theme, align = 'auto' }) => ({
     position: 'relative',
     transformStyle: "preserve-3d",
     backfaceVisibility: "hidden",
     alignSelf: align,
+}));
+
+const TextHover = styled(MotionBox)(({ theme }) => ({
+    position: 'relative',
+    transformStyle: "preserve-3d",
+    backfaceVisibility: "hidden",
 }));
 
 const TextClip = styled(MotionBox)({
@@ -1349,44 +1371,88 @@ const TextClip = styled(MotionBox)({
     lineHeight: 1.2,
 });
 
-const Header = styled(MotionBox)(({ theme, textcolor = '#000000' }) => ({
-    position: 'relative',
+const HeaderStyle = {
     fontWeight: 600,
     lineHeight: 0.9,
     fontFamily: 'Fraunces',
     textTransform: 'uppercase',
-    fontSize: '26px',
-    color: textcolor,
+    fontSize: 'clamp(24px, 2.2vw + 17px, 26px)',
     whiteSpace: 'nowrap',
-    [theme.breakpoints.down('md')]: {
-        fontSize: '24px',
-    },
+};
+
+const SubHeaderStyle = {
+    textTransform: 'uppercase',
+    letterspacing: '0.15em',
+    fontFamily: 'Antonio',
+    fontSize: '22px',
+    color: 'rgb(255,255,255)',
+    whiteSpace: 'nowrap',
+};
+
+const TextShadow = styled(MotionBox)(({ theme, textstyle }) => ({
+    position: 'absolute', inset: 0,
+    ...textstyle,
+    color: 'transparent',
+    pointerEvents: 'none',
+    transformStyle: "preserve-3d",
+    backfaceVisibility: "hidden",
+}));
+
+const ProjectionBeamTop = styled(MotionBox)(({ theme, hexcolor = '#ffffff' }) => ({
+    position: 'absolute',
+    top: 0,
+    left: '50%',
+    width: '100%',
+    height: 0,
+    background: `linear-gradient(to bottom, ${hexcolor}, transparent)`,
+    transform: 'translateX(-50%) rotateX(90deg)',
+    transformOrigin: 'top',
+    pointerEvents: 'none',
+    contain: 'strict',
+    transformStyle: 'flat',
+    willChange: 'height',
+    backfaceVisibility: 'hidden',
+}));
+
+const ProjectionBeamBottom = styled(MotionBox)(({ theme, hexcolor = '#ffffff' }) => ({
+    position: 'absolute',
+    bottom: 0,
+    left: '50%',
+    width: '100%',
+    height: 0,
+    background: `linear-gradient(to top, ${hexcolor}, transparent)`,
+    transform: 'translateX(-50%) rotateX(-90deg)',
+    transformOrigin: 'bottom',
+    pointerEvents: 'none',
+    contain: 'strict',
+    transformStyle: 'flat',
+    willChange: 'height',
+    backfaceVisibility: 'hidden',
+}));
+
+const Header = styled(MotionBox)(({ theme, textcolor = '#000000' }) => ({
+    position: 'relative',
+    ...HeaderStyle,
+    color: textcolor,
     transformStyle: "preserve-3d",
     backfaceVisibility: "hidden",
 }));
 
 const SubHeader = styled(MotionBox)(({ theme }) => ({
     position: 'relative',
-    textTransform: 'uppercase',
-    letterspacing: '0.15em',
-    fontFamily: 'Antonio',
-    fontSize: '22px',
-    color: 'rgb(255,255,255)',
+    ...SubHeaderStyle,
     transformStyle: "preserve-3d",
     backfaceVisibility: "hidden",
 }));
 
-const TextShadow = styled(MotionBox)(({ theme, color = '#000000',
-    top = '100%', height = '40%'
-}) => ({
+const HUDGlow = styled(MotionBox)(({ theme }) => ({
     position: 'absolute',
-    top: top, left: 0,
-    width: '100%', height: height,
-    backgroundColor: color,
+    top: '10%', left: 0,
+    width: '100%', height: '90%',
     filter: 'blur(12px)',
     pointerEvents: 'none',
-    transformStyle: "preserve-3d",
     backfaceVisibility: "hidden",
+    //willChange: 'transform, opacity',
 }));
 
 const pagedelay = 1.6;
@@ -1397,32 +1463,60 @@ const itemcontentVars = {
         transition: TRANSITIONCONFIG.hoverend,
     },
     hover: {
-        z: 60,
-        transition: TRANSITIONCONFIG.hoverstart,
+        z: 0,
+        transition: {
+            ...TRANSITIONCONFIG.hoverstart,
+            staggerChildren: 0.35
+        },
     },
     rest: {
         z: 0,
         transition: TRANSITIONCONFIG.hoverend,
     },
+    visible: {
+        transition: {
+            delayChildren: pagedelay + 0.2,
+            staggerChildren: 0.35
+        }
+    },
     static: { z: 0, },
+};
+
+const projectionbeamVars = {
+    initial: {
+        opacity: 0, height: 0,
+    },
+    hover: {
+        opacity: 0.2, height: '150px',
+        transition: TRANSITIONCONFIG.hoverstart
+    },
+    static: { opacity: 0, height: 0 }
+};
+
+const textshadowVars = {
+    initial: {
+        z: 0,
+    },
+    hover: {
+        z: 0,
+        transition: TRANSITIONCONFIG.hoverstart,
+    },
+    static: { z: 0 },
 };
 
 const texthoverVars = {
     initial: {
         z: 0,
     },
-    hover: (i = 0) => ({
-        z: 90,
-        transition: {
-            delay: i * 0.35,
-            ...TRANSITIONCONFIG.hoverend
-        },
-    }),
+    hover: {
+        z: 150,
+        transition: TRANSITIONCONFIG.hoverstart
+    },
     rest: {
         z: 0,
-        transition: TRANSITIONCONFIG.hoverend,
+        transition: TRANSITIONCONFIG.hoverstart,
     },
-    static: { z: 0, transition: { duration: 0 } },
+    static: { z: 0 },
 };
 
 const headerVars = {
@@ -1440,36 +1534,35 @@ const headerVars = {
     static: { textShadow: '0px 0px 0px rgba(255, 0, 0, 0), 0px 0px 0px rgba(0, 0, 255, 0)', },
 };
 
-const textshadowVars = {
+const subheadershadowVars = {
     initial: {
-        opacity: 0, z: 0,
-        scale: 1,
+        opacity: 0,
     },
-    hover: (i) => ({
-        opacity: 0.35, z: -100,
-        scale: 1.10,
+    visible: {
+        opacity: [0, 0, 1],
         transition: {
-            delay: i * 0.45,
-            ...TRANSITIONCONFIG.hoverend
-        },
-    }),
-    static: { opacity: 0, z: 0, scale: 1 },
+            duration: 0.7,
+            times: [0, 0.8, 1],
+            ease: 'easeOut',
+        }
+    },
+    static: { opacity: 1 },
 };
 
-const textVars = {
+const subheaderVars = {
     initial: {
         opacity: 0,
         y: '100%',
     },
-    visible: (i) => ({
+    visible: {
         opacity: 1,
         y: 0,
         transition: {
-            delay: i * 0.35 + pagedelay + 0.2,
-            type: "spring", stiffness: 160, damping: 20,
+            duration: 0.35,
+            ease: 'easeIn',
         }
-    }),
-    static: { opacity: 1, y: 0, transition: { duration: 0 } },
+    },
+    static: { opacity: 1, y: 0 },
 };
 
 const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, animationConfig,
@@ -1478,53 +1571,81 @@ const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, an
 
     const lesserThanSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
 
+    const color = useMemo(() => hexToRgba(item.color, 0.9), [item.color]);
+
     return (
         <GridItemContent
             variants={itemcontentVars}
         >
-            <TextHover
-                variants={texthoverVars}
-                align={'flex-start'}
-            >
+            <TextContainer align={'flex-start'} >
                 <TextShadow
                     variants={textshadowVars}
-                    top={'80%'} height={'40%'}
                     style={{
-                        x: lesserThanSm ? 0 : shadowY,
-                        y: lesserThanSm ? 0 : shadowX,
+                        textShadow: `
+                            -1px 0px 0px rgba(255,0,0,0.5), 
+                            1px 0px 0px rgba(0,255,255,0.5),
+                            0px 0px 4px ${color}
+                        `,
                     }}
-                />
-                <Header
-                    textcolor={item.color}
-                    variants={headerVars}
+                    textstyle={HeaderStyle}
                 >
+                    <ProjectionBeamTop
+                        variants={projectionbeamVars}
+                        hexcolor={item.color}
+                    />
+                    <ProjectionBeamBottom
+                        variants={projectionbeamVars}
+                        hexcolor={item.color}
+                    />
                     {item.title}
-                </Header>
-            </TextHover>
-            {item.id == 1 && !lesserThanSm && item.icons.map((v, i) => (
+                </TextShadow>
                 <TextHover
-                    key={i}
-                    custom={i}
                     variants={texthoverVars}
                 >
+                    <Header
+                        textcolor={item.color}
+                        variants={headerVars}
+                    >
+                        {item.title}
+                    </Header>
+                </TextHover>
+            </TextContainer>
+            {item.id == 1 && !lesserThanSm && item.icons.map((v, i) => (
+                <TextContainer>
                     <TextShadow
                         custom={i}
                         variants={textshadowVars}
-                        top={'80%'} height={'20%'}
                         style={{
-                            x: lesserThanSm ? 0 : shadowY,
-                            y: lesserThanSm ? 0 : shadowX,
+                            textShadow: `
+                                -1px 0px 0px rgba(255,0,0,0.5), 
+                                1px 0px 0px rgba(0,255,255,0.5),
+                                0px 0px 4px #ffffff
+                            `,
                         }}
-                    />
-                    <TextClip>
-                        <SubHeader
+                        textstyle={SubHeaderStyle}
+                    >
+                        <MotionBox
                             custom={i}
-                            variants={textVars}
+                            variants={subheadershadowVars}
                         >
                             {v.name}
-                        </SubHeader>
-                    </TextClip>
-                </TextHover>
+                        </MotionBox>
+                    </TextShadow>
+                    <TextHover
+                        key={i}
+                        custom={i}
+                        variants={texthoverVars}
+                    >
+                        <TextClip>
+                            <SubHeader
+                                custom={i}
+                                variants={subheaderVars}
+                            >
+                                {v.name}
+                            </SubHeader>
+                        </TextClip>
+                    </TextHover>
+                </TextContainer>
             ))}
         </GridItemContent>
     );
@@ -1654,7 +1775,7 @@ const AnimatedModal = memo(function AnimatedModal({ selectedItem, handleItemSele
                         variants={titleglowVars}
                         initial='initial'
                         animate='animate'
-                        sx={{
+                        style={{
                             background: hexToRgba(selectedItem.cardcolors[1], 0.4),
                         }}
                     />

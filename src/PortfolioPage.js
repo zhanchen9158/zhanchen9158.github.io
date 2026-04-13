@@ -20,6 +20,7 @@ import entrancehero3 from './pics/entrancehero3.webp';
 import entrancebg1 from './pics/entrancebg1.webp';
 import entrancebg2 from './pics/entrancebg2.webp';
 import svggrit from './pics/ionizationmask.webp';
+import hyperstream from './pics/hyperstream.webp';
 
 
 const MotionBox = motion(Box);
@@ -115,6 +116,14 @@ const WindowGlass = styled(MotionBox)(({ theme }) => ({
   backfaceVisibility: 'hidden',
 }));
 
+const RadialHyperstream = styled(MotionBox)({
+  position: 'fixed', inset: 0,
+  zIndex: 5,
+  backgroundImage: `url(${hyperstream})`,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+});
+
 const HeroBlurBg = styled(MotionBox)(({ theme }) => ({
   position: 'fixed', inset: 0,
   zIndex: 30,
@@ -174,6 +183,20 @@ const HeroEntrance = memo(function HeroEntrance({ }) {
             animate={{ opacity: 0 }}
             transition={{ duration: 8, ease: 'easeInOut' }}
           />
+          <RadialHyperstream
+            initial={{
+              scale: 1,
+              opacity: 1,
+            }}
+            animate={{
+              scale: 1.5,
+              opacity: 0,
+            }}
+            transition={{
+              duration: 2.5,
+              ease: "easeOut",
+            }}
+          />
           <HeroBlurBg
             initial={{ opacity: 1 }}
             animate={{ opacity: 0 }}
@@ -182,12 +205,14 @@ const HeroEntrance = memo(function HeroEntrance({ }) {
           <HeroBg
             initial={{
               opacity: 1,
+              filter: 'brightness(100%)',
             }}
             animate={{
               opacity: [1, 0.2, 0],
+              filter: 'brightness(300%)',
             }}
             transition={{
-              delay: 2,
+              delay: 3,
               duration: 2,
               times: [0, 0.5, 1],
               ease: "easeInOut",
@@ -203,7 +228,7 @@ const HeroEntrance = memo(function HeroEntrance({ }) {
               scale: 2,
             }}
             transition={{
-              delay: 2.5,
+              delay: 3.5,
               duration: 6,
               times: [0, 0.4, 1],
               ease: "easeIn"
