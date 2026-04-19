@@ -1,8 +1,8 @@
-import React, { useState, useLayoutEffect, useRef, useMemo, memo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, memo } from 'react';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import { styled, useTheme } from '@mui/material/styles';
-import { motion } from "motion/react";
+import { motion, useMotionValue, useTransform, animate } from "motion/react";
 import SkillsCard from './SkillsCard';
 import useSectionReporting from '../functions/useSectionReporting';
 import GrainOverlay from './GrainOverlay';
@@ -26,8 +26,9 @@ const NAVIGATION_DATA = [
   }
 ];
 
-const MotionContainer = motion(Container);
-const MotionBox = motion(Box);
+const MotionContainer = motion.create(Container);
+const MotionBox = motion.create(Box);
+const MotionSpan = motion.create('span');
 
 const header = '70px';
 const scrolldown = 80;
@@ -99,8 +100,7 @@ export default function Hero({ refProps, handleViewport, handleScrollsection }) 
 const NavigationBox = styled(MotionBox)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'row',
-  justifyContent: 'center',
-  alignItems: 'center',
+  justifyContent: 'center', alignItems: 'center',
   paddingTop: theme.spacing(2),
   gap: theme.spacing(4),
   [theme.breakpoints.down('md')]: {
@@ -115,16 +115,18 @@ const containerVars = {
   visible: { opacity: 1 }
 };
 
-const AnimatedNavigation = memo(function AnimatedNavigation({ handleScrollsection }) {
+const calculateWordOffsets = (data) => {
+  let count = 0;
+  return data.map((v) => {
+    const currentOffset = count;
+    count += v.title.length;
+    return currentOffset;
+  });
+};
 
-  const wordOffsets = useMemo(() => {
-    let count = 0;
-    return NAVIGATION_DATA.map(v => {
-      const currentOffset = count;
-      count += v.title.length;
-      return currentOffset;
-    });
-  }, []);
+const WORD_OFFSETS = calculateWordOffsets(NAVIGATION_DATA);
+
+const AnimatedNavigation = memo(function AnimatedNavigation({ handleScrollsection }) {
 
   return (
     <NavigationBox
@@ -137,7 +139,7 @@ const AnimatedNavigation = memo(function AnimatedNavigation({ handleScrollsectio
         <AnimatedWord
           key={v.id}
           item={v}
-          offset={wordOffsets[i]}
+          offset={WORD_OFFSETS[i]}
           handleScrollsection={handleScrollsection}
         />
       ))}
@@ -159,48 +161,58 @@ const HoverWord = styled(MotionBox)(({ theme }) => ({
   cursor: 'pointer',
   [theme.breakpoints.down('md')]: {
     fontSize: '28px',
-  }
+  },
 }));
 
-const LetterMask = styled(MotionBox)({
-  display: 'inline-block',
+const Bracket = styled(MotionSpan)(({ theme }) => ({
+  height: '1.2em',
+  display: 'inline-flex',
+  alignItems: 'center', justifyContent: 'center',
+  color: '#FF4500',
+  lineHeight: '1.2em',
+  verticalAlign: 'middle',
+}));
+
+const LetterWrapper = styled(MotionBox)(({ theme }) => ({
+  height: '1.2em',
+  display: 'inline-flex',
+  alignItems: 'center', justifyContent: 'center',
+  color: (theme.vars || theme).palette.primary.main,
+  lineHeight: '1.2em',
+  verticalAlign: 'middle',
   overflow: 'hidden',
-  verticalAlign: 'bottom',
-});
+}));
 
-const AnimatedLetter = styled(MotionBox)({
-  display: 'inline-block',
-  whiteSpace: 'pre',
-  transformOrigin: "bottom left",
-  willChange: 'transform',
-});
-
-const letterStagger = 0.04;
+const animationdelay = 2;
+const letterStagger = 0.2;
 
 const wordVars = {
   hidden: { opacity: 0 },
-  visible: (previousChars) => ({
+  visible: (offset) => ({
     opacity: 1,
     transition: {
-      delayChildren: previousChars * letterStagger + 2,
+      delayChildren: offset * letterStagger + animationdelay,
       staggerChildren: letterStagger
     }
   })
 };
 
-const letterVars = {
-  hidden: {
-    y: "110%", rotate: 15,
-  },
-  visible: {
-    y: 0, rotate: 0,
-    transition: {
-      duration: 0.6, ease: [0.33, 1, 0.68, 1],
-    }
-  }
-};
-
 const AnimatedWord = memo(function AnimatedWord({ item, offset, handleScrollsection }) {
+
+  const hoverVal = useMotionValue(0);
+
+  const scale = useTransform(hoverVal, [0, 1], [1, 1.1]);
+
+  const bracketOpacity = useTransform(hoverVal, [0, 1], [0, 1]);
+  const bracketX1 = useTransform(hoverVal, [0, 1], [-10, 0]);
+  const bracketX2 = useTransform(hoverVal, [0, 1], [10, 0]);
+
+  const handleHoverStart = () => {
+    animate(hoverVal, 1, { duration: 0.3, ease: "easeOut" });
+  };
+  const handleHoverEnd = () => {
+    animate(hoverVal, 0, { duration: 0.3, ease: "easeOut" });
+  };
 
   return (
     <WordWrapper
@@ -208,20 +220,109 @@ const AnimatedWord = memo(function AnimatedWord({ item, offset, handleScrollsect
       custom={offset}
     >
       <HoverWord
-        whileHover={{
-          scale: 1.1,
-          transition: { type: "spring", stiffness: 400, damping: 10 }
-        }}
+        onHoverStart={handleHoverStart}
+        onHoverEnd={handleHoverEnd}
+        style={{ scale }}
         onClick={() => handleScrollsection(item.scrollId)}
       >
+        <Bracket
+          style={{ opacity: bracketOpacity, x: bracketX1 }}
+        >
+          [
+        </Bracket>
         {item.title.split('').map((l, i) => (
-          <LetterMask key={i}>
-            <AnimatedLetter variants={letterVars}>
-              {l}
-            </AnimatedLetter>
-          </LetterMask>
+          <LetterWrapper key={i}>
+            <LetterAnimation
+              letter={l}
+              delay={(offset + i) * letterStagger + animationdelay}
+            />
+          </LetterWrapper>
         ))}
+        <Bracket
+          style={{ opacity: bracketOpacity, x: bracketX2 }}
+        >
+          ]
+        </Bracket>
       </HoverWord>
     </WordWrapper>
   )
+});
+
+const AnimatedLetter = styled(MotionBox)({
+  width: '1.25ch', height: '1.2em',
+  display: 'inline-flex',
+  alignItems: 'center', justifyContent: 'center',
+  whiteSpace: 'pre',
+});
+
+const letterVars = {
+  hidden: {
+    opacity: 0,
+    filter: 'blur(2px)',
+  },
+  visible: {
+    opacity: [0, 1, 1],
+    filter: ['blur(2px)', 'blur(2px)', 'blur(0px)'],
+    transition: {
+      duration: 0.65 + 1,
+      ease: "easeOut",
+      times: [0, 0.1, 1]
+    }
+  }
+};
+
+const GLYPHS = "0123456789ABCDEF<>[]/!@#$%^&*";
+const getRandomGlyph = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+
+const LetterAnimation = memo(function LetterAnimation({ letter, delay }) {
+  const [displayLetter, setDisplayLetter] = useState(getRandomGlyph());
+  const [isLocked, setIsLocked] = useState(false);
+
+  const timeoutRef = useRef(null);
+  const intervalRef = useRef(null);
+
+  const startDecryption = () => {
+    clearTimeout(timeoutRef.current);
+    clearTimeout(intervalRef.current);
+
+    timeoutRef.current = setTimeout(() => {
+      let iteration = 0;
+      const maxIterations = 10;
+
+      const runInterval = () => {
+        const speed = 20 + (iteration * 10);
+        intervalRef.current = setTimeout(() => {
+          setDisplayLetter(getRandomGlyph());
+          iteration++;
+
+          if (iteration < maxIterations) {
+            runInterval();
+          } else {
+            setIsLocked(true);
+            setDisplayLetter(letter);
+          }
+        }, speed);
+      };
+      runInterval();
+    }, delay * 1000);
+  };
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(timeoutRef.current);
+      clearTimeout(intervalRef.current);
+    };
+  }, []);
+
+  return (
+    <AnimatedLetter
+      variants={letterVars}
+      onAnimationStart={startDecryption}
+      style={{
+        color: isLocked ? '#ffffff' : 'inherit',
+      }}
+    >
+      {displayLetter}
+    </AnimatedLetter>
+  );
 });

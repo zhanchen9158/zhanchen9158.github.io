@@ -1,9 +1,12 @@
-import React, { useEffect, useState, useRef, useCallback, useMemo, memo } from 'react';
+import React, {
+    useEffect, useLayoutEffect, useState, useRef,
+    useCallback, useMemo, memo
+} from 'react';
 import Typography from '@mui/material/Typography';
-import { duration, styled, useTheme } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import {
-    motion, AnimatePresence, useMotionValue,
+    motion, AnimatePresence, useMotionValue, useMotionValueEvent,
     useSpring, useTransform, animate, useInView
 } from "motion/react";
 import Box from '@mui/material/Box';
@@ -14,10 +17,16 @@ import SvgSplitColor, { SvgSplitShadow, SvgBorder } from './SvgSplitColor';
 import GrainOverlay from './GrainOverlay';
 import hexToRgba from '../functions/hexToRgba';
 import orbitalstation from '../pics/orbitalstation.webp';
+import shuttle1 from '../pics/spaceshuttle1.webp';
+import shuttle2 from '../pics/spaceshuttle2.webp';
+import cargoshuttle from '../pics/cargoshuttle.webp';
 
 
-const MotionBox = motion(Box);
-const MotionTypography = motion(Typography);
+const MotionBox = motion.create(Box);
+const MotionSvg = motion.create('svg');
+const MotionPath = motion.create('path');
+const MotionText = motion.create('text');
+const MotionTypography = motion.create(Typography);
 
 const icons = import.meta.glob('../icons/skills/*.svg', {
     eager: true,
@@ -30,6 +39,7 @@ const SKILLS_DATA = [
         title: 'Languages',
         size: 'large',
         color: '#2196f3', underlayercolor: '#0A6FC2',
+        shuttlecolor: '#64C8FF',
         cardcolors: ['#010B13', '#d8ecfd', '#7fbdf5'],
         circlecolors: ['#f0dc56', '#f5e78e', '#faf3c7'],
         border: '#90CAF9',
@@ -47,6 +57,7 @@ const SKILLS_DATA = [
         title: 'Frontend',
         size: 'small',
         color: '#9c27b0', underlayercolor: '#852197',
+        shuttlecolor: '#FF6464',
         cardcolors: ['#0f0311', '#f4def8', '#9b59b6'],
         circlecolors: ['#7bbfcc', '#a7d5dd', '#d3eaee'],
         border: '#ce93d8',
@@ -67,6 +78,7 @@ const SKILLS_DATA = [
         title: 'Backend',
         size: 'small',
         color: '#00897b', underlayercolor: '#00665C',
+        shuttlecolor: '#FF6464',
         cardcolors: ['#001412', '#d6fffb', '#79e0ee'],
         circlecolors: ['#f0dc56', '#f5e78e', '#faf3c7'],
         border: '#A5D6A7',
@@ -85,6 +97,7 @@ const SKILLS_DATA = [
         title: 'Tools/Cloud',
         size: 'medium',
         color: '#f57c00', underlayercolor: '#CC6600',
+        shuttlecolor: '#BE963C',
         cardcolors: ['#140b00', '#ffebd6', '#ffd1a3'],
         circlecolors: ['#7bbfcc', '#a7d5dd', '#d3eaee'],
         border: '#FFCC80',
@@ -336,6 +349,7 @@ const ParallaxShapes = memo(function ParallaxShapes({ mouseX, mouseY }) {
 
     return (
         <ParallaxContainer>
+            <SvgDefs />
             <PlexusCanvas
                 mouseX={mouseX}
                 mouseY={mouseY}
@@ -345,7 +359,7 @@ const ParallaxShapes = memo(function ParallaxShapes({ mouseX, mouseY }) {
                 ref={ringRef}
             >
                 {RING_CONFIGS.map((config) => (
-                    <ParallaxRing
+                    <Parallax3dRing
                         key={config.id}
                         config={config}
                         mouseX={mouseX} mouseY={mouseY}
@@ -735,7 +749,7 @@ const PlexusCanvas = memo(function PlexusCanvas({
     );
 });
 
-const RingLayer = styled(motion.div)(({ theme, config }) => ({
+const RingLayer = styled(MotionBox)(({ theme, config }) => ({
     position: 'absolute', //inset: 0,
     width: `${config.radius}vmin`,
     height: `${config.radius}vmin`,
@@ -746,112 +760,11 @@ const RingLayer = styled(motion.div)(({ theme, config }) => ({
     backfaceVisibility: 'hidden',
 }));
 
-const RingStack = styled(motion.div)(({ theme }) => ({
-    position: 'absolute', inset: 0,
-    pointerEvents: 'none',
-    backfaceVisibility: 'hidden',
-}));
-
-const RingSvg = styled('svg')(({ theme }) => ({
-    width: '100%', height: '100%',
-    overflow: 'visible',
-    backfaceVisibility: 'hidden',
-}));
-
-const RingGlow1 = styled('circle')({
-    backfaceVisibility: 'hidden',
-});
-
-const RingGlow2 = styled('circle')({
-    filter: 'drop-shadow(0 0 2px rgba(0, 210, 255, 0.6))',
-    opacity: 0.6,
-    backfaceVisibility: 'hidden',
-});
-
-const RingStructure = styled('circle')({
-    backfaceVisibility: 'hidden',
-});
-
-const Ring3DHull = styled('circle')({
-    backfaceVisibility: 'hidden',
-});
-
-const RingDarkOverlay = styled('circle')({
-    backfaceVisibility: 'hidden',
-});
-
-const RingGlint = styled('circle')({
-    filter: `drop-shadow(0 0 2px white)`,
-    mixBlendMode: 'plus-lighter',
-    backfaceVisibility: 'hidden',
-});
-
-const RingEtching = styled('circle')({
-    filter: 'blur(0.5px)',
-    //mixBlendMode: 'overlay',
-    backfaceVisibility: 'hidden',
-});
-
-const RingRibs = styled('circle')({
-    mixBlendMode: 'overlay',
-    backfaceVisibility: 'hidden',
-});
-
-const RingPlating = styled('circle')({
-    backfaceVisibility: 'hidden',
-});
-
-const RingBeacons = styled('circle')({
-    filter: 'blur(1px)',
-    backfaceVisibility: 'hidden',
-    animation: 'beaconPulse 2s infinite ease-in-out',
-    '@keyframes beaconPulse': {
-        '0%, 100%': {
-            opacity: 0.2,
-        },
-        '50%': {
-            opacity: 1,
-        },
-    },
-});
-
-const RingWindows = styled('circle')(({ theme, i = 0, isInView = true }) => ({
-    opacity: 0,
-    backfaceVisibility: 'hidden',
-    animation: isInView
-        ? `startupFlicker 1.5s ${4 + i * 0.5}s ease-out forwards`
-        : 'none',
-    '@keyframes startupFlicker': {
-        '0%': { opacity: 0 },
-        '10%, 15%': { opacity: 1 },
-        '20%, 25%': { opacity: 0 },
-        '40%': { opacity: 1, filter: 'brightness(5)', },
-        '100%': { opacity: 1, filter: 'brightness(1)', },
-    },
-}));
-
-const RingDataTube = styled('circle')({
-    backfaceVisibility: 'hidden',
-    animation: 'dataFlow 3s linear infinite',
-    '@keyframes dataFlow': {
-        'from': {
-            strokeDashoffset: 50,
-        },
-        'to': {
-            strokeDashoffset: 0,
-        },
-    },
-});
-
-const getVisualStroke = (base, radius) => (base * 50) / radius;
-
-const ParallaxRing = memo(function ParallaxRing({ config,
+const Parallax3dRing = memo(function Parallax3dRing({ config,
     mouseX, mouseY,
     masterTransform, entranceProgress,
     springScale, isInView
 }) {
-
-    const gradientId = `ringGradient-${config.id}`;
 
     const rotateX = useSpring(
         useTransform(mouseY, [0, 1], config.rotX),
@@ -893,147 +806,219 @@ const ParallaxRing = memo(function ParallaxRing({ config,
             }}
         >
             {[...Array(3)].map((_, i) => (
-                <RingStack
-                    style={{
-                        z: i * -10,
-                        opacity: springOpacity,
-                    }}
-                >
-                    <RingSvg viewBox="0 0 100 100">
-                        <defs>
-                            <radialGradient
-                                id="strokeGlow"
-                                cx="0.5" cy="0.5" r="0.50"
-                                fx="0.5" fy="0.5"
-                                gradientUnits="objectBoundingBox"
-                            >
-                                <stop offset="80%" stopColor="rgba(0, 100, 255, 0)" />
-                                <stop offset="90%" stopColor="rgba(0, 210, 255, 0.6)" />
-                                <stop offset="100%" stopColor="rgba(0, 100, 255, 0)" />
-                            </radialGradient>
-                            <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stopColor="rgba(40, 44, 52, 1)" />
-                                <stop offset="45%" stopColor="rgba(200, 220, 255, 1)" />
-                                <stop offset="50%" stopColor="rgba(255, 255, 255, 1)" />
-                                <stop offset="55%" stopColor="rgba(200, 220, 255, 1)" />
-                                <stop offset="100%" stopColor="rgba(70, 75, 90, 1)" />
-                            </linearGradient>
-                            <radialGradient
-                                id="glintGradient"
-                                cx="15" cy="15" r="15"
-                                fx="15" fy="15"
-                                gradientUnits="userSpaceOnUse"
-                            >
-                                <stop offset="0%" stopColor="rgba(255, 255, 255, 1)" />
-                                <stop offset="100%" stopColor="rgba(255, 255, 255, 0)" />
-                            </radialGradient>
-                        </defs>
-                        {i === 1 &&
-                            <>
-                                <RingGlow1
-                                    cx="50" cy="50" r={config.r}
-                                    fill="none"
-                                    stroke="url(#strokeGlow)"
-                                    strokeWidth={config.glow}
-                                />
-                                <RingGlow2
-                                    cx="50" cy="50" r={config.r}
-                                    fill="none"
-                                    stroke="rgba(0, 210, 255, 0.15)"
-                                    strokeWidth={config.strokeWidth * 2}
-                                />
-                            </>
-                        }
-                        <RingStructure
-                            cx="50" cy="50" r={config.r}
-                            fill="none"
-                            stroke={`url(#${gradientId})`}
-                            strokeWidth={config.strokeWidth}
-                        />
-                        <Ring3DHull
-                            cx="50" cy="50" r={config.r}
-                            fill="none"
-                            stroke={i === 0 ? `url(#${gradientId})` : `rgba(30, 40, 50, ${0.8 - i * 0.1})`}
-                            strokeWidth={i === 0 ? config.strokeWidth : config.strokeWidth * 1.5}
-                            strokeDasharray={i === 0 ? "1, 4, 1, 4, 1, 303" : "none"}
-                        />
-                        {i > 0 && (
-                            <RingDarkOverlay
-                                cx="50" cy="50" r={config.r}
-                                fill="none"
-                                stroke="#000000"
-                                strokeWidth={config.strokeWidth}
-                                style={{
-                                    opacity: 0.4 + i * 0.1,
-                                }}
-                            />
-                        )}
-                        <RingRibs
-                            cx="50" cy="50" r={config.r}
-                            fill="none"
-                            stroke="rgba(255, 255, 255, 0.3)"
-                            strokeWidth={config.strokeWidth + 0.5}
-                            strokeDasharray="1, 4"
-                        />
-                        <RingPlating
-                            cx="50" cy="50" r={config.r}
-                            fill="none"
-                            stroke="rgba(0, 0, 0, 0.5)"
-                            strokeWidth={config.strokeWidth + 0.1}
-                            strokeDasharray="17, 35"
-                        />
-                        <RingGlint
-                            cx="50" cy="50" r={config.r}
-                            fill="none"
-                            stroke="url(#glintGradient)"
-                            strokeWidth={getVisualStroke(2, config.radius)}
-                            strokeLinecap="round"
-                            style={{
-                                transform: 'rotate(var(--inverse-z))',
-                                transformOrigin: 'center'
-                            }}
-                        />
-                        {i === 0 &&
-                            <>
-                                <RingEtching
-                                    cx="50" cy="50" r={config.r}
-                                    fill="none"
-                                    stroke="rgba(255, 255, 255, 0.7)"
-                                    strokeWidth={0.2}
-                                    strokeDasharray="2, 11"
-                                />
-                                <RingBeacons
-                                    cx="50" cy="50" r={config.r}
-                                    fill="none"
-                                    stroke="#ff3e3e"
-                                    strokeWidth={1.2}
-                                    strokeDasharray="1, 5, 1, 4, 1, 314"
-                                    strokeDashoffset='1'
-                                    strokeLinecap="round"
-                                />
-                                <RingWindows
-                                    cx="50" cy="50" r={config.windowr}
-                                    fill="none"
-                                    stroke="rgba(255, 200, 50, 0.6)"
-                                    strokeWidth={0.3}
-                                    strokeDasharray={config.windowdasharray}
-                                    i={config.order}
-                                    isInView={isInView}
-                                //style={{ filter: 'drop-shadow(0 0 2px rgba(255, 200, 50, 0.8))' }}
-                                />
-                                <RingDataTube
-                                    cx="50" cy="50" r={config.datar}
-                                    fill="none"
-                                    stroke="rgba(0, 255, 255, 0.2)"
-                                    strokeWidth={0.2}
-                                    strokeDasharray="1, 9"
-                                />
-                            </>
-                        }
-                    </RingSvg>
-                </RingStack>
+                <ParallaxRing
+                    key={i}
+                    config={config}
+                    springOpacity={springOpacity}
+                    isInView={isInView}
+                    i={i}
+                />
             ))}
         </RingLayer>
+    );
+});
+
+const RingStack = styled(MotionBox)(({ theme }) => ({
+    position: 'absolute', inset: 0,
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
+}));
+
+const RingSvg = styled('svg')({
+    width: '100%', height: '100%',
+    overflow: 'visible',
+    backfaceVisibility: 'hidden',
+});
+
+const Ring3DHull = styled('circle')({
+    vectorEffect: 'non-scaling-stroke',
+    //backfaceVisibility: 'hidden',
+});
+
+const RingGlint = styled('circle')({
+    filter: `drop-shadow(0 0 2px white)`,
+    //mixBlendMode: 'plus-lighter',
+    //backfaceVisibility: 'hidden',
+});
+
+const RingEtching = styled('circle')({
+    filter: 'blur(0.5px)',
+    //mixBlendMode: 'overlay',
+    //backfaceVisibility: 'hidden',
+});
+
+const RingRibs = styled('circle')({
+    mixBlendMode: 'overlay',
+    //backfaceVisibility: 'hidden',
+});
+
+const RingBeacons = styled('circle')({
+    filter: 'blur(1px)',
+    //backfaceVisibility: 'hidden',
+    animation: 'beaconPulse 2s infinite ease-in-out',
+    '@keyframes beaconPulse': {
+        '0%, 100%': {
+            opacity: 0.2,
+        },
+        '50%': {
+            opacity: 1,
+        },
+    },
+});
+
+const RingWindows = styled('circle')(({ theme, i = 0, isInView = true }) => ({
+    opacity: 0,
+    //backfaceVisibility: 'hidden',
+    animation: isInView
+        ? `startupFlicker 1.5s ${4 + i * 0.5}s ease-out forwards`
+        : 'none',
+    '@keyframes startupFlicker': {
+        '0%': { opacity: 0 },
+        '10%, 15%': { opacity: 1 },
+        '20%, 25%': { opacity: 0 },
+        '40%': { opacity: 1, filter: 'brightness(5)', },
+        '100%': { opacity: 1, filter: 'brightness(1)', },
+    },
+}));
+
+const RingDataTube = styled('circle')({
+    //backfaceVisibility: 'hidden',
+    animation: 'dataFlow 3s linear infinite',
+    '@keyframes dataFlow': {
+        'from': {
+            strokeDashoffset: 50,
+        },
+        'to': {
+            strokeDashoffset: 0,
+        },
+    },
+});
+
+const getVisualStroke = (base, radius) => (base * 50) / radius;
+
+const ParallaxRing = memo(function ParallaxRing({ config,
+    springOpacity, isInView, i
+}) {
+
+    const gradientId = `ringGradient-${config.id}`;
+    const hullColor = useMemo(() => {
+        return i === 0 ? `url(#${gradientId})` : `rgba(30, 40, 50, ${0.8 - i * 0.1})`;
+    }, [i, gradientId]);
+    const strokeGradient = useMemo(() => {
+        return `url(#${gradientId})`;
+    }, [gradientId]);
+
+    return (
+        <RingStack
+            style={{
+                z: i * -10,
+                opacity: springOpacity,
+            }}
+        >
+            <RingSvg viewBox="0 0 100 100">
+                <defs>
+                    <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="rgba(40, 44, 52, 1)" />
+                        <stop offset="45%" stopColor="rgba(200, 220, 255, 1)" />
+                        <stop offset="50%" stopColor="rgba(255, 255, 255, 1)" />
+                        <stop offset="55%" stopColor="rgba(200, 220, 255, 1)" />
+                        <stop offset="100%" stopColor="rgba(70, 75, 90, 1)" />
+                    </linearGradient>
+                </defs>
+                {i === 1 &&
+                    <circle     //glow
+                        cx="50" cy="50" r={config.r}
+                        fill="none"
+                        stroke="url(#strokeGlow)"
+                        strokeWidth={config.glow}
+                    />
+                }
+                <circle         //RingStructure
+                    cx="50" cy="50" r={config.r}
+                    fill="none"
+                    stroke={strokeGradient}
+                    strokeWidth={config.strokeWidth}
+                />
+                <Ring3DHull
+                    cx="50" cy="50" r={config.r}
+                    fill="none"
+                    stroke={hullColor}
+                    strokeWidth={i === 0 ? config.strokeWidth : config.strokeWidth * 1.5}
+                />
+                {i > 0 && (
+                    <circle     //RingDarkOverlay
+                        cx="50" cy="50" r={config.r}
+                        fill="none"
+                        stroke="#000000"
+                        strokeWidth={config.strokeWidth}
+                        style={{
+                            opacity: 0.4 + i * 0.1,
+                        }}
+                    />
+                )}
+                <RingRibs
+                    cx="50" cy="50" r={config.r}
+                    fill="none"
+                    stroke="rgba(255, 255, 255, 0.3)"
+                    strokeWidth={config.strokeWidth + 0.5}
+                    strokeDasharray="1, 4"
+                />
+                <circle         //RingPlating
+                    cx="50" cy="50" r={config.r}
+                    fill="none"
+                    stroke="rgba(0, 0, 0, 0.5)"
+                    strokeWidth={config.strokeWidth + 0.1}
+                    strokeDasharray="17, 35"
+                />
+                <RingGlint
+                    cx="50" cy="50" r={config.r}
+                    fill="none"
+                    stroke="url(#glintGradient)"
+                    strokeWidth={getVisualStroke(2, config.radius)}
+                    strokeLinecap="round"
+                    style={{
+                        transform: 'rotate(var(--inverse-z))',
+                        transformOrigin: 'center'
+                    }}
+                />
+                {i === 0 &&
+                    <>
+                        <RingEtching
+                            cx="50" cy="50" r={config.r}
+                            fill="none"
+                            stroke="rgba(255, 255, 255, 0.7)"
+                            strokeWidth={0.2}
+                            strokeDasharray="2, 11"
+                        />
+                        <RingBeacons
+                            cx="50" cy="50" r={config.r}
+                            fill="none"
+                            stroke="#ff3e3e"
+                            strokeWidth={1.2}
+                            strokeDasharray="1, 5, 1, 4, 1, 314"
+                            strokeDashoffset='1'
+                            strokeLinecap="round"
+                        />
+                        <RingWindows
+                            cx="50" cy="50" r={config.windowr}
+                            fill="none"
+                            stroke="rgba(255, 200, 50, 0.6)"
+                            strokeWidth={0.3}
+                            strokeDasharray={config.windowdasharray}
+                            i={config.order}
+                            isInView={isInView}
+                        />
+                        <RingDataTube
+                            cx="50" cy="50" r={config.datar}
+                            fill="none"
+                            stroke="rgba(0, 255, 255, 0.2)"
+                            strokeWidth={0.2}
+                            strokeDasharray="1, 9"
+                        />
+                    </>
+                }
+            </RingSvg>
+        </RingStack>
     );
 });
 
@@ -1329,8 +1314,10 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, globalMouseX
 
     const tiltStrength = useMotionValue(0);
 
+    const hoverProgress = useMotionValue(0);
     const handleMouseEnter = useCallback(() => {
         if (isEntrancing) return;
+        hoverProgress.set(1);
         if (itemRef.current) {
             rectRef.current = itemRef.current.getBoundingClientRect();
         }
@@ -1338,6 +1325,7 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, globalMouseX
     }, [isEntrancing]);
 
     const handleMouseLeave = useCallback(() => {
+        hoverProgress.set(0);
         animate(tiltStrength, 0, { duration: 0.5, ease: "easeInOut" });
     }, []);
 
@@ -1376,21 +1364,19 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, globalMouseX
             onViewportLeave={handleViewportLeave}
             viewport={{ once: false, amount: 0.2 }}
         >
-            <GridItemBorder
+            {/*<GridItemBorder
                 variants={griditemhoverVars}
             />
+            <Spotlight
+                variants={griditemhoverVars}
+            />*/}
             <GridItemBg
                 variants={griditemhoverVars}
             >
-                <GrainOverlay opacity={0.15} bgcolor='#ffffff' contrast='200%' />
-
                 <Scanline />
             </GridItemBg>
-            <Spotlight
-                variants={griditemhoverVars}
-            />
             <AnimatedGridItemContent item={item} animationConfig={animationConfig}
-                shadowX={rotateX} shadowY={rotateY}
+                hoverProgress={hoverProgress}
             />
         </GridItem3D>
     );
@@ -1566,8 +1552,15 @@ const wireframeVars = {
         transition: TRANSITIONCONFIG.hoverbgend,
     },
     hover: {
-        opacity: 1, z: 30,
-        transition: TRANSITIONCONFIG.hoverbgstart,
+        opacity: [0, 0.4, 0.2, 0.5, 0.4, 0.6],
+        z: 60,
+        transition: {
+            z: TRANSITIONCONFIG.hoverbgstart,
+            opacity: {
+                ...TRANSITIONCONFIG.hoverbgstart,
+                times: [0, 0.1, 0.2, 0.3, 0.4, 1]
+            }
+        }
     },
     rest: {
         opacity: 0, z: 0,
@@ -1674,25 +1667,56 @@ const subheaderVars = {
 };
 
 const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, animationConfig,
-    shadowX, shadowY
+    hoverProgress
 }) {
 
     const lesserThanSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
 
     const color = useMemo(() => hexToRgba(item.color, 0.9), [item.color]);
 
+    const griditemRef = useRef(null);
+    const griditemwidthRef = useRef(0);
+
+    useLayoutEffect(() => {
+        if (!griditemRef.current) return;
+
+        const observer = new ResizeObserver((entries) => {
+            for (let entry of entries) {
+                griditemwidthRef.current = entry.contentRect.width;
+            }
+        });
+
+        observer.observe(griditemRef.current);
+
+        return () => observer.disconnect();
+    }, []);
+
+    const bgimage = useMemo(() => {
+        return item.id === 1
+            ? `url(${orbitalstation})`
+            : item.id === 2
+                ? `url(${shuttle1})`
+                : item.id === 3
+                    ? `url(${shuttle2})`
+                    : `url(${cargoshuttle})`
+    }, []);
+
     return (
         <GridItemContent
+            ref={griditemRef}
             variants={itemcontentVars}
         >
-            {item.id === 1 &&
-                <WireframeBg
-                    variants={wireframeVars}
-                    style={{
-                        backgroundImage: `url(${orbitalstation})`,
-                    }}
-                />
-            }
+            <WireframeBg
+                variants={wireframeVars}
+                style={{
+                    backgroundImage: bgimage,
+                }}
+            />
+            <LeaderLines
+                item={item}
+                griditemwidthRef={griditemwidthRef}
+                hoverProgress={hoverProgress}
+            />
             <TextContainer align={'flex-start'} >
                 <TextShadow
                     variants={textshadowVars}
@@ -1709,14 +1733,14 @@ const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, an
                         variants={projectionbeamheightVars}
                         hexcolor={item.color}
                     />
-                    <ProjectionBeamBottom
+                    {/*<ProjectionBeamBottom
                         variants={projectionbeamheightVars}
                         hexcolor={item.color}
                     />
                     <ProjectionBeamLeft
                         variants={projectionbeamwidthVars}
                         hexcolor={item.color}
-                    />
+                    />*/}
                     <ProjectionBeamRight
                         variants={projectionbeamwidthVars}
                         hexcolor={item.color}
@@ -1771,6 +1795,145 @@ const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, an
                 </TextContainer>
             ))}
         </GridItemContent>
+    );
+});
+
+const StyledLeaderLine = styled(MotionSvg)({
+    position: 'absolute',
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
+    overflow: 'visible',
+});
+
+const StyledGlyphs = styled(MotionText)({
+    position: 'absolute',
+    fontSize: '8px',
+    fontFamily: 'Spectral',
+    letterSpacing: '1px',
+    userSelect: 'none',
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
+});
+
+const leaderlineVars = {
+    initial: {
+        pathLength: 0,
+        opacity: 0,
+        transition: TRANSITIONCONFIG.hoverstart,
+    },
+    hover: {
+        pathLength: 1,
+        opacity: [0, 1, 0.2, 1, 0.6, 1],
+        transition: {
+            pathLength: TRANSITIONCONFIG.hoverstart,
+            opacity: {
+                ...TRANSITIONCONFIG.hoverstart,
+                times: [0, 0.1, 0.4, 0.6, 0.8, 1]
+            }
+        }
+    },
+    rest: {
+        pathLength: 0,
+        opacity: 0,
+        transition: TRANSITIONCONFIG.hoverstart,
+    },
+    static: { pathLength: 1, opacity: 1 },
+};
+
+const GLYPHS = "0123456789ABCDEF<>[]/!@#$%^&*";
+
+const randomGlyphs = (count = 5) => Array.from({ length: count }, () =>
+    GLYPHS[Math.floor(Math.random() * GLYPHS.length)]
+).join("");
+
+const generateHudLines = (count = 4, width) => {
+    return [...Array(count)].map((_, i) => {
+        const isLeftSide = Math.random() > 0.5 ? true : false;
+        const leftVal = isLeftSide
+            ? Math.floor(Math.random() * (21)) + 20
+            : Math.floor(Math.random() * (21)) + 70;
+
+        const sectionHeight = 60 / count;
+        const sectionStart = 20 + (i * sectionHeight);
+        const topVal = sectionStart + (Math.random() * (sectionHeight * 0.8));
+        const zVal = Math.floor(Math.random() * 20) + 50;
+
+        const direction = leftVal < 50 ? -1 : 1;
+        const length = width / 3 + Math.random() * 30;
+        const bend = Math.random() > 0.5 ? 1 : -1;
+        const endX = (length + 15) * direction;
+        const bendY = bend * 10;
+        const pathData = `M 0,0 L ${length * direction},0 L ${endX},${bendY}`;
+
+        const glyphlength = Math.floor(Math.random() * 5) + 5;
+        const glyph = randomGlyphs(glyphlength);
+
+        return {
+            id: `hud-line-${i}`,
+            top: `${topVal}%`,
+            left: `${leftVal}%`,
+            scale: 0.8 + Math.random() * 0.4,
+            opacity: 0.4 + Math.random() * 0.2,
+            z: zVal,
+            direction: direction,
+            endX: endX,
+            bendY: bendY,
+            pathData: pathData,
+            glyphtext: glyph,
+        };
+    });
+};
+
+const LeaderLines = memo(function LeaderLines({ item, griditemwidthRef, hoverProgress }) {
+    const [hudLines, setHudLines] = useState([]);
+
+    const activeVariant = useMemo(() => hudLines.length > 0 ? 'hover' : 'rest', [hudLines]);
+
+    useMotionValueEvent(hoverProgress, "change", (latest) => {
+        if (latest === 1 && griditemwidthRef.current) {
+            setHudLines(generateHudLines(4, griditemwidthRef.current));
+        } else if (latest === 0) {
+            setHudLines([]);
+        }
+    });
+
+    return (
+        <>
+            {hudLines.map((line) => (
+                <StyledLeaderLine
+                    key={line.id}
+                    width="100" height="100"
+                    style={{
+                        top: line.top,
+                        left: line.left,
+                        scale: line.scale,
+                        opacity: line.opacity,
+                        z: line.z,
+                    }}
+                    initial='initial'
+                    animate={activeVariant}
+                    exit='initial'
+                >
+                    <MotionPath
+                        d={line.pathData}
+                        fill="none"
+                        stroke={item.shuttlecolor}
+                        strokeWidth="1.5"
+                        variants={leaderlineVars}
+                    />
+                    <StyledGlyphs
+                        x={line.endX + (line.direction === 1 ? 5 : -5)}
+                        y={line.bendY + (line.bendY > 0 ? 3 : -3)}
+                        fill={item.shuttlecolor}
+                        textAnchor={line.direction === 1 ? "start" : "end"}
+                        dominantBaseline="middle"
+                        variants={leaderlineVars}
+                    >
+                        {line.glyphtext}
+                    </StyledGlyphs>
+                </StyledLeaderLine>
+            ))}
+        </>
     );
 });
 
@@ -2300,5 +2463,32 @@ const AnimatedIcon = memo(function AnimatedIcon({ icon, i, content, handleHovere
                 </HoverWrapper>
             </AvatarContainer>
         </IconContainer>
+    );
+});
+
+const SvgDefs = memo(function SvgDefs() {
+    return (
+        <svg width="0" height="0" style={{ position: 'absolute' }}>
+            <defs>
+                <radialGradient
+                    id="strokeGlow"
+                    cx="0.5" cy="0.5" r="0.5"
+                    fx="0.5" fy="0.5"
+                    gradientUnits="objectBoundingBox"
+                >
+                    <stop offset="85%" stopColor="rgba(0, 210, 255, 1)" />
+                    <stop offset="100%" stopColor="rgba(0, 210, 255, 0)" />
+                </radialGradient>
+                <radialGradient
+                    id="glintGradient"
+                    cx="15" cy="15" r="15"
+                    fx="15" fy="15"
+                    gradientUnits="userSpaceOnUse"
+                >
+                    <stop offset="0%" stopColor="rgba(255, 255, 255, 1)" />
+                    <stop offset="100%" stopColor="rgba(255, 255, 255, 0)" />
+                </radialGradient>
+            </defs>
+        </svg>
     );
 });
