@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import marketintelligence from '../pics/marketintelligence.webp';
 import artexplorer from '../pics/artexplorer.png';
-import researchdigest from '../pics/researchdigest.png';
+import researchdigest from '../pics/researchdigest.webp';
 import mealplanner from '../pics/mealplanner.webp';
 import {
   motion, useMotionValue, useSpring, AnimatePresence,
@@ -919,7 +919,7 @@ const ProjectCard = memo(function ProjectCard({ projinfo, isActive,
   const handleClick = useCallback((e) => {
     e.stopPropagation();
     if (isActive) window.open(projinfo.link, '_blank', 'noopener,noreferrer');
-  }, [projinfo.link])
+  }, [projinfo.link, isActive]);
 
   const borderConfig = useMemo(() => {
 

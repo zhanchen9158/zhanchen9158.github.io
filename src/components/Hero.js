@@ -152,6 +152,8 @@ const WordWrapper = styled(MotionBox)(({ theme }) => ({
 }));
 
 const HoverWord = styled(MotionBox)(({ theme }) => ({
+  display: 'inline-flex',
+  alignItems: 'center', justifyContent: 'center',
   whiteSpace: "pre-wrap",
   color: 'white',
   fontFamily: 'Cormorant Garamond',
@@ -271,7 +273,9 @@ const letterVars = {
   }
 };
 
-const GLYPHS = "0123456789ABCDEF<>[]/!@#$%^&*";
+const GLYPHS = `アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌ
+  フムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン
+  01234567789ABCDEFGHIJKLMNOPQRSTUVWXYZ_&*+!?@#`;
 const getRandomGlyph = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
 
 const LetterAnimation = memo(function LetterAnimation({ letter, delay }) {

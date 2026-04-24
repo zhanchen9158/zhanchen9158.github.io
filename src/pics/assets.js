@@ -6,10 +6,10 @@ import mealplanner from './mealplanner.webp';
 import mealplanner1 from './mealplanner1.webp';
 import mealplanner2 from './mealplanner2.webp';
 import mealplanner3 from './mealplanner3.webp';
-import researchdigest from './researchdigest.png';
-import researchdigest1 from './researchdigest1.png';
-import researchdigest2 from './researchdigest2.png';
-import researchdigest3 from './researchdigest3.png';
+import researchdigest from './researchdigest.webp';
+import researchdigest1 from './researchdigest1.webp';
+import researchdigest2 from './researchdigest2.webp';
+import researchdigest3 from './researchdigest3.webp';
 
 
 export const PROJECT_HIGHLIGHTS = {

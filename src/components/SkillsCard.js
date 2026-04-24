@@ -7,7 +7,8 @@ import { styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import {
     motion, AnimatePresence, useMotionValue, useMotionValueEvent,
-    useSpring, useTransform, animate, useInView
+    useSpring, useTransform, animate, useInView,
+    time
 } from "motion/react";
 import Box from '@mui/material/Box';
 import { useAnimateContext } from './AnimateContext';
@@ -16,17 +17,20 @@ import SvgGlow from './SvgGlow';
 import SvgSplitColor, { SvgSplitShadow, SvgBorder } from './SvgSplitColor';
 import GrainOverlay from './GrainOverlay';
 import hexToRgba from '../functions/hexToRgba';
-import orbitalstation from '../pics/orbitalstation.webp';
-import shuttle1 from '../pics/spaceshuttle1.webp';
-import shuttle2 from '../pics/spaceshuttle2.webp';
-import cargoshuttle from '../pics/cargoshuttle.webp';
+import wireframe1 from '../pics/wireframe1.webp';
+import wireframe2 from '../pics/wireframe2.webp';
+import wireframe3 from '../pics/wireframe3.webp';
+import wireframe4 from '../pics/wireframe4.webp';
+import modalbg from '../pics/hudbg.webp';
+import modalbgretinal from '../pics/hudretinal.webp';
 
 
 const MotionBox = motion.create(Box);
 const MotionSvg = motion.create('svg');
 const MotionPath = motion.create('path');
+const MotionCircle = motion.create('circle');
 const MotionText = motion.create('text');
-const MotionTypography = motion.create(Typography);
+const MotionSpan = motion.create('span');
 
 const icons = import.meta.glob('../icons/skills/*.svg', {
     eager: true,
@@ -45,11 +49,26 @@ const SKILLS_DATA = [
         border: '#90CAF9',
         mainicon: 'languages',
         icons: [
-            { file: 'java', name: 'Java' },
-            { file: 'javascript', name: 'JavaScript' },
-            { file: 'python', name: 'Python' },
-            { file: 'csharp', name: 'C#' },
-            { file: 'sql', name: 'SQL' }
+            {
+                file: 'java', name: 'Java',
+                desc: 'Scalable, secure microservices with Spring Boot and Hibernate.'
+            },
+            {
+                file: 'javascript', name: 'JavaScript',
+                desc: 'Dynamic, high-performance full-stack applications with React and JavaScript.'
+            },
+            {
+                file: 'python', name: 'Python',
+                desc: 'Robust data processing pipelines and machine learning models via PyTorch.'
+            },
+            {
+                file: 'csharp', name: 'C#',
+                desc: 'Efficient, maintainable applications leveraging C# and .NET technologies.'
+            },
+            {
+                file: 'sql', name: 'SQL',
+                desc: 'Scalable, efficient relational SQL data structures.'
+            }
         ],
     },
     {
@@ -63,14 +82,38 @@ const SKILLS_DATA = [
         border: '#ce93d8',
         mainicon: 'frontend',
         icons: [
-            { file: 'react', name: 'React' },
-            { file: 'onnx', name: 'ONNX Runtime Web' },
-            { file: 'materialui', name: 'Material UI' },
-            { file: 'html', name: 'HTML' },
-            { file: 'css', name: 'CSS' },
-            { file: 'vite', name: 'Vite' },
-            { file: 'emotion', name: 'Emotion' },
-            { file: 'framermotion', name: 'Framer Motion' }
+            {
+                file: 'react', name: 'React',
+                desc: 'Responsive, dynamic web applications with a focus on React optimization.'
+            },
+            {
+                file: 'onnx', name: 'ONNX Runtime Web',
+                desc: 'Performance-driven On-Device machine learning inference.'
+            },
+            {
+                file: 'emotion', name: 'Emotion',
+                desc: 'Component-driven, themable UIs with strict design system fidelity.'
+            },
+            {
+                file: 'framermotion', name: 'Framer Motion',
+                desc: 'Fluid, motion-rich user experience balanced with performance optimization.'
+            },
+            {
+                file: 'vite', name: 'Vite',
+                desc: 'Optimized production asset delivery and streamlined development feedback loops.'
+            },
+            {
+                file: 'materialui', name: 'Material UI',
+                desc: 'Consistent, accessible design implementation with Material UI.'
+            },
+            {
+                file: 'html', name: 'HTML',
+                desc: 'Semantic, accessible HTML foundations for scalable web applications.'
+            },
+            {
+                file: 'css', name: 'CSS',
+                desc: 'Sophisticated, adaptive styling and layout for modern design system specifications.'
+            },
         ],
     },
     {
@@ -84,12 +127,30 @@ const SKILLS_DATA = [
         border: '#A5D6A7',
         mainicon: 'backend',
         icons: [
-            { file: 'springboot', name: 'Spring Boot' },
-            { file: 'nodejs', name: 'Node.js' },
-            { file: 'hibernate', name: 'Hibernate' },
-            { file: 'mysql', name: 'MySQL' },
-            { file: 'mongodb', name: 'MongoDB' },
-            { file: 'elasticsearch', name: 'Elasticsearch' }
+            {
+                file: 'springboot', name: 'Spring Boot',
+                desc: 'Resilient, scalable backend services with Spring Boot ecosystem.'
+            },
+            {
+                file: 'nodejs', name: 'Node.js',
+                desc: 'Event-driven, non-blocking network services with robust API design.'
+            },
+            {
+                file: 'hibernate', name: 'Hibernate',
+                desc: 'Robust data-persistence architectures leverageing Hibernate/JPA.'
+            },
+            {
+                file: 'mysql', name: 'MySQL',
+                desc: 'High-availability relational data architectures and optimized querying patterns.'
+            },
+            {
+                file: 'mongodb', name: 'MongoDB',
+                desc: 'Flexible, high-performance data systems powering data-intensive features.'
+            },
+            {
+                file: 'elasticsearch', name: 'Elasticsearch',
+                desc: 'Low-latency search infrastructures for real-time data retrieval and analytics.'
+            }
         ],
     },
     {
@@ -103,15 +164,42 @@ const SKILLS_DATA = [
         border: '#FFCC80',
         mainicon: 'cloud',
         icons: [
-            { file: 'aws', name: 'AWS' },
-            { file: 'pytorch', name: 'PyTorch' },
-            { file: 'huggingface', name: 'Hugging Face' },
-            { file: 'docker', name: 'Docker' },
-            { file: 'git', name: 'Git' },
-            { file: 'jwt', name: 'JWT' },
-            { file: 'cloudarchitecture', name: 'Cloud Architecture' },
-            { file: 'microservice', name: 'Microservice' },
-            { file: 'restapi', name: 'REST API' }
+            {
+                file: 'aws', name: 'AWS',
+                desc: 'Highly available, secure, and operationally efficient cloud solutions.'
+            },
+            {
+                file: 'pytorch', name: 'PyTorch',
+                desc: 'End-to-end deep learning pipelines for high-throughput predictive workloads alongside model precision.'
+            },
+            {
+                file: 'huggingface', name: 'Hugging Face',
+                desc: 'Optimized inferencing with research-grade model architectures.'
+            },
+            {
+                file: 'docker', name: 'Docker',
+                desc: 'Immutable infrastructure with optimized resource orchestration.'
+            },
+            {
+                file: 'git', name: 'Git',
+                desc: 'Distributed version control system for efficient code management.'
+            },
+            {
+                file: 'jwt', name: 'JWT',
+                desc: 'Secure, granular Claims-Based Authorization & Authentication ecosystems.'
+            },
+            {
+                file: 'cloudarchitecture', name: 'Cloud Architecture',
+                desc: 'High-availability, cloud-native ecosystems with rigorous operational governance.'
+            },
+            {
+                file: 'microservice', name: 'Micro Service',
+                desc: 'Modular, service-oriented ecosystems with system resilience and independent service scalability.'
+            },
+            {
+                file: 'restapi', name: 'REST API',
+                desc: 'Resource-oriented RESTful APIs for consistent and predictable service integration.'
+            }
         ],
     },
 ];
@@ -161,6 +249,7 @@ const SPRINGCONFIG = {
 const ringdelay = 2.2;
 const hover = 0.5;
 const layoutduration = 0.8;
+const modalbootupduration = 2;
 const TRANSITIONCONFIG = {
     ringentrance: { duration: 2, ease: [0.16, 1, 0.3, 1] },
     canvasentrance: { duration: 2, delay: 4, ease: 'easeOut' },
@@ -172,7 +261,10 @@ const TRANSITIONCONFIG = {
     hoverend: { duration: hover, ease: 'easeOut' },
 
     layoutbg: {
-        delay: layoutduration, duration: layoutduration / 2, ease: 'easeOut'
+        delay: layoutduration, duration: modalbootupduration, ease: 'easeOut'
+    },
+    layoutbgimage: {
+        delay: layoutduration, duration: modalbootupduration, ease: 'easeOut'
     },
     layoutanimate: { duration: layoutduration, ease: 'easeOut' },
 };
@@ -263,23 +355,23 @@ const r = 50;
 const RING_CONFIGS = [
     {
         id: 'outer', order: 2,
-        radius: 72, strokeWidth: 1, glow: 4,
+        radius: 72, strokeWidth: 1, glow: 3,
         r: r, windowr: r - 1.5,
         windowdasharray: "2, 1, 4, 2",
         datar: r - 2.5,
         rotX: [30, -30], rotY: [-30, 30], rotZ: 45,
         z: [0, -150],
-        opacity: [1, 0.25],
+        opacity: [0, 0.25],
     },
     {
         id: 'middle', order: 1,
-        radius: 45, strokeWidth: 3, glow: 6,
+        radius: 45, strokeWidth: 3, glow: 5,
         r: r, windowr: r - 3,
         windowdasharray: "2, 1, 4, 2",
         datar: r - 5,
         rotX: [-40, 40], rotY: [-40, 40], rotZ: 90,
         z: [0, 0],
-        opacity: [1, 0.5],
+        opacity: [0, 0.5],
     },
     {
         id: 'inner', order: 0,
@@ -289,7 +381,7 @@ const RING_CONFIGS = [
         datar: r - 14,
         rotX: [-50, 50], rotY: [50, -50], rotZ: 180,
         z: [0, 150],
-        opacity: [1, 0.75],
+        opacity: [0, 0.75],
     }
 ];
 
@@ -783,14 +875,27 @@ const Parallax3dRing = memo(function Parallax3dRing({ config,
             return entranceOffset + parallaxDeg;
         }
     ), SPRINGCONFIG.parallax);
-    const inverseZ = useTransform(rotateZ, (v) => `${-v}deg`);
+    const inverseZ = useTransform(rotateZ, (v) => -v);
+    const shadowZ = useTransform(
+        [rotateX, rotateY, rotateZ],
+        ([rx, ry, rz]) => {
+            const tiltAngle = Math.atan2(ry, rx) * (180 / Math.PI);
+            const finalAngle = tiltAngle - rz;
 
-    const springOpacity = useSpring(useTransform(
-        [masterTransform, entranceProgress],
-        ([{ parallaxFactor, direction }, progress]) => {
-            const [minOpacity, maxOpacity] = config.opacity;
+            return finalAngle + 45;
+        }
+    );
+
+    const entranceOpacity = useSpring(useTransform(
+        entranceProgress, [0, 1], [0, 1]
+    ), SPRINGCONFIG.parallax);
+
+    const shadowOpacity = useSpring(useTransform(
+        masterTransform,
+        ({ parallaxFactor, direction }) => {
+            const [minOpacity, maxOpacity] = [0, 0.9];
             const parallaxOpacity = minOpacity + parallaxFactor * (maxOpacity - minOpacity);
-            return progress * parallaxOpacity;
+            return parallaxOpacity;
         }
     ), SPRINGCONFIG.parallax);
 
@@ -803,13 +908,15 @@ const Parallax3dRing = memo(function Parallax3dRing({ config,
                 rotateZ,
                 scale: springScale,
                 '--inverse-z': inverseZ,
+                '--shadow-z': shadowZ,
             }}
         >
             {[...Array(3)].map((_, i) => (
                 <ParallaxRing
                     key={i}
                     config={config}
-                    springOpacity={springOpacity}
+                    entranceOpacity={entranceOpacity}
+                    shadowOpacity={shadowOpacity}
                     isInView={isInView}
                     i={i}
                 />
@@ -822,6 +929,9 @@ const RingStack = styled(MotionBox)(({ theme }) => ({
     position: 'absolute', inset: 0,
     pointerEvents: 'none',
     backfaceVisibility: 'hidden',
+    willChange: 'transform',
+    shapeRendering: 'geometricPrecision',
+    transform: 'translateZ(0)',
 }));
 
 const RingSvg = styled('svg')({
@@ -832,29 +942,29 @@ const RingSvg = styled('svg')({
 
 const Ring3DHull = styled('circle')({
     vectorEffect: 'non-scaling-stroke',
-    //backfaceVisibility: 'hidden',
+    backfaceVisibility: 'hidden',
 });
 
 const RingGlint = styled('circle')({
     filter: `drop-shadow(0 0 2px white)`,
     //mixBlendMode: 'plus-lighter',
-    //backfaceVisibility: 'hidden',
+    backfaceVisibility: 'hidden',
 });
 
 const RingEtching = styled('circle')({
     filter: 'blur(0.5px)',
     //mixBlendMode: 'overlay',
-    //backfaceVisibility: 'hidden',
+    backfaceVisibility: 'hidden',
 });
 
 const RingRibs = styled('circle')({
     mixBlendMode: 'overlay',
-    //backfaceVisibility: 'hidden',
+    backfaceVisibility: 'hidden',
 });
 
 const RingBeacons = styled('circle')({
     filter: 'blur(1px)',
-    //backfaceVisibility: 'hidden',
+    backfaceVisibility: 'hidden',
     animation: 'beaconPulse 2s infinite ease-in-out',
     '@keyframes beaconPulse': {
         '0%, 100%': {
@@ -868,7 +978,7 @@ const RingBeacons = styled('circle')({
 
 const RingWindows = styled('circle')(({ theme, i = 0, isInView = true }) => ({
     opacity: 0,
-    //backfaceVisibility: 'hidden',
+    backfaceVisibility: 'hidden',
     animation: isInView
         ? `startupFlicker 1.5s ${4 + i * 0.5}s ease-out forwards`
         : 'none',
@@ -882,7 +992,7 @@ const RingWindows = styled('circle')(({ theme, i = 0, isInView = true }) => ({
 }));
 
 const RingDataTube = styled('circle')({
-    //backfaceVisibility: 'hidden',
+    backfaceVisibility: 'hidden',
     animation: 'dataFlow 3s linear infinite',
     '@keyframes dataFlow': {
         'from': {
@@ -897,7 +1007,7 @@ const RingDataTube = styled('circle')({
 const getVisualStroke = (base, radius) => (base * 50) / radius;
 
 const ParallaxRing = memo(function ParallaxRing({ config,
-    springOpacity, isInView, i
+    entranceOpacity, shadowOpacity, isInView, i
 }) {
 
     const gradientId = `ringGradient-${config.id}`;
@@ -912,7 +1022,7 @@ const ParallaxRing = memo(function ParallaxRing({ config,
         <RingStack
             style={{
                 z: i * -10,
-                opacity: springOpacity,
+                opacity: entranceOpacity,
             }}
         >
             <RingSvg viewBox="0 0 100 100">
@@ -946,7 +1056,7 @@ const ParallaxRing = memo(function ParallaxRing({ config,
                     strokeWidth={i === 0 ? config.strokeWidth : config.strokeWidth * 1.5}
                 />
                 {i > 0 && (
-                    <circle     //RingDarkOverlay
+                    <circle     //RingStackDepth
                         cx="50" cy="50" r={config.r}
                         fill="none"
                         stroke="#000000"
@@ -977,7 +1087,7 @@ const ParallaxRing = memo(function ParallaxRing({ config,
                     strokeWidth={getVisualStroke(2, config.radius)}
                     strokeLinecap="round"
                     style={{
-                        transform: 'rotate(var(--inverse-z))',
+                        transform: 'rotate(calc(var(--inverse-z) * 1deg))',
                         transformOrigin: 'center'
                     }}
                 />
@@ -1015,6 +1125,18 @@ const ParallaxRing = memo(function ParallaxRing({ config,
                             strokeWidth={0.2}
                             strokeDasharray="1, 9"
                         />
+                        <MotionCircle    //RingShadowOverlay
+                            cx="50" cy="50" r={config.r}
+                            fill="none"
+                            stroke="url(#shadowGradient)"
+                            strokeWidth={getVisualStroke(2, config.radius)}
+                            strokeLinecap="round"
+                            style={{
+                                opacity: shadowOpacity,
+                                transform: 'rotate(calc(var(--shadow-z) * 1deg))',
+                                transformOrigin: 'center'
+                            }}
+                        />
                     </>
                 }
             </RingSvg>
@@ -1044,7 +1166,7 @@ const BentoGrid = memo(function BentoGrid({ globalMouseX, globalMouseY }) {
     }, [lastSelectedId]);
 
     return (
-        <AnimatePresence>
+        <>
             {SKILLS_DATA.map((item, _) => (
                 <AnimatedGridItem
                     key={item.id}
@@ -1064,7 +1186,7 @@ const BentoGrid = memo(function BentoGrid({ globalMouseX, globalMouseY }) {
                     handleItemSelect={handleItemSelect}
                 />
             )}
-        </AnimatePresence>
+        </>
     );
 });
 
@@ -1530,7 +1652,7 @@ const itemcontentVars = {
         z: 0,
         transition: {
             ...TRANSITIONCONFIG.hoverstart,
-            staggerChildren: 0.35
+            staggerChildren: 0.15
         },
     },
     rest: {
@@ -1693,12 +1815,12 @@ const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, an
 
     const bgimage = useMemo(() => {
         return item.id === 1
-            ? `url(${orbitalstation})`
+            ? `url(${wireframe1})`
             : item.id === 2
-                ? `url(${shuttle1})`
+                ? `url(${wireframe2})`
                 : item.id === 3
-                    ? `url(${shuttle2})`
-                    : `url(${cargoshuttle})`
+                    ? `url(${wireframe3})`
+                    : `url(${wireframe4})`
     }, []);
 
     return (
@@ -1706,17 +1828,21 @@ const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, an
             ref={griditemRef}
             variants={itemcontentVars}
         >
-            <WireframeBg
-                variants={wireframeVars}
-                style={{
-                    backgroundImage: bgimage,
-                }}
-            />
-            <LeaderLines
-                item={item}
-                griditemwidthRef={griditemwidthRef}
-                hoverProgress={hoverProgress}
-            />
+            {!lesserThanSm &&
+                <>
+                    <WireframeBg
+                        variants={wireframeVars}
+                        style={{
+                            backgroundImage: bgimage,
+                        }}
+                    />
+                    <LeaderLines
+                        item={item}
+                        griditemwidthRef={griditemwidthRef}
+                        hoverProgress={hoverProgress}
+                    />
+                </>
+            }
             <TextContainer align={'flex-start'} >
                 <TextShadow
                     variants={textshadowVars}
@@ -1840,7 +1966,9 @@ const leaderlineVars = {
     static: { pathLength: 1, opacity: 1 },
 };
 
-const GLYPHS = "0123456789ABCDEF<>[]/!@#$%^&*";
+const GLYPHS = `アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌ
+  フムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン
+  01234567789ABCDEFGHIJKLMNOPQRSTUVWXYZ_&*+!?@#`;
 
 const randomGlyphs = (count = 5) => Array.from({ length: count }, () =>
     GLYPHS[Math.floor(Math.random() * GLYPHS.length)]
@@ -1952,22 +2080,11 @@ const ModalContent = styled(MotionBox)(({ theme }) => ({
     [theme.breakpoints.down('sm')]: {
         width: '100%',
     },
-    perspective: '1000px',
-    transformStyle: "preserve-3d",
+    //perspective: '1000px',
+    //transformStyle: "preserve-3d",
     willChange: 'transform, opacity',
     backfaceVisibility: "hidden",
     isolation: 'isolate',
-}));
-
-const ModalBg = styled(MotionBox)(({ theme, bgcolor }) => ({
-    position: 'absolute',
-    width: '80%', maxWidth: 675, height: 450,
-    borderRadius: '32px', padding: 0,
-    background: bgcolor,
-    backdropFilter: 'blur(20px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-    //willChange: 'transform, opacity',
-    backfaceVisibility: "hidden",
 }));
 
 const ModalTitle = styled(MotionBox)(({ theme }) => ({
@@ -2002,17 +2119,6 @@ const modalVars = {
     },
 };
 
-const modalbgVars = {
-    initial: {
-        opacity: 0,
-        transition: TRANSITIONCONFIG.layoutbg
-    },
-    animate: {
-        opacity: 1,
-        transition: TRANSITIONCONFIG.layoutbg
-    },
-};
-
 const titleglowVars = {
     initial: { opacity: 0.4, scale: 0.4 },
     animate: {
@@ -2024,7 +2130,34 @@ const titleglowVars = {
     static: { opacity: 1, scale: 1 },
 };
 
+const generateBootupLogs = (count = 5, wordlength = 15, dotlen) => {
+
+    const letterstagger = Math.random() * 0.05 + 0.1;
+
+    return [...Array(count)].map((_, i) => {
+        const glyphlength = Math.floor(Math.random() * wordlength / 2) + Math.floor(wordlength / 3);
+        const glyph = randomGlyphs(glyphlength);
+        const dotlength = dotlen
+            ? Math.floor(Math.random() * dotlen) + 2
+            : wordlength - glyphlength;
+
+        return {
+            text: glyph + '.'.repeat(dotlength),
+            length: glyphlength + dotlength,
+            stagger: letterstagger
+        };
+    });
+};
+
 const AnimatedModal = memo(function AnimatedModal({ selectedItem, handleItemSelect }) {
+
+    const handleModalClick = useCallback((e) => {
+        const isInteractive = e.target.closest('[tap-interactive="true"]');
+        if (isInteractive) {
+            return;
+        }
+        handleItemSelect(null);
+    }, []);
 
     return (
         <Modal
@@ -2032,11 +2165,10 @@ const AnimatedModal = memo(function AnimatedModal({ selectedItem, handleItemSele
             initial='initial'
             animate='animate'
             exit='initial'
-            onClick={() => handleItemSelect(null)}
+            onClick={handleModalClick}
         >
-            <ModalBg
-                variants={modalbgVars}
-                bgcolor={hexToRgba(selectedItem.cardcolors[1], 0.15)}
+            <AnimatedModalBg
+                selectedItem={selectedItem}
             />
             <ModalContent
                 layoutId={`skillgriditem-${selectedItem.id}`}
@@ -2045,13 +2177,6 @@ const AnimatedModal = memo(function AnimatedModal({ selectedItem, handleItemSele
                     layout: TRANSITIONCONFIG.layoutanimate
                 }}
             >
-                <GrainOverlay />
-                {/*<SvgSplitShadow />*/}
-                {/*<SvgSplitColor color={selectedItem.cardcolors[0]} />*/}
-                {/*<SvgBorder
-                    glowColor={selectedItem.cardcolors[2]}
-                    borderColor={selectedItem.cardcolors[0]}
-                />*/}
                 <ModalTitle
                     sx={{
                         color: selectedItem.color,
@@ -2073,22 +2198,301 @@ const AnimatedModal = memo(function AnimatedModal({ selectedItem, handleItemSele
     );
 });
 
-const radius = 170;
+const ModalBg = styled(MotionBox)(({ theme, bgcolor }) => ({
+    position: 'absolute',
+    width: '80%', maxWidth: 675, height: 450,
+    borderRadius: '32px', padding: 0,
+    //background: bgcolor,
+    backdropFilter: 'blur(20px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+    //willChange: 'transform, opacity',
+    backfaceVisibility: "hidden",
+}));
+
+const ModalBootupText = styled(MotionBox)(({ theme }) => ({
+    position: 'absolute',
+    width: 'fit-content', height: 'fit-content',
+    display: 'flex', justifyContent: 'center',
+    userSelect: 'none',
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
+}));
+
+const BootupWord = styled(MotionBox)(({ theme }) => ({
+    position: 'relative',
+    fontSize: '8px',
+    fontFamily: 'Spectral',
+    letterSpacing: '1px',
+    lineHeight: 2,
+    userSelect: 'none',
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
+}));
+
+const BootupLetter = styled(MotionSpan)(({
+    display: 'inline-block',
+    width: '0.8em',
+    textAlign: 'center',
+    userSelect: 'none',
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
+}));
+
+
+const ModalBgImage = styled(MotionBox)(({ theme }) => ({
+    position: 'absolute', inset: 0,
+    borderRadius: 'inherit',
+    backgroundImage: `url(${modalbg})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
+}));
+
+const ModalBgRetinal = styled(MotionBox)(({ theme }) => ({
+    position: 'absolute',
+    top: '50%', left: '50%',
+    width: '150px', height: '150px',
+    borderRadius: 'inherit',
+    backgroundImage: `url(${modalbgretinal})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
+}));
+
+const modalbgVars = {
+    initial: {
+        opacity: 0,
+        transition: TRANSITIONCONFIG.layoutanimate
+    },
+    animate: {
+        opacity: 1,
+        transition: TRANSITIONCONFIG.layoutanimate
+    },
+};
+
+const modalbgimageVars = {
+    initial: {
+        opacity: 0,
+        transition: TRANSITIONCONFIG.layoutbg
+    },
+    animate: {
+        opacity: [0, 0.6, 0.2, 0.6, 0.4, 0.6],
+        transition: {
+            ...TRANSITIONCONFIG.layoutbg,
+            times: [0, 0.2, 0.4, 0.6, 0.8, 1]
+        }
+    },
+};
+
+const bootuptextVars = {
+    initial: {
+        opacity: 0,
+        transition: TRANSITIONCONFIG.layoutanimate
+    },
+    animate: (wordstagger = 3) => ({
+        opacity: 1,
+        transition: {
+            when: "beforeChildren",
+            ...TRANSITIONCONFIG.layoutanimate,
+            staggerChildren: wordstagger,
+        }
+    }),
+};
+
+const bootupwordVars = {
+    initial: {
+        opacity: 0,
+        transition: TRANSITIONCONFIG.layoutanimate
+    },
+    animate: ({ length, stagger } = {}) => ({
+        opacity: [0, 0.8, 0.2, 0.8, 0.4, 0.8],
+        transition: {
+            staggerChildren: stagger || 0.2,
+            opacity: {
+                duration: length * stagger || 3,
+                times: [0, 0.2, 0.4, 0.6, 0.8, 1],
+                ease: 'easeOut',
+            }
+        }
+    }),
+};
+
+const bootupletterVars = {
+    initial: {
+        opacity: 0,
+    },
+    animate: (stagger = 0.2) => ({
+        opacity: 1,
+        transition: {
+            duration: stagger,
+            ease: 'easeOut',
+        }
+    }),
+};
+
+const AnimatedModalBg = memo(function AnimatedModalBg({ selectedItem }) {
+
+    const rotation = useMotionValue(0);
+    const opacity = useMotionValue(0);
+
+    const runRetinalBootup = useCallback(async (delay = 0, totalduration = 2.5) => {
+
+        const runOpacity = async () => {
+            opacity.set(0);
+            await animate(opacity, 1, {
+                delay: delay,
+                duration: 0.1,
+                ease: "linear"
+            }).finished;
+            await animate(opacity, 0, {
+                delay: 1.4 * totalduration,
+                duration: 0.2 * totalduration,
+                ease: "easeOut"
+            }).finished;
+        };
+
+        const runRotate = async () => {
+
+            const rotate = (target, delay, duration, ease) =>
+                animate(rotation, target, { delay: delay, duration: duration, ease: ease }).finished;
+
+            await rotate(-20, delay, 0.12 * totalduration, "easeOut");
+
+            await rotate(135, 0, 0.48 * totalduration, "easeInOut");
+            await rotate(130, 0, 0.04 * totalduration, "linear");
+            await rotate(135, 0, 0.04 * totalduration, "linear");
+
+            await rotate(360, 0, 0.72 * totalduration, "easeInOut");
+        };
+
+        await Promise.all([runOpacity(), runRotate()]);
+    }, []);
+
+    useEffect(() => {
+        runRetinalBootup(layoutduration + 0.2, 3);
+    }, []);
+
+    const bootupLogsLeft = useMemo(() => generateBootupLogs(6, 12, 3), []);
+    const bootupLogsRight = useMemo(() => generateBootupLogs(6, 12, 3), []);
+
+    return (
+        <ModalBg
+            variants={modalbgVars}
+            bgcolor={hexToRgba(selectedItem.cardcolors[1], 0.15)}
+        >
+            {/*<GrainOverlay />*/}
+            <ModalBgImage
+                variants={modalbgimageVars}
+            />
+            <ModalBgRetinal
+                style={{
+                    x: '-50%',
+                    y: '-50%',
+                    opacity: opacity,
+                    rotate: rotation
+                }}
+            />
+            <ModalBootupText
+                custom={bootupLogsLeft[0]?.length * bootupLogsLeft[0]?.stagger}
+                variants={bootuptextVars}
+                sx={{
+                    bottom: 0,
+                    paddingBottom: '16px', paddingLeft: '16px',
+                    flexDirection: 'column-reverse', alignItems: 'flex-start',
+                    color: selectedItem.cardcolors[1],
+                }}
+            >
+                {bootupLogsLeft.map((text, i) => (
+                    <BootupWord
+                        key={i}
+                        custom={{ length: text.length, stagger: text.stagger }}
+                        variants={bootupwordVars}
+                    >
+                        {text.text?.split('').map((letter, i) => (
+                            <BootupLetter
+                                key={i}
+                                custom={text.stagger}
+                                variants={bootupletterVars}
+                            >
+                                {letter}
+                            </BootupLetter>
+                        ))}
+                    </BootupWord>
+                ))}
+            </ModalBootupText>
+            <ModalBootupText
+                custom={bootupLogsRight[0]?.length * bootupLogsRight[0]?.stagger}
+                variants={bootuptextVars}
+                sx={{
+                    top: 0, right: 0,
+                    paddingTop: '16px', paddingRight: '16px',
+                    flexDirection: 'column', alignItems: 'flex-start',
+                    direction: 'rtl',
+                    color: selectedItem.cardcolors[1],
+                }}
+            >
+                {bootupLogsRight.map((text, i) => (
+                    <BootupWord
+                        key={i}
+                        custom={{ length: text.length, stagger: text.stagger }}
+                        variants={bootupwordVars}
+                    >
+                        {text.text?.split('').map((letter, i) => (
+                            <BootupLetter
+                                key={i}
+                                custom={text.stagger}
+                                variants={bootupletterVars}
+                            >
+                                {letter}
+                            </BootupLetter>
+                        ))}
+                    </BootupWord>
+                ))}
+            </ModalBootupText>
+        </ModalBg>
+    );
+});
+
+const startRadius = 90;
+const nodeRadius = 170;
 const centerX = 170;
 const centerY = 170;
 
-const getRadialPositions = (count) => {
+const getPositionsConfig = (count, jitterAmount = 20) => {
     return Array.from({ length: count }).map((_, i) => {
         const angle = (i * (360 / count) - 90) * (Math.PI / 180);
+
+        const jitterX = Math.sin(i * 12.34) * jitterAmount;
+        const jitterY = Math.cos(i * 56.78) * jitterAmount;
+
+        const cosAngle = Math.cos(angle);
+        const sinAngle = Math.sin(angle);
+
+        const startx = centerX + startRadius * cosAngle;
+        const starty = centerY + startRadius * sinAngle;
+        const endx = centerX + (nodeRadius * cosAngle) + jitterX;
+        const endy = centerY + (nodeRadius * sinAngle) + jitterY;
+
+        const midx = startx + (endx - startx) / 2;
+        const pathdata = `M ${startx} ${starty} L ${midx} ${starty} L ${midx} ${endy} L ${endx} ${endy}`;
+
         return {
-            x: centerX + radius * Math.cos(angle),
-            y: centerY + radius * Math.sin(angle),
+            startx: startx,
+            starty: starty,
+            endx: endx,
+            endy: endy,
+            pathdata: pathdata,
+            midx: midx,
         };
     });
 };
 
 const ICON_LAYOUTS = SKILLS_DATA.reduce((acc, skill) => {
-    acc[skill.title] = getRadialPositions(skill.icons.length);
+    acc[skill.title] = getPositionsConfig(skill.icons.length);
     return acc;
 }, {});
 
@@ -2108,10 +2512,12 @@ const StyledCard = styled(Box)(({ theme }) => ({
 
 const CardContentContainer = styled(MotionBox)(({ theme }) => ({
     position: 'relative',
-    width: `${radius * 2}px`,
-    height: `${radius * 2}px`,
+    width: `${nodeRadius * 2}px`,
+    height: `${nodeRadius * 2}px`,
     borderRadius: 'inherit',
     backfaceVisibility: "hidden",
+    perspective: '1000px',
+    transformStyle: 'preserve-3d',
 }));
 
 const cardcontentVars = {
@@ -2133,14 +2539,24 @@ const AnimatedCard = memo(function AnimatedCard({ content = {} }) {
 
     const positions = ICON_LAYOUTS[content.title] || [];
 
-    const positionedIcons = useMemo(() => {
+    const positionsConfig = useMemo(() => {
         if (!content.icons) return [];
 
         return content.icons.map((icon, i) => ({
             ...icon,
-            ...positions[i]
+            ...positions[i],
+            color: content.cardcolors[1],
         }));
     }, [content.title]);
+
+    const transitionsConfig = useMemo(() =>
+        Array.from({ length: positionsConfig.length }, () =>
+        ({
+            delay: layoutduration + 0.2 + Math.random(),
+            duration: 1.8 + Math.random(),
+            ease: 'easeOut',
+        }),
+        ), []);
 
     const { manual, system } = useAnimateContext();
     const mode = system || manual;
@@ -2165,153 +2581,112 @@ const AnimatedCard = memo(function AnimatedCard({ content = {} }) {
                 initial={animationConfig.initial}
                 animate={animationConfig.animate}
             >
+                <CircuitLines
+                    positionsConfig={positionsConfig}
+                    transitionsConfig={transitionsConfig}
+                />
+                {positionsConfig.map((icon, i) => (
+                    <AnimatedIcon key={i} icon={icon} i={i}
+                        handleHovered={handleHovered}
+                        transition={transitionsConfig[i]}
+                    />
+                ))}
                 {hoveredIcon &&
                     <CenterIcon icon={hoveredIcon} content={content}
                         animationConfig={animationConfig}
                     />
                 }
-                {positionedIcons.map((icon, i) => (
-                    <AnimatedIcon key={i} icon={icon} i={i}
-                        content={content} handleHovered={handleHovered}
-                    />
-                ))}
             </CardContentContainer>
         </StyledCard>
     );
 });
 
-const CenterIconContainer = styled(MotionBox)(({ theme }) => ({
-    position: 'absolute',
-    borderRadius: '50%',
-    top: '50%', left: '50%',
-    transform: 'translate(-50%, -100%)',
-    display: 'flex', justifyContent: 'center', alignItems: 'center',
-    backfaceVisibility: "hidden",
-}));
-
-const HoverGlow = styled(MotionBox)(({ theme }) => ({
+const CircuitLinesContainer = styled(MotionSvg)(({ theme }) => ({
     position: 'absolute',
     top: 0, left: 0,
     width: '100%', height: '100%',
-    borderRadius: 'inherit',
-    filter: 'blur(12px)',
+    overflow: 'visible',
+    pointerEvents: 'none',
     backfaceVisibility: "hidden",
 }));
 
-const CenterAvatarContainer = styled(MotionBox)(({ theme }) => ({
-    position: 'relative',
-    width: 56, height: 56,
-    borderRadius: 'inherit',
-    [theme.breakpoints.down('sm')]: {
-        width: 48, height: 48,
+const circuitVars = {
+    initial: {
+        pathLength: 0, opacity: 0
     },
-    display: 'flex', justifyContent: 'center', alignItems: 'center',
-    backfaceVisibility: "hidden",
-}));
-
-const AnimatedText = styled(MotionTypography)(({ theme }) => ({
-    position: 'absolute',
-    top: '170%',
-    pt: theme.spacing(1),
-    fontSize: '18px',
-    fontWeight: 700,
-    letterSpacing: `0.07em`,
-    textTransform: 'uppercase',
-    fontFamily: 'DM Serif Display',
-    textAlign: 'center',
-    backfaceVisibility: "hidden",
-    [theme.breakpoints.down('sm')]: {
-        fontSize: '16px',
-    },
-}));
-
-const centerTransition = { type: "spring", stiffness: 300, damping: 20 };
-
-const centerVars = {
-    initial: { opacity: 0 },
-    animate: {
+    animate: (transition = {}) => ({
+        pathLength: 1,
         opacity: 1,
-        transition: { delay: 0 }
-    },
-    static: { opacity: 1, transition: { duration: 0 } },
+        transition: transition
+    }),
+    static: { pathLength: 1, opacity: 1 }
 };
 
-const centerGlowVars = {
-    initial: { opacity: 0, scale: 1 },
-    animate: {
-        opacity: 1, scale: 2,
-        transition: { delay: 0.35 }
+const circuitendVars = {
+    initial: {
+        opacity: 0
     },
-    static: { opacity: 1, scale: 1.5, transition: { duration: 0 } },
+    animate: (transition = {}) => ({
+        opacity: [0, 0.2, 1],
+        transition: {
+            ...transition,
+            times: [0, 0.8, 1]
+        }
+    }),
+    static: { opacity: 1 }
 };
 
-const centerAvatarVars = {
-    initial: { opacity: 0, scale: 1.5, y: -50 },
-    animate: {
-        opacity: 1, scale: 1.5, y: 0,
-        transition: centerTransition
-    },
-    static: { opacity: 1, scale: 1.5, y: 0, transition: { duration: 0 } },
-};
-
-const centerTextVars = {
-    initial: { opacity: 0, scale: 1.5, y: 50 },
-    animate: {
-        opacity: 1, scale: 1.5, y: 0,
-        transition: centerTransition
-    },
-    static: { opacity: 1, scale: 1.5, y: 0, transition: { duration: 0 } },
-};
-
-const CenterIcon = memo(function CenterIcon({ icon, content, animationConfig }) {
+const CircuitLines = memo(function CircuitLines({ positionsConfig, transitionsConfig }) {
 
     return (
-        <CenterIconContainer
-            variants={centerVars}
-            initial={animationConfig.initial}
-            animate={animationConfig.animate}
-        >
-            <HoverGlow
-                variants={centerGlowVars}
-                sx={{
-                    background: content.cardcolors[2],
-                }}
-            />
-            <CenterAvatarContainer
-                variants={centerAvatarVars}
-            >
-                <GlassOverlay />
-                <StyledAvatar
-                    src={icons[`../icons/skills/${icon.file}.svg`]?.default}
-                    alt={icon.name}
-                />
-            </CenterAvatarContainer>
-            <AnimatedText
-                variants={centerTextVars}
-                sx={{
-                    color: content.color,
-                }}
-            >
-                {icon.name}
-            </AnimatedText>
-        </CenterIconContainer >
+        <CircuitLinesContainer>
+            {positionsConfig.map((v, i) => (
+                <>
+                    <MotionPath
+                        key={i}
+                        custom={transitionsConfig[i]}
+                        variants={circuitVars}
+                        d={v.pathdata}
+                        fill="none"
+                        stroke={v.color}
+                        strokeWidth="1.5"
+                        strokeLinejoin="round"
+                    />
+                    <circle
+                        key={`s-${i}`}
+                        cx={v.startx}
+                        cy={v.starty}
+                        r={2}
+                        fill="none"
+                        stroke={v.color}
+                        strokeWidth={1}
+                    />
+                    <MotionCircle
+                        key={`e-${i}`}
+                        custom={transitionsConfig[i]}
+                        variants={circuitendVars}
+                        cx={v.endx}
+                        cy={v.endy}
+                        r={2}
+                        fill={v.color}
+                    />
+                </>
+            ))}
+        </CircuitLinesContainer>
     );
 });
 
-const IconContainer = styled(MotionBox)(({ theme }) => ({
+const NodeContainer = styled(MotionBox)(({ theme }) => ({
     position: 'absolute',
-    borderRadius: '50%',
+    //borderRadius: '50%',
     backfaceVisibility: "hidden",
 }));
 
-const AvatarContainer = styled(MotionBox)(({ theme }) => ({
+const NodeEntrance = styled(MotionBox)(({ theme }) => ({
     position: 'relative',
-    width: 56, height: 56,
+    display: 'flex', justifyContent: 'center', alignItems: 'center',
     borderRadius: 'inherit',
     backfaceVisibility: "hidden",
-    [theme.breakpoints.down('sm')]: {
-        width: 48, height: 48,
-    },
 }));
 
 const HoverShadow = styled(MotionBox)(({ theme }) => ({
@@ -2337,71 +2712,41 @@ const HoverWrapper = styled(MotionBox)(({ theme }) => ({
     zIndex: 1,
 }));
 
-const StyledAvatar = styled('img')(({ theme }) => ({
-    width: 48, height: 48,
-    background: 'transparent',
-    borderRadius: 'inherit',
-    [theme.breakpoints.down('sm')]: {
-        width: 40, height: 40,
-    },
-    pointerEvents: 'none',
-    zIndex: 2,
-}));
-
-const IconText = styled(Typography)(({ theme }) => ({
+const IconText = styled(MotionBox)(({ theme }) => ({
     position: 'absolute',
-    top: '100%',
-    pt: theme.spacing(1),
-    whiteSpace: 'nowrap',
-    fontSize: '18px',
+    display: 'flex', flexDirection: 'column',
+    fontSize: 'clamp(16px, 2vw + 1rem, 18px)',
     fontWeight: 'bold',
-    fontFamily: 'Cormorant Garamond',
+    fontFamily: 'Spectral',
     textAlign: 'center',
     [theme.breakpoints.down('sm')]: {
         fontSize: '16px',
     },
-    pointerEvents: 'none',
+    cursor: 'default',
 }));
 
-const iconTransition = { type: "spring", stiffness: 160, damping: 10 };
+const WordBlock = styled('div')(({
+    display: 'flex',
+    justifyContent: 'center',
+}));
 
 const entranceVars = {
     initial: {
-        opacity: 0, scale: 0.4, y: 0,
+        opacity: 0,
     },
-    animate: (i) => ({
-        opacity: 1, scale: 1, y: 0,
+    animate: (transition = {}) => ({
+        opacity: 1,
         transition: {
-            delay: layoutduration + 0.08 * i,
-            ...iconTransition
+            ...transition,
         }
     }),
-    visible: {
-        opacity: 1, scale: 1, y: 0,
-        transition: { delay: 0, duration: 0.15 }
-    },
-    static: { opacity: 1, scale: 1, y: 0 },
+    static: { opacity: 1, },
 };
 
-const AnimatedIcon = memo(function AnimatedIcon({ icon, i, content, handleHovered }) {
-
-    const scaleValue = useMotionValue(1);
-
-    const springScale = useSpring(scaleValue, {
-        stiffness: 260,
-        damping: 10,
-        restDelta: 0.001
-    });
-
-    const inverseOpacity = useTransform(springScale, [1, 1.1], [0.8, 0.4]);
+const AnimatedIcon = memo(function AnimatedIcon({ icon, i, handleHovered, transition }) {
 
     const { manual, system } = useAnimateContext();
     const isNormal = ((system || manual) === 'normal');
-
-    const handleHover = useCallback((scale) => {
-        if (!isNormal) return;
-        scaleValue.set(scale);
-    }, [isNormal]);
 
     const animationConfig = useMemo(() => {
         return {
@@ -2409,60 +2754,268 @@ const AnimatedIcon = memo(function AnimatedIcon({ icon, i, content, handleHovere
         };
     }, [isNormal]);
 
+    const { textX, textY } = useMemo(() => {
+        const horizontalTextAlignment = icon.startx - icon.midx !== 0;
+
+        let x = 0;
+        let y = 0;
+
+        if (horizontalTextAlignment) {
+            x = (icon.endx < icon.midx) ? '-50%' : '50%';
+            y = 0;
+        } else {
+            x = 0;
+
+            const isPointingUp = icon.endy < icon.starty;
+            if (isPointingUp) {
+                y = '-50%';
+            } else {
+                y = '50%';
+            }
+        }
+
+        return { textX: x, textY: y };
+    }, [icon.endx, icon.midx, icon.startx, icon.endy]);
+
+    const handleTap = useCallback((e, v) => {
+        e.stopPropagation();
+        handleHovered(v);
+    }, []);
+
     return (
-        <IconContainer
+        <NodeContainer
+            tap-interactive="true"
             whileHover={{ zIndex: 5 }}
+            onTap={(e) => handleTap(e, icon)}
             onHoverStart={() => handleHovered(icon)}
             onHoverEnd={() => handleHovered(null)}
             style={{
-                x: icon.x, y: icon.y,
-                translateX: "-50%",
-                translateY: "-50%",
+                x: icon.endx,
+                y: icon.endy,
+                translateX: '-50%',
+                translateY: '-50%',
             }}
         >
-            <AvatarContainer
-                variants={entranceVars}
-                custom={i}
-                initial='initial'
-                animate={animationConfig.animate}
-
+            <NodeEntrance
+            //custom={transition}
+            //variants={entranceVars}
+            //initial='initial'
+            //animate={animationConfig.animate}
             >
-                <HoverShadow
+                <IconText
                     style={{
-                        scale: springScale,
-                        opacity: inverseOpacity,
-                    }}
-                />
-                <HoverWrapper
-                    onHoverStart={() => handleHover(1.1)}
-                    onHoverEnd={() => handleHover(1)}
-                    whileTap={{ scale: 0.95 }}
-                    style={{
-                        scale: springScale,
+                        translateX: textX,
+                        translateY: textY,
                     }}
                 >
-                    {/*<HoverGlow
-                    initial={{ opacity: 0 }}
-                    whileHover={{ opacity: 1 }}
-                    sx={{
-                        backgroundColor: content.cardcolors[1],
-                    }}
-                />*/}
-                    <GlassOverlay />
-                    <StyledAvatar
-                        src={icons[`../icons/skills/${icon.file}.svg`]?.default}
-                        alt={icon.name}
-                    />
-                    <IconText
-                        sx={{
-                            color: content.color,
-                        }}
-                    >
-                        {icon.name}
-                    </IconText>
-                </HoverWrapper>
-            </AvatarContainer>
-        </IconContainer>
+                    {icon.name.split(' ').map((word, i) => (
+                        <WordBlock key={i} >
+                            {word.split('').map((char, i) => (
+                                <FallingLetter
+                                    key={i}
+                                    char={char}
+                                    color={icon.color}
+                                    delay={i * 200}
+                                />
+                            ))}
+                        </WordBlock>
+                    ))}
+                </IconText>
+            </NodeEntrance>
+        </NodeContainer>
+    );
+});
+
+const AnimatedLetter = styled(MotionSpan)(({
+    display: 'inline-block',
+    width: '0.8em',
+    textAlign: 'center',
+}));
+
+const letterentranceVars = {
+    initial: ({ direction, height }) => ({
+        opacity: 0,
+        y: direction * 15 * (height + 1)
+    }),
+    animate: ({ direction, height }) => ({
+        opacity: 1,
+        y: direction * 15 * height,
+        transition: { duration: 0.3 }
+    }),
+    static: { opacity: 1, y: 0 },
+};
+
+const FallingLetter = ({ char, color, delay }) => {
+    const [displayChar, setDisplayChar] = useState('');
+    const [height, setHeight] = useState(4);
+    const [isLocked, setIsLocked] = useState(false);
+
+    const direction = useMemo(() => (Math.random() > 0.5 ? 1 : -1), []);
+
+    useEffect(() => {
+        const timeoutIds = [];
+
+        const sequence = Array.from({ length: 5 }).map((_, i) => {
+            if (i === 4) return { char: char, delay: i * 300 };
+            return { char: GLYPHS[Math.floor(Math.random() * GLYPHS.length)], delay: i * 300 };
+        });
+
+
+        sequence.forEach((step, index) => {
+            const id = setTimeout(() => {
+                setDisplayChar(step.char);
+                setHeight(4 - index);
+                if (index === sequence.length - 1) setIsLocked(true);
+            }, delay + step.delay);
+
+            timeoutIds.push(id);
+        });
+
+        return () => {
+            timeoutIds.forEach(clearTimeout);
+        };
+    }, [char, delay]);
+
+    return (
+        <AnimatedLetter
+            custom={{ direction: direction, height: height }}
+            variants={letterentranceVars}
+            initial="initial"
+            animate="animate"
+            style={{
+                color: isLocked ? color : '#acd9ec',
+            }}
+        >
+            {displayChar}
+        </AnimatedLetter>
+    );
+};
+
+const CenterContainer = styled(MotionBox)(({ theme }) => ({
+    position: 'absolute',
+    borderRadius: '50%',
+    top: '50%', left: '50%',
+    transform: 'translate(-50%, -50%)',
+    display: 'flex', justifyContent: 'center', alignItems: 'center',
+    backfaceVisibility: "hidden",
+}));
+
+const HoverGlow = styled(MotionBox)(({ theme }) => ({
+    position: 'absolute', inset: 0,
+    borderRadius: 'inherit',
+    filter: 'blur(12px)',
+    backfaceVisibility: "hidden",
+}));
+
+const CenterIconContainer = styled(MotionBox)(({ theme }) => ({
+    position: 'relative',
+    width: 56, height: 56,
+    display: 'flex', justifyContent: 'center', alignItems: 'center',
+    borderRadius: 'inherit',
+    opacity: 0.6,
+    [theme.breakpoints.down('sm')]: {
+        width: 48, height: 48,
+    },
+    backfaceVisibility: "hidden",
+}));
+
+const StyledIcon = styled('img')(({ theme }) => ({
+    width: 48, height: 48,
+    background: 'transparent',
+    borderRadius: 'inherit',
+    [theme.breakpoints.down('sm')]: {
+        width: 40, height: 40,
+    },
+    pointerEvents: 'none',
+    backfaceVisibility: "hidden",
+}));
+
+const AnimatedText = styled(MotionBox)(({ theme }) => ({
+    position: 'absolute',
+    fontSize: '18px',
+    letterSpacing: `0.07em`,
+    textTransform: 'Capitalize',
+    fontFamily: 'DM Serif Display',
+    color: '#ffffff',
+    textAlign: 'center',
+    backfaceVisibility: "hidden",
+    [theme.breakpoints.down('sm')]: {
+        fontSize: '16px',
+    },
+    textShadow: `
+        0 0 4px rgba(0, 0, 0, 0.8),
+        1px 0 0 rgba(255, 0, 255, 0.7), 
+        -1px 0 0 rgba(0, 255, 255, 0.7)
+    `,
+}));
+
+const centerTransition = { type: "spring", stiffness: 300, damping: 20 };
+
+const centerVars = {
+    initial: { opacity: 0 },
+    animate: {
+        opacity: 1,
+        transition: { delay: 0 }
+    },
+    static: { opacity: 1, transition: { duration: 0 } },
+};
+
+const centerGlowVars = {
+    initial: { opacity: 0, scale: 1 },
+    animate: {
+        opacity: 0.2, scale: 2,
+        transition: { delay: 0.35 }
+    },
+    static: { opacity: 1, scale: 1.5, transition: { duration: 0 } },
+};
+
+const centericonVars = {
+    initial: { opacity: 0, scale: 1.5, y: -50 },
+    animate: {
+        opacity: 0.6, scale: 1.5, y: 0,
+        transition: centerTransition
+    },
+    static: { opacity: 1, scale: 1.5, y: 0, transition: { duration: 0 } },
+};
+
+const centertextVars = {
+    initial: { opacity: 0, scale: 1.5, y: 50 },
+    animate: {
+        opacity: 1, scale: 1.5, y: 0,
+        transition: centerTransition
+    },
+    static: { opacity: 1, scale: 1.5, y: 0, transition: { duration: 0 } },
+};
+
+const CenterIcon = memo(function CenterIcon({ icon, content, animationConfig }) {
+
+    return (
+        <CenterContainer
+            variants={centerVars}
+            initial={animationConfig.initial}
+            animate={animationConfig.animate}
+        >
+            <HoverGlow
+                variants={centerGlowVars}
+                sx={{
+                    background: content.cardcolors[2],
+                }}
+            />
+            <CenterIconContainer
+                variants={centericonVars}
+            >
+                <GlassOverlay />
+                <StyledIcon
+                    src={icons[`../icons/skills/${icon.file}.svg`]?.default}
+                    alt={icon.name}
+                />
+            </CenterIconContainer>
+            <AnimatedText
+                variants={centertextVars}
+            >
+                {icon.desc}
+            </AnimatedText>
+        </CenterContainer >
     );
 });
 
@@ -2487,6 +3040,17 @@ const SvgDefs = memo(function SvgDefs() {
                 >
                     <stop offset="0%" stopColor="rgba(255, 255, 255, 1)" />
                     <stop offset="100%" stopColor="rgba(255, 255, 255, 0)" />
+                </radialGradient>
+                <radialGradient
+                    id="shadowGradient"
+                    gradientUnits="objectBoundingBox"
+                    cx="0.15" cy="0.15"
+                    fx="0.15" fy="0.15"
+                    r="0.8"
+                >
+                    <stop offset="0%" stopColor="rgba(0, 0, 0, 1)" />
+                    <stop offset="60%" stopColor="rgba(0, 0, 0, 1)" />
+                    <stop offset="100%" stopColor="rgba(0, 0, 0, 0)" />
                 </radialGradient>
             </defs>
         </svg>
