@@ -2,7 +2,10 @@ import React, { useState, useEffect, useRef, useMemo, memo } from 'react';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import { styled, useTheme } from '@mui/material/styles';
-import { motion, useMotionValue, useTransform, animate } from "motion/react";
+import {
+  motion, useMotionValue, useMotionValueEvent,
+  useTransform, animate, useInView
+} from "motion/react";
 import SkillsCard from './SkillsCard';
 import useSectionReporting from '../functions/useSectionReporting';
 import GrainOverlay from './GrainOverlay';
@@ -110,11 +113,6 @@ const NavigationBox = styled(MotionBox)(({ theme }) => ({
   },
 }));
 
-const containerVars = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1 }
-};
-
 const calculateWordOffsets = (data) => {
   let count = 0;
   return data.map((v) => {
@@ -129,17 +127,13 @@ const WORD_OFFSETS = calculateWordOffsets(NAVIGATION_DATA);
 const AnimatedNavigation = memo(function AnimatedNavigation({ handleScrollsection }) {
 
   return (
-    <NavigationBox
-      variants={containerVars}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: false, amount: 0.5 }}
-    >
+    <NavigationBox>
       {NAVIGATION_DATA.map((v, i) => (
         <AnimatedWord
           key={v.id}
           item={v}
-          offset={WORD_OFFSETS[i]}
+          //offset={WORD_OFFSETS[i]}
+          offset={i * 0.65}
           handleScrollsection={handleScrollsection}
         />
       ))}
@@ -188,17 +182,6 @@ const LetterWrapper = styled(MotionBox)(({ theme }) => ({
 const animationdelay = 2;
 const letterStagger = 0.2;
 
-const wordVars = {
-  hidden: { opacity: 0 },
-  visible: (offset) => ({
-    opacity: 1,
-    transition: {
-      delayChildren: offset * letterStagger + animationdelay,
-      staggerChildren: letterStagger
-    }
-  })
-};
-
 const AnimatedWord = memo(function AnimatedWord({ item, offset, handleScrollsection }) {
 
   const hoverVal = useMotionValue(0);
@@ -217,10 +200,7 @@ const AnimatedWord = memo(function AnimatedWord({ item, offset, handleScrollsect
   };
 
   return (
-    <WordWrapper
-      variants={wordVars}
-      custom={offset}
-    >
+    <WordWrapper>
       <HoverWord
         onHoverStart={handleHoverStart}
         onHoverEnd={handleHoverEnd}
@@ -237,6 +217,7 @@ const AnimatedWord = memo(function AnimatedWord({ item, offset, handleScrollsect
             <LetterAnimation
               letter={l}
               delay={(offset + i) * letterStagger + animationdelay}
+              hoverVal={hoverVal}
             />
           </LetterWrapper>
         ))}
@@ -257,39 +238,55 @@ const AnimatedLetter = styled(MotionBox)({
   whiteSpace: 'pre',
 });
 
-const letterVars = {
-  hidden: {
-    opacity: 0,
-    filter: 'blur(2px)',
-  },
-  visible: {
-    opacity: [0, 1, 1],
-    filter: ['blur(2px)', 'blur(2px)', 'blur(0px)'],
-    transition: {
-      duration: 0.65 + 1,
-      ease: "easeOut",
-      times: [0, 0.1, 1]
-    }
-  }
-};
-
 const GLYPHS = `アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌ
   フムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン
   01234567789ABCDEFGHIJKLMNOPQRSTUVWXYZ_&*+!?@#`;
 const getRandomGlyph = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
 
-const LetterAnimation = memo(function LetterAnimation({ letter, delay }) {
+const decryptTransition = { duration: 0.65, ease: "easeInOut" };
+const hoverTransition = { duration: 0.35, ease: "easeInOut" };
+
+const LetterAnimation = memo(function LetterAnimation({ letter, delay, hoverVal }) {
   const [displayLetter, setDisplayLetter] = useState(getRandomGlyph());
   const [isLocked, setIsLocked] = useState(false);
 
+  const eleRef = useRef(null);
   const timeoutRef = useRef(null);
   const intervalRef = useRef(null);
 
+  const isInView = useInView(eleRef, { once: false, amount: 0.2 });
+  const entryProgress = useMotionValue(0);
+  const opacity = useMotionValue(0);
+  const filter = useMotionValue('blur(2px)');
+  useMotionValueEvent(entryProgress, "change", (latest) => {
+    if (!isLocked) {
+      opacity.set(latest);
+      filter.set(latest === 1 ? 'blur(0px)' : 'blur(2px)');
+    }
+  });
+
+  useMotionValueEvent(hoverVal, "change", (latest) => {
+    if (latest === 1) {
+      setIsLocked(true);
+      setDisplayLetter(letter);
+
+      clearTimeout(timeoutRef.current);
+      clearTimeout(intervalRef.current);
+
+      animate(opacity, 1, { duration: 0.35, ease: "easeOut" });
+      animate(filter, 'blur(0px)', { duration: 0 });
+    }
+  });
+
   const startDecryption = () => {
+    if (isLocked) return;
+
     clearTimeout(timeoutRef.current);
     clearTimeout(intervalRef.current);
 
     timeoutRef.current = setTimeout(() => {
+      animate(entryProgress, 1, decryptTransition);
+
       let iteration = 0;
       const maxIterations = 10;
 
@@ -318,11 +315,26 @@ const LetterAnimation = memo(function LetterAnimation({ letter, delay }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (isInView) {
+      startDecryption();
+    }
+    return () => {
+      setIsLocked(false);
+      entryProgress.set(0);
+      opacity.set(0);
+      filter.set('blur(2px)');
+      clearTimeout(timeoutRef.current);
+      clearTimeout(intervalRef.current);
+    };
+  }, [isInView]);
+
   return (
     <AnimatedLetter
-      variants={letterVars}
-      onAnimationStart={startDecryption}
+      ref={eleRef}
       style={{
+        opacity: opacity,
+        filter: filter,
         color: isLocked ? '#ffffff' : 'inherit',
       }}
     >

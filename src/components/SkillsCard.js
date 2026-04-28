@@ -2,13 +2,11 @@ import React, {
     useEffect, useLayoutEffect, useState, useRef,
     useCallback, useMemo, memo
 } from 'react';
-import Typography from '@mui/material/Typography';
 import { styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import {
     motion, AnimatePresence, useMotionValue, useMotionValueEvent,
     useSpring, useTransform, animate, useInView,
-    time
 } from "motion/react";
 import Box from '@mui/material/Box';
 import { useAnimateContext } from './AnimateContext';
@@ -23,6 +21,8 @@ import wireframe3 from '../pics/wireframe3.webp';
 import wireframe4 from '../pics/wireframe4.webp';
 import modalbg from '../pics/hudbg.webp';
 import modalbgretinal from '../pics/hudretinal.webp';
+import { getWindowDimRef, getWindowWidth } from '../functions/getWindowDim';
+import ionizationmask from '../pics/ionizationmask2.png';
 
 
 const MotionBox = motion.create(Box);
@@ -271,9 +271,7 @@ const TRANSITIONCONFIG = {
 
 export default function SkillsCard() {
 
-    const lesserThanSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
-
-    const { manual, system } = useAnimateContext();
+    const { manual, system, lesserThanSm } = useAnimateContext();
     const mode = system || manual;
 
     const animationConfig = useMemo(() => {
@@ -287,11 +285,13 @@ export default function SkillsCard() {
 
     const x = useMotionValue(0);
     const y = useMotionValue(0);
+    const windowDimRef = getWindowDimRef();
 
     useEffect(() => {
         const handleGlobalMouseMove = (e) => {
-            x.set(e.clientX / window.innerWidth);
-            y.set(e.clientY / window.innerHeight);
+            if (!windowDimRef?.current) return;
+            x.set(e.clientX / windowDimRef.current.w);
+            y.set(e.clientY / windowDimRef.current.h);
         };
 
         window.addEventListener('mousemove', handleGlobalMouseMove);
@@ -324,7 +324,6 @@ export default function SkillsCard() {
             <ParallaxShapes
                 mouseX={x}
                 mouseY={y}
-
             />
             <BentoGrid
                 globalMouseX={x}
@@ -1151,19 +1150,24 @@ const BentoGrid = memo(function BentoGrid({ globalMouseX, globalMouseY }) {
     const selectedItem = useMemo(() => {
         if (!selectedId) return {};
 
-        return SKILLS_DATA.find(i => i.id == selectedId) || {};
+        return SKILLS_DATA.find(i => i.id === selectedId) || {};
     }, [selectedId]);
+
+    const selectedIdRef = useRef(selectedId);
+    useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
 
     const handleItemSelect = useCallback((id) => {
-        if (id == null) {
-            setLastSelectedId(selectedId);
+        if (id === null) {
+            setLastSelectedId(selectedIdRef.current);
         }
         setSelectedId(id);
-    }, [selectedId]);
+    }, []);
 
+    const lastSelectedIdRef = useRef(lastSelectedId);
+    useEffect(() => { lastSelectedIdRef.current = lastSelectedId; }, [lastSelectedId]);
     const handleGridAnimationComplete = useCallback((id) => {
-        if (id == lastSelectedId) setLastSelectedId(null);
-    }, [lastSelectedId]);
+        if (id === lastSelectedIdRef.current) setLastSelectedId(null);
+    }, []);
 
     return (
         <>
@@ -1363,7 +1367,7 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, globalMouseX
 
         timerRef.current = setTimeout(() => {
             setIsEntrancing(false);
-        }, 2000);
+        }, 1000);
     }, []);
 
     const handleViewportLeave = useCallback(() => {
@@ -1380,9 +1384,7 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, globalMouseX
         };
     }, []);
 
-    const lesserThanSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
-
-    const { manual, system } = useAnimateContext();
+    const { manual, system, lesserThanSm } = useAnimateContext();
     const mode = system || manual;
 
     const animationConfig = useMemo(() => {
@@ -1398,14 +1400,15 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, globalMouseX
         };
     }, [mode]);
 
+    const windowDimRef = getWindowDimRef();
     const itemRef = useRef(null);
     const rectRef = useRef(null);
 
     const localX = useTransform(globalMouseX, (latestX) => {
-        if (!itemRef.current || !rectRef.current) return 0;
+        if (!windowDimRef.current || !itemRef.current || !rectRef.current) return 0;
         const rect = rectRef.current;
 
-        const pixelX = latestX * window.innerWidth;
+        const pixelX = latestX * windowDimRef.current.w;
 
         const isInside = pixelX >= rect.left && pixelX <= rect.right;
         if (!isInside) return 0;
@@ -1417,10 +1420,10 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, globalMouseX
     });
 
     const localY = useTransform(globalMouseY, (latestY) => {
-        if (!itemRef.current || !rectRef.current) return 0;
+        if (!windowDimRef.current || !itemRef.current || !rectRef.current) return 0;
         const rect = rectRef.current;
 
-        const pixelY = latestY * window.innerHeight;
+        const pixelY = latestY * windowDimRef.current.h;
 
         const isInside = pixelY >= rect.top && pixelY <= rect.bottom;
         if (!isInside) return 0;
@@ -1455,14 +1458,14 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, globalMouseX
     const rotateY = useTransform([springY, tiltStrength], ([val, s]) => val * s);
 
     const mousePX = useTransform(globalMouseX, (v) => {
-        if (!rectRef.current) return '0px';
-        const pixelX = (v * window.innerWidth) - rectRef.current.left;
+        if (!windowDimRef.current || !rectRef.current) return '0px';
+        const pixelX = (v * windowDimRef.current.w) - rectRef.current.left;
         return `${pixelX}px`;
     });
 
     const mousePY = useTransform(globalMouseY, (v) => {
-        if (!rectRef.current) return '0px';
-        const pixelY = (v * window.innerHeight) - rectRef.current.top;
+        if (!windowDimRef.current || !rectRef.current) return '0px';
+        const pixelY = (v * windowDimRef.current.h) - rectRef.current.top;
         return `${pixelY}px`;
     });
 
@@ -1521,15 +1524,57 @@ const GridItemContent = styled(MotionBox)(({ theme }) => ({
     },
 }));
 
-const WireframeBg = styled(MotionBox)(({ theme }) => ({
+const WireframeHover = styled(MotionBox)(({ theme }) => ({
     position: 'absolute', inset: 0,
     borderRadius: 'inherit',
-    backgroundSize: 'contain',
+    transformStyle: "preserve-3d",
+    pointerEvents: 'none',
+    backfaceVisibility: "hidden",
+}));
+
+const Wireframe = styled(MotionBox)(({ theme }) => ({
+    position: 'absolute', inset: 0,
+    borderRadius: 'inherit',
+    backgroundSize: '90% 90%',
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',
     outline: "1px solid transparent",
+    transformStyle: "preserve-3d",
     pointerEvents: 'none',
     backfaceVisibility: "hidden",
+    maskImage: `
+        linear-gradient(to right, transparent 10%, black 20%, black 80%, transparent 90%), 
+        linear-gradient(to bottom, transparent 10%, black 20%, black 80%, transparent 90%)`,
+    WebkitMaskImage: `
+        linear-gradient(to right, transparent 10%, black 20%, black 80%, transparent 90%), 
+        linear-gradient(to bottom, transparent 10%, black 20%, black 80%, transparent 90%)`,
+    maskComposite: 'intersect',
+    WebkitMaskComposite: 'source-in',
+    maskSize: '100% 100%',
+    WebkitMaskSize: '100% 100%',
+}));
+
+const IonizationLayer = styled(MotionBox)({
+    position: 'fixed', inset: 0,
+    zIndex: 10,
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
+    willChange: 'transform, opacity, mask-size',
+    transform: 'translateZ(0)',
+
+    maskImage: `url(${ionizationmask})`,
+    maskRepeat: 'repeat',
+    maskPosition: 'center',
+    WebkitMaskPosition: 'center',
+    maskSize: '100px',
+});
+
+const MaskedImage = styled(MotionBox)(({ theme }) => ({
+    width: '100%', height: '100%',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
 }));
 
 const TextContainer = styled(MotionBox)(({ theme, align = 'auto' }) => ({
@@ -1642,6 +1687,7 @@ const SubHeader = styled(MotionBox)(({ theme }) => ({
 }));
 
 const pagedelay = 1.6;
+const wireframez = 90;
 
 const itemcontentVars = {
     initial: {
@@ -1668,27 +1714,56 @@ const itemcontentVars = {
     static: { z: 0, },
 };
 
+const scale = 1.4;
 const wireframeVars = {
     initial: {
-        opacity: 0, z: 0,
+        opacity: 0, scale: scale, z: wireframez,
         transition: TRANSITIONCONFIG.hoverbgend,
     },
     hover: {
-        opacity: [0, 0.4, 0.2, 0.5, 0.4, 0.6],
-        z: 60,
+        opacity: [0, 0, 0.6],
+        scale: 1,
+        z: wireframez,
         transition: {
-            z: TRANSITIONCONFIG.hoverbgstart,
-            opacity: {
-                ...TRANSITIONCONFIG.hoverbgstart,
-                times: [0, 0.1, 0.2, 0.3, 0.4, 1]
-            }
+            ...TRANSITIONCONFIG.hoverstart,
+            times: [0, 0.3, 1]
         }
     },
     rest: {
-        opacity: 0, z: 0,
-        transition: TRANSITIONCONFIG.hoverbgend,
+        opacity: [0.6, 0, 0], scale: scale, z: wireframez,
+        transition: {
+            ...TRANSITIONCONFIG.hoverbgend,
+            times: [0, 0.4, 1]
+        }
     },
-    static: { opacity: 0, z: 0, },
+    static: { opacity: 0, scale:1, z: 0, },
+};
+
+const ionizationVars = {
+    initial: {
+        opacity: 0, scale: scale,
+        rotate: -5, z: wireframez, filter: "blur(8px) brightness(200%)",
+    },
+    hover: {
+        opacity: [0, 1, 0], scale: 1,
+        rotate: 0, z: wireframez, filter: "blur(0px) brightness(100%)",
+        transition: {
+            ...TRANSITIONCONFIG.hoverstart,
+            opacity: {
+                duration: 6 * hover,
+                times: [0, 0.17, 1]
+            },
+        },
+    },
+    rest: {
+        opacity: [0, 1, 0], scale: scale,
+        rotate: -5, z: wireframez, filter: "blur(8px) brightness(200%)",
+        transition: {
+            ...TRANSITIONCONFIG.hoverbgend,
+            times: [0, 0.4, 1]
+        },
+    },
+    static: { opacity: 0, scale: 1, rotate: 0, z: 0, filter: 'blur(0px) brightness(100%)' },
 };
 
 const projectionbeamheightVars = {
@@ -1792,9 +1867,13 @@ const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, an
     hoverProgress
 }) {
 
-    const lesserThanSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
+    const { lesserThanSm, lesserThanMd } = useAnimateContext();
 
     const color = useMemo(() => hexToRgba(item.color, 0.9), [item.color]);
+    const textalign = useMemo(() =>
+        lesserThanSm ? 'center'
+            : lesserThanMd ? 'flex-end' : 'flex-start'
+        , [lesserThanSm, lesserThanMd])
 
     const griditemRef = useRef(null);
     const griditemwidthRef = useRef(0);
@@ -1813,7 +1892,7 @@ const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, an
         return () => observer.disconnect();
     }, []);
 
-    const bgimage = useMemo(() => {
+    const wireframeimage = useMemo(() => {
         return item.id === 1
             ? `url(${wireframe1})`
             : item.id === 2
@@ -1829,11 +1908,18 @@ const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, an
             variants={itemcontentVars}
         >
             {!lesserThanSm &&
-                <>
-                    <WireframeBg
+                <WireframeHover>
+                    <IonizationLayer
+                        variants={ionizationVars}
+                    >
+                        <MaskedImage
+                            style={{ backgroundImage: wireframeimage }}
+                        />
+                    </IonizationLayer>
+                    <Wireframe
                         variants={wireframeVars}
                         style={{
-                            backgroundImage: bgimage,
+                            backgroundImage: wireframeimage,
                         }}
                     />
                     <LeaderLines
@@ -1841,9 +1927,9 @@ const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, an
                         griditemwidthRef={griditemwidthRef}
                         hoverProgress={hoverProgress}
                     />
-                </>
+                </WireframeHover>
             }
-            <TextContainer align={'flex-start'} >
+            <TextContainer align={textalign} >
                 <TextShadow
                     variants={textshadowVars}
                     style={{
@@ -1926,6 +2012,7 @@ const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, an
 
 const StyledLeaderLine = styled(MotionSvg)({
     position: 'absolute',
+    transformStyle: "preserve-3d",
     pointerEvents: 'none',
     backfaceVisibility: 'hidden',
     overflow: 'visible',
@@ -1936,6 +2023,7 @@ const StyledGlyphs = styled(MotionText)({
     fontSize: '8px',
     fontFamily: 'Spectral',
     letterSpacing: '1px',
+    transformStyle: "preserve-3d",
     userSelect: 'none',
     pointerEvents: 'none',
     backfaceVisibility: 'hidden',
@@ -1984,7 +2072,7 @@ const generateHudLines = (count = 4, width) => {
         const sectionHeight = 60 / count;
         const sectionStart = 20 + (i * sectionHeight);
         const topVal = sectionStart + (Math.random() * (sectionHeight * 0.8));
-        const zVal = Math.floor(Math.random() * 20) + 50;
+        const zVal = Math.floor(Math.random() * 20) + wireframez - 10;
 
         const direction = leftVal < 50 ? -1 : 1;
         const length = width / 3 + Math.random() * 30;
@@ -2246,6 +2334,7 @@ const ModalBgImage = styled(MotionBox)(({ theme }) => ({
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',
+    transformOrigin: 'center center',
     pointerEvents: 'none',
     backfaceVisibility: 'hidden',
 }));
@@ -2259,6 +2348,7 @@ const ModalBgRetinal = styled(MotionBox)(({ theme }) => ({
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',
+    transformOrigin: 'center center',
     pointerEvents: 'none',
     backfaceVisibility: 'hidden',
 }));
@@ -2379,21 +2469,32 @@ const AnimatedModalBg = memo(function AnimatedModalBg({ selectedItem }) {
     const bootupLogsLeft = useMemo(() => generateBootupLogs(6, 12, 3), []);
     const bootupLogsRight = useMemo(() => generateBootupLogs(6, 12, 3), []);
 
+    const { lesserThanSm } = useAnimateContext();
+    const windowWidth = getWindowWidth();
+    const responsivescale = useTransform(windowWidth, (w) => {
+        if (!lesserThanSm) return 1;
+        return Math.min(w / 400, 1);
+    });
+
     return (
         <ModalBg
             variants={modalbgVars}
             bgcolor={hexToRgba(selectedItem.cardcolors[1], 0.15)}
         >
             {/*<GrainOverlay />*/}
-            <ModalBgImage
-                variants={modalbgimageVars}
-            />
+            {!lesserThanSm &&
+                <ModalBgImage
+                    variants={modalbgimageVars}
+                    style={{ scale: responsivescale }}
+                />
+            }
             <ModalBgRetinal
                 style={{
                     x: '-50%',
                     y: '-50%',
                     opacity: opacity,
-                    rotate: rotation
+                    rotate: rotation,
+                    scale: responsivescale
                 }}
             />
             <ModalBootupText
@@ -2463,12 +2564,39 @@ const centerX = 170;
 const centerY = 170;
 
 const getPositionsConfig = (count, jitterAmount = 20) => {
-    return Array.from({ length: count }).map((_, i) => {
-        const angle = (i * (360 / count) - 90) * (Math.PI / 180);
 
+    const generatePath = (startx, starty, midx, endx, endy) => {
+        return `M ${startx} ${starty} L ${midx} ${starty} L ${midx} ${endy} L ${endx} ${endy}`;
+    };
+
+    const mobile = Array.from({ length: count }).map((_, i) => {
+        const colGap = 130;
+        const rowHeight = 70;
+        const verticalOffset = (count / 2) * rowHeight / 2;
+
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+
+        const jitterX = (Math.random() - 0.5) * jitterAmount;
+        const jitterY = (Math.random() - 0.5) * jitterAmount;
+        const colOffset = col === 0 ? 0 : 20;
+
+        const startx = centerX;
+        const starty = centerY;
+        const endx = centerX + (col === 0 ? -colGap : colGap) + jitterX;
+        const endy = (centerY - verticalOffset) + (row * rowHeight) + colOffset + jitterY;
+        const midx = startx + (endx - startx) / 2;
+
+        return {
+            startx, starty, midx, endx, endy,
+            pathdata: generatePath(startx, starty, midx, endx, endy)
+        };
+    });
+
+    const notmobile = Array.from({ length: count }).map((_, i) => {
+        const angle = (i * (360 / count) - 90) * (Math.PI / 180);
         const jitterX = Math.sin(i * 12.34) * jitterAmount;
         const jitterY = Math.cos(i * 56.78) * jitterAmount;
-
         const cosAngle = Math.cos(angle);
         const sinAngle = Math.sin(angle);
 
@@ -2476,22 +2604,18 @@ const getPositionsConfig = (count, jitterAmount = 20) => {
         const starty = centerY + startRadius * sinAngle;
         const endx = centerX + (nodeRadius * cosAngle) + jitterX;
         const endy = centerY + (nodeRadius * sinAngle) + jitterY;
-
         const midx = startx + (endx - startx) / 2;
-        const pathdata = `M ${startx} ${starty} L ${midx} ${starty} L ${midx} ${endy} L ${endx} ${endy}`;
 
         return {
-            startx: startx,
-            starty: starty,
-            endx: endx,
-            endy: endy,
-            pathdata: pathdata,
-            midx: midx,
+            startx, starty, midx, endx, endy,
+            pathdata: generatePath(startx, starty, midx, endx, endy)
         };
     });
+
+    return { mobile, notmobile };
 };
 
-const ICON_LAYOUTS = SKILLS_DATA.reduce((acc, skill) => {
+const NODE_LAYOUTS = SKILLS_DATA.reduce((acc, skill) => {
     acc[skill.title] = getPositionsConfig(skill.icons.length);
     return acc;
 }, {});
@@ -2520,6 +2644,16 @@ const CardContentContainer = styled(MotionBox)(({ theme }) => ({
     transformStyle: 'preserve-3d',
 }));
 
+const ResponsiveContainer = styled(MotionBox)(({ theme }) => ({
+    //position: 'relative',
+    width: `${nodeRadius * 2}px`,
+    height: `${nodeRadius * 2}px`,
+    borderRadius: 'inherit',
+    transformOrigin: 'center center',
+    transformStyle: 'preserve-3d',
+    backfaceVisibility: "hidden",
+}));
+
 const cardcontentVars = {
     initial: {
         opacity: 0, scale: 1.2, y: -20,
@@ -2537,7 +2671,13 @@ const cardcontentVars = {
 const AnimatedCard = memo(function AnimatedCard({ content = {} }) {
     const [hoveredIcon, setHoveredIcon] = useState(null);
 
-    const positions = ICON_LAYOUTS[content.title] || [];
+    const { manual, system, lesserThanSm } = useAnimateContext();
+    const mode = system || manual;
+
+    const positions = useMemo(() => {
+        const ismobile = lesserThanSm ? 'mobile' : 'notmobile';
+        return NODE_LAYOUTS[content.title][ismobile] || []
+    }, []);
 
     const positionsConfig = useMemo(() => {
         if (!content.icons) return [];
@@ -2558,9 +2698,6 @@ const AnimatedCard = memo(function AnimatedCard({ content = {} }) {
         }),
         ), []);
 
-    const { manual, system } = useAnimateContext();
-    const mode = system || manual;
-
     const animationConfig = useMemo(() => {
         const isNormal = (mode === 'normal');
 
@@ -2571,8 +2708,18 @@ const AnimatedCard = memo(function AnimatedCard({ content = {} }) {
     }, [mode]);
 
     const handleHovered = useCallback((v) => {
-        setHoveredIcon(v);
-    }, [setHoveredIcon])
+        setHoveredIcon((prev) => {
+            if (lesserThanSm && prev?.name === v?.name) return null;
+            return v;
+        });
+    }, []);
+
+    const windowWidth = getWindowWidth();
+    const responsivescale = useTransform(windowWidth, (w) => {
+        if (lesserThanSm) return 1;
+
+        return Math.min(w / (nodeRadius * 4), 1);
+    });
 
     return (
         <StyledCard>
@@ -2581,18 +2728,25 @@ const AnimatedCard = memo(function AnimatedCard({ content = {} }) {
                 initial={animationConfig.initial}
                 animate={animationConfig.animate}
             >
-                <CircuitLines
-                    positionsConfig={positionsConfig}
-                    transitionsConfig={transitionsConfig}
-                />
-                {positionsConfig.map((icon, i) => (
-                    <AnimatedIcon key={i} icon={icon} i={i}
-                        handleHovered={handleHovered}
-                        transition={transitionsConfig[i]}
-                    />
-                ))}
+                <ResponsiveContainer
+                    style={{ scale: responsivescale }}
+                >
+                    {!lesserThanSm &&
+                        <CircuitLines
+                            positionsConfig={positionsConfig}
+                            transitionsConfig={transitionsConfig}
+                        />
+                    }
+                    {positionsConfig.map((icon, i) => (
+                        <AnimatedIcon key={i} icon={icon} i={i}
+                            handleHovered={handleHovered}
+                            transition={transitionsConfig[i]}
+                        />
+                    ))}
+                </ResponsiveContainer>
                 {hoveredIcon &&
                     <CenterIcon icon={hoveredIcon} content={content}
+                        handleHovered={handleHovered}
                         animationConfig={animationConfig}
                     />
                 }
@@ -2718,12 +2872,26 @@ const IconText = styled(MotionBox)(({ theme }) => ({
     fontSize: 'clamp(16px, 2vw + 1rem, 18px)',
     fontWeight: 'bold',
     fontFamily: 'Spectral',
-    textAlign: 'center',
     [theme.breakpoints.down('sm')]: {
         fontSize: '16px',
     },
     cursor: 'default',
 }));
+
+const Bracket = styled(MotionSpan)(({ theme }) => ({
+    height: '1.2em',
+    display: 'inline-flex',
+    alignItems: 'center', justifyContent: 'center',
+    color: '#FF4500',
+    lineHeight: '1.2em',
+    verticalAlign: 'middle',
+}));
+
+const WordRow = styled('div')({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+});
 
 const WordBlock = styled('div')(({
     display: 'flex',
@@ -2743,9 +2911,10 @@ const entranceVars = {
     static: { opacity: 1, },
 };
 
-const AnimatedIcon = memo(function AnimatedIcon({ icon, i, handleHovered, transition }) {
+const AnimatedIcon = memo(function AnimatedIcon({ icon, i,
+    handleHovered, transition }) {
 
-    const { manual, system } = useAnimateContext();
+    const { manual, system, lesserThanSm } = useAnimateContext();
     const isNormal = ((system || manual) === 'normal');
 
     const animationConfig = useMemo(() => {
@@ -2754,7 +2923,18 @@ const AnimatedIcon = memo(function AnimatedIcon({ icon, i, handleHovered, transi
         };
     }, [isNormal]);
 
-    const { textX, textY } = useMemo(() => {
+    const { textX, textY, align } = useMemo(() => {
+        if (lesserThanSm) {
+            const x = icon.endx < icon.startx
+                ? '50%' : '-50%';
+            const align = icon.endx < icon.startx
+                ? 'left' : 'right';
+
+            return {
+                textX: x, textY: 0, align: align
+            };
+        }
+
         const horizontalTextAlignment = icon.startx - icon.midx !== 0;
 
         let x = 0;
@@ -2774,7 +2954,7 @@ const AnimatedIcon = memo(function AnimatedIcon({ icon, i, handleHovered, transi
             }
         }
 
-        return { textX: x, textY: y };
+        return { textX: x, textY: y, align: 'center' };
     }, [icon.endx, icon.midx, icon.startx, icon.endy]);
 
     const handleTap = useCallback((e, v) => {
@@ -2806,19 +2986,28 @@ const AnimatedIcon = memo(function AnimatedIcon({ icon, i, handleHovered, transi
                     style={{
                         translateX: textX,
                         translateY: textY,
+                        textAlign: align,
                     }}
                 >
-                    {icon.name.split(' ').map((word, i) => (
-                        <WordBlock key={i} >
-                            {word.split('').map((char, i) => (
-                                <FallingLetter
-                                    key={i}
-                                    char={char}
-                                    color={icon.color}
-                                    delay={i * 200}
-                                />
-                            ))}
-                        </WordBlock>
+                    {icon.name.split(' ').map((word, i, array) => (
+                        <WordRow
+                            style={{
+                                justifyContent: align
+                            }}
+                        >
+                            {i === 0 && <Bracket>[</Bracket>}
+                            <WordBlock key={i}>
+                                {word.split('').map((char, i) => (
+                                    <FallingLetter
+                                        key={i}
+                                        char={char}
+                                        color={icon.color}
+                                        delay={i * 200}
+                                    />
+                                ))}
+                            </WordBlock>
+                            {i === array.length - 1 && <Bracket>]</Bracket>}
+                        </WordRow>
                     ))}
                 </IconText>
             </NodeEntrance>
@@ -2904,6 +3093,7 @@ const HoverGlow = styled(MotionBox)(({ theme }) => ({
     position: 'absolute', inset: 0,
     borderRadius: 'inherit',
     filter: 'blur(12px)',
+    pointerEvents: 'none',
     backfaceVisibility: "hidden",
 }));
 
@@ -2916,6 +3106,7 @@ const CenterIconContainer = styled(MotionBox)(({ theme }) => ({
     [theme.breakpoints.down('sm')]: {
         width: 48, height: 48,
     },
+    pointerEvents: 'none',
     backfaceVisibility: "hidden",
 }));
 
@@ -2987,7 +3178,12 @@ const centertextVars = {
     static: { opacity: 1, scale: 1.5, y: 0, transition: { duration: 0 } },
 };
 
-const CenterIcon = memo(function CenterIcon({ icon, content, animationConfig }) {
+const CenterIcon = memo(function CenterIcon({ icon, content, handleHovered, animationConfig }) {
+
+    const handleTap = useCallback((e, v) => {
+        e.stopPropagation();
+        handleHovered(v);
+    }, []);
 
     return (
         <CenterContainer
@@ -3011,7 +3207,9 @@ const CenterIcon = memo(function CenterIcon({ icon, content, animationConfig }) 
                 />
             </CenterIconContainer>
             <AnimatedText
+                tap-interactive="true"
                 variants={centertextVars}
+                onTap={(e) => handleTap(e, null)}
             >
                 {icon.desc}
             </AnimatedText>

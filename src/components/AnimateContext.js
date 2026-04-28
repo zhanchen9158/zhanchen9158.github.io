@@ -1,4 +1,9 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, {
+    useEffect, useRef, useCallback,
+    createContext, useContext, useState
+} from 'react';
+import useMediaQuery from '@mui/material/useMediaQuery';
+
 
 const AnimateContext = createContext();
 
@@ -28,7 +33,7 @@ export const AnimateProvider = ({ children }) => {
         });
     }
 
-    const handleMediaQuery = React.useCallback(
+    const handleMediaQuery = useCallback(
         (e) => {
             if (mode.manual === 'system') {
                 setMode((prev) => {
@@ -44,10 +49,10 @@ export const AnimateProvider = ({ children }) => {
         [mode.manual],
     );
 
-    const mediaListener = React.useRef(handleMediaQuery);
+    const mediaListener = useRef(handleMediaQuery);
     mediaListener.current = handleMediaQuery;
 
-    React.useEffect(() => {
+    useEffect(() => {
         const handler = (...args) => mediaListener.current(...args);
 
         // Always listen to System preference
@@ -61,8 +66,16 @@ export const AnimateProvider = ({ children }) => {
         };
     }, []);
 
+    const lesserThanSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
+    const lesserThanMd = useMediaQuery((theme) => theme.breakpoints.down('md'));
+
     return (
-        <AnimateContext.Provider value={{ manual: mode.manual, system: mode.system, setAniMode }}>
+        <AnimateContext.Provider
+            value={{
+                manual: mode.manual, system: mode.system, setAniMode,
+                lesserThanSm: lesserThanSm, lesserThanMd: lesserThanMd
+            }}
+        >
             {children}
         </AnimateContext.Provider>
     );

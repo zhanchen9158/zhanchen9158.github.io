@@ -19,7 +19,7 @@ import entrancehero2 from './pics/entrancehero2.webp';
 import entrancehero3 from './pics/entrancehero3.webp';
 import entrancebg1 from './pics/entrancebg1.webp';
 import entrancebg2 from './pics/entrancebg2.webp';
-import svggrit from './pics/ionizationmask.webp';
+import ionizationmask from './pics/ionizationmask.webp';
 import hyperstream from './pics/hyperstream.webp';
 
 
@@ -122,6 +122,8 @@ const RadialHyperstream = styled(MotionBox)({
   backgroundImage: `url(${hyperstream})`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
+  pointerEvents: 'none',
+  backfaceVisibility: 'hidden',
 });
 
 const HeroBlurBg = styled(MotionBox)(({ theme }) => ({
@@ -144,7 +146,7 @@ const HeroBg = styled(MotionBox)(({ theme }) => ({
   backfaceVisibility: 'hidden',
 }));
 
-const IonizedLayer = styled(MotionBox)({
+const IonizationLayer = styled(MotionBox)({
   position: 'fixed', inset: 0,
   zIndex: 10,
   pointerEvents: 'none',
@@ -152,7 +154,7 @@ const IonizedLayer = styled(MotionBox)({
   willChange: 'transform, opacity, mask-size',
   transform: 'translateZ(0)',
 
-  maskImage: `url(${svggrit})`,
+  maskImage: `url(${ionizationmask})`,
   maskRepeat: 'repeat',
   maskPosition: 'center',
   WebkitMaskPosition: 'center',
@@ -218,7 +220,7 @@ const HeroEntrance = memo(function HeroEntrance({ }) {
               ease: "easeInOut",
             }}
           />
-          <IonizedLayer
+          <IonizationLayer
             initial={{
               opacity: 1,
               scale: 1,
@@ -239,7 +241,7 @@ const HeroEntrance = memo(function HeroEntrance({ }) {
             <MaskedImage
               style={{ backgroundImage: `url(${entrancehero3})` }}
             />
-          </IonizedLayer>
+          </IonizationLayer>
         </>
       )}
     </AnimatePresence>

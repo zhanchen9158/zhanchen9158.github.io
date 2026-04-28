@@ -140,19 +140,19 @@ function Projects({ refProps, handleViewport }) {
 }
 
 const CarouselContainer = styled(Box)(({ theme }) => ({
-  width: '100%', //height: 'auto'
+  width: '100%', maxHeight: 'calc(100vh - 80px)',
   display: 'flex', justifyContent: 'center', alignItems: 'center',
   flexDirection: 'column',
-  marginTop: theme.spacing(12),
+  marginTop: theme.spacing(10),
   gap: theme.spacing(1),
   //zIndex: 1,
 }));
 
 const CarouselContent = styled(MotionBox)(({ theme }) => ({
   position: 'relative',
-  width: '100%',
+  width: '100%', minHeight: CARDHsm + 50,
   display: 'flex', justifyContent: 'center', alignItems: 'center',
-  //flexWrap: 'wrap',
+  flexShrink: 1,
   gap: theme.spacing(4),
   backfaceVisibility: "hidden",
 }));
@@ -283,7 +283,7 @@ const ProjectsCarousel = memo(function ProjectsCarousel({ hoveredProj,
 
 const StyledCardHeader = styled(MotionBox)(({ theme }) => ({
   position: 'relative',
-  //marginTop: theme.spacing(8),
+  marginTop: theme.spacing(2),
   fontFamily: 'DM Serif Display, sans-serif',
   fontSize: 'clamp(20px, 3vw, 32px)',
   fontWeight: 800,
@@ -1286,7 +1286,10 @@ const NavDock = styled(MotionBox)(({ theme }) => ({
   position: 'relative',
   display: 'flex', justifyContent: 'center', alignItems: 'center',
   gap: theme.spacing(DotGap / 8),
-  marginTop: theme.spacing(4),
+  margin: theme.spacing(4, 0),
+  [theme.breakpoints.down('sm')]: {
+    margin: theme.spacing(2, 0),
+  }
 }));
 
 const NavDotWrapper = styled(MotionBox)(({ theme }) => ({
