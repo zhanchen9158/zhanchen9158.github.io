@@ -20,13 +20,15 @@
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        const offset=-9;
 
         // Your exact SVG filter logic
         const svgString = `
         <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
             <filter id="n">
                 <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3" seed="${Math.random()}"/>
-                <feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 -7.5 -7.5 -7.5 0 10"/>
+                <feColorMatrix type="matrix" 
+                values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 ${offset} ${offset} ${offset} 0 10"/>
             </filter>
             <rect width="100%" height="100%" filter="url(#n)"/>
         </svg>`;

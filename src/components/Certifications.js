@@ -13,13 +13,14 @@ import Pagination from '@mui/material/Pagination';
 import Grid from '@mui/material/Grid';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import useSectionReporting from '../functions/useSectionReporting';
+import { useWindowDim } from '../functions/getWindowDim';
 
 
 const Floating3DCanvas = React.lazy(() => import('./Floating3DCanvas'));
 
-const items = [
+const CERT_DATA = [
   {
-    id: 1,
+    id: 0,
     icon: AWSIcon,
     title: 'Amazon Web Services Certified Solutions Architect - Associate',
     descriptions: [
@@ -31,7 +32,7 @@ const items = [
     ],
   },
   {
-    id: 2,
+    id: 1,
     icon: MicrosoftIcon,
     title: 'Foundational C# with Microsoft',
     descriptions: [
@@ -42,7 +43,7 @@ const items = [
     ],
   },
   {
-    id: 3,
+    id: 2,
     icon: FreecodecampIcon,
     title: 'JavaScript Algorithms and Data Structures',
     descriptions: [
@@ -52,7 +53,7 @@ const items = [
     ],
   },
   {
-    id: 4,
+    id: 3,
     icon: FreecodecampIcon,
     title: 'Responsive Web Design Developer',
     descriptions: [
@@ -76,34 +77,119 @@ const SectionContainer = styled(MotionContainer)(({ theme }) => ({
   overflow: 'hidden',
 }));
 
-const CardsContainer = styled(MotionBox)(({ theme }) => ({
-  position: 'relative',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  width: '75%', height: '100%',
-  perspective: 1200,
-  [theme.breakpoints.down('md')]: {
-    width: '85%',
-  },
-  [theme.breakpoints.down('sm')]: {
-    width: '100%',
-  },
+export default function Certifications({ refProps, handleViewport }) {
+  const [card, setCard] = useState(null);
+
+  const containerRef = useRef(null);
+  const isInView = useInView(containerRef, {
+    amount: 0.5,
+    once: false
+  });
+
+  const { manual, system, lesserThanSm } = useAnimateContext();
+  const mode = system || manual;
+
+  const animationConfig = useMemo(() => {
+
+    return {
+      canvas: isInView ? true : false,
+    };
+  }, [mode, isInView]);
+
+  const coordRef = useRef({ x: 0, y: 0 });
+
+  const { onEnter, onLeave } = useSectionReporting('certifications', handleViewport);
+
+  const handleCardSelect = useCallback((v = 0) => {
+    setCard((prev) => {
+      if (v === null || v >= CERT_DATA.length) return null;
+      if (prev?.id === v) return null;
+      return CERT_DATA[v];
+    });
+  }, []);
+
+  return (
+    <SectionContainer
+      ref={containerRef}
+      onViewportEnter={onEnter}
+      onViewportLeave={onLeave}
+      viewport={{ amount: 0.5 }}
+      id="certifications"
+      maxWidth="lg"
+    >
+      <AnimatePresence>
+        {animationConfig.canvas &&
+          <Animated3dCanvas
+            coordRef={coordRef}
+            handleSelect={handleCardSelect}
+          />
+        }
+      </AnimatePresence>
+      <AnimatePresence>
+        {card &&
+          <AnimatedModal
+            coordRef={coordRef}
+            card={card}
+            handleSelect={handleCardSelect}
+          />
+        }
+      </AnimatePresence>
+    </SectionContainer>
+  );
+}
+
+const CanvasContainer = styled(MotionBox)(({ theme }) => ({
+  position: 'fixed', inset: 0,
+  willChange: 'transform,opacity',
 }));
 
-const AnimatedCard = styled(MotionBox)(({ theme }) => ({
+const canvasVars = {
+  initial: { opacity: 0, y: 100 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { delay: 1, duration: 2 },
+  },
+};
+
+function Animated3dCanvas({ coordRef, handleSelect }) {
+  return (
+    <CanvasContainer
+      variants={canvasVars}
+      initial='initial'
+      animate='animate'
+      exit={'initial'}
+    >
+      <Floating3DCanvas
+        coordRef={coordRef}
+        handleSelect={handleSelect}
+        certData={CERT_DATA}
+      />
+    </CanvasContainer>
+  )
+}
+
+const Modal = styled(MotionBox)(({ theme }) => ({
+  position: 'fixed', inset: 0,
+  zIndex: 10,
+  backfaceVisibility: "hidden",
+}));
+
+const ModalContent = styled(MotionBox)(({ theme }) => ({
   position: 'absolute',
-  width: `50%`, height: `75%`,
-  maxWidth: '450px', maxHeight: '500px',
-  originX: 0,
-  willChange: 'transform,opacity',
-  backfaceVisibility: 'hidden',
-  [theme.breakpoints.down('md')]: {
-    width: '75%',
-  },
+  top: 0, left: 0,
+  width: '80%', height: '90%',
+  maxWidth: 450, maxHeight: 500,
+  borderRadius: '32px', padding: 0,
+  display: 'flex', justifyContent: 'center', alignItems: 'center',
   [theme.breakpoints.down('sm')]: {
-    width: '100%',
+    width: '100%', height: '100%',
   },
+  //perspective: '1000px',
+  //transformStyle: "preserve-3d",
+  //willChange: 'transform, opacity',
+  backfaceVisibility: "hidden",
+  isolation: 'isolate',
 }));
 
 const StyledCard = styled(MotionBox)(({ theme }) => ({
@@ -122,162 +208,6 @@ const StyledCard = styled(MotionBox)(({ theme }) => ({
   gap: '8px',
   padding: '8px',
 }));
-
-const cardVars = {
-  hidden: { opacity: 0, y: 20, },
-  visible: ({ i, stackdiff }) => ({
-    scale: 1 - i * 0.05,
-    x: i * stackdiff,
-    y: i * -20,
-    zIndex: items.length - i,
-    opacity: 1 - i * 0.1,
-    transition: {
-      type: "spring",
-      stiffness: 90,
-      damping: 20,
-      restDelta: 0.1,
-      delay: 0.35 * i,
-    }
-  }),
-  exit: ({ flipx }) => ({
-    opacity: 0.5,
-    rotateY: -110,
-    x: flipx,
-    zIndex: items.length + 1,
-    transition: {
-      duration: 0.6,
-      ease: "easeInOut",
-    },
-  }),
-};
-
-const itemVars = {
-  hover: (hoverscale) => ({
-    scale: hoverscale,
-    y: -40,
-    transition: {
-      duration: 0.2,
-      type: "spring", stiffness: 160, damping: 15,
-    }
-  }),
-};
-
-export default function Certifications({ refProps, handleViewport }) {
-  const [cards, setCards] = useState(items);
-
-  const theme = useTheme();
-  const greaterThanMd = useMediaQuery(theme.breakpoints.up('md'));
-  const greaterThanSm = useMediaQuery(theme.breakpoints.up('sm'));
-
-  const { stackdiff, flipx, hoverscale } = useMemo(() => {
-    return {
-      stackdiff: greaterThanSm ? 45 : 10,
-      flipx: greaterThanSm ? -350 : -200,
-      hoverscale: greaterThanSm ? 1.1 : 1.05
-    };
-  }, [greaterThanMd, greaterThanSm]);
-
-  const containerRef = useRef(null);
-  const isInView = useInView(containerRef, {
-    amount: 0.5,
-    once: false
-  });
-
-  const { manual, system } = useAnimateContext();
-  const mode = system || manual;
-
-  const animationConfig = useMemo(() => {
-    const animate = (mode == 'normal' && isInView && greaterThanMd);
-
-    return {
-      canvas: animate ? true : false,
-    };
-  }, [mode, isInView, greaterThanMd]);
-
-  const handleNext = () => {
-    setCards((prev) => {
-      const newArray = [...prev];
-      const firstItem = newArray.shift();
-      newArray.push(firstItem);
-      return newArray;
-    });
-  };
-
-  const { onEnter, onLeave } = useSectionReporting('certifications', handleViewport);
-
-  return (
-    <SectionContainer
-      ref={containerRef}
-      onViewportEnter={onEnter}
-      onViewportLeave={onLeave}
-      viewport={{ amount: 0.5 }}
-      id="certifications"
-      maxWidth="lg"
-    >
-      <AnimatePresence>
-        {animationConfig.canvas &&
-          <Animated3D />
-        }
-      </AnimatePresence>
-      {mode == 'normal' ?
-        <CardsContainer
-          onClick={handleNext}
-        >
-          <AnimatePresence mode="popLayout">
-            {cards.map((v, i) => (
-              <AnimatedCard
-                key={v.title + i}
-                custom={{ i, stackdiff, flipx }}
-                variants={cardVars}
-                whileInView="visible"
-                viewport={{ once: false }}
-                exit={i == 0 && "exit"}
-              >
-                <StyledCard
-                  custom={hoverscale}
-                  variants={itemVars}
-                  whileHover={i == 0 && 'hover'}
-                >
-                  <CardContent card={v} />
-                </StyledCard>
-              </AnimatedCard>
-            ))}
-          </AnimatePresence>
-        </CardsContainer>
-        :
-        <ReducedAnimation />
-      }
-    </SectionContainer>
-  );
-}
-
-const CanvasContainer = styled(MotionBox)(({ theme }) => ({
-  position: 'fixed',
-  inset: 0,
-  willChange: 'transform,opacity',
-}));
-
-const canvasVars = {
-  initial: { opacity: 0, y: 100 },
-  animate: {
-    opacity: 1,
-    y: 0,
-    transition: { delay: 1.5, duration: 2 },
-  },
-};
-
-function Animated3D() {
-  return (
-    <CanvasContainer
-      variants={canvasVars}
-      initial='initial'
-      animate='animate'
-      exit={'initial'}
-    >
-      <Floating3DCanvas />
-    </CanvasContainer>
-  )
-}
 
 const StyledIcon = styled('img')(({ theme }) => ({
   height: 48,
@@ -325,27 +255,67 @@ const StyledListText = styled(Typography)(({ theme }) => ({
   }
 }));
 
-const CardContent = memo(function CardContent({ card }) {
+const AnimatedModal = memo(function AnimatedModal({ coordRef, handleSelect, card }) {
+
+  const { w, h } = useWindowDim();
+
+  const { startX, startY, endX, endY } = useMemo(() => {
+    const centerX = w / 2;
+    const centerY = h / 2;
+
+    const x = coordRef.current?.x ?? 0;
+    const y = coordRef.current?.y ?? 0;
+
+    return {
+      startX: `calc(${x}px - 50%)`,
+      startY: `calc(${y}px - 50%)`,
+      endX: `calc(${centerX}px - 50%)`,
+      endY: `calc(${centerY}px - 50%)`,
+    };
+  }, [w, h, coordRef.current]);
 
   return (
-    <React.Fragment>
-      <Box>
-        <StyledIcon
-          src={card.icon}
-        />
-        <SubHeader>
-          {card.title}
-        </SubHeader>
-      </Box>
-      {card.descriptions.map((item, i) => (
-        <StyledListItem key={i} >
-          <StyledPlayArrowIcon />
-          <StyledListText>
-            {item}
-          </StyledListText>
-        </StyledListItem>
-      ))}
-    </React.Fragment>
+    <Modal
+      onTap={() => handleSelect(null)}
+    >
+      <ModalContent
+        initial={{
+          opacity: 0, scale: 0,
+          x: startX,
+          y: startY,
+        }}
+        animate={{
+          opacity: 1, scale: 1,
+          x: endX,
+          y: endY,
+        }}
+        exit={{
+          opacity: 0, scale: 0,
+          x: startX,
+          y: startY,
+        }}
+        transition={{ duration: 1 }}
+      >
+        <StyledCard>
+          <Box>
+            <StyledIcon
+              src={card.icon}
+            />
+            <SubHeader>
+              {card.title}
+            </SubHeader>
+          </Box>
+          {card?.descriptions?.map((item, i) => (
+            <StyledListItem key={i} >
+              <StyledPlayArrowIcon />
+              <StyledListText>
+                {item}
+              </StyledListText>
+            </StyledListItem>
+          ))}
+        </StyledCard>
+      </ModalContent>
+    </Modal>
   )
 });
 
@@ -386,7 +356,7 @@ function ReducedAnimation({ }) {
   const lesserThanMd = useMediaQuery(theme.breakpoints.down('md'));
 
   const perpage = lesserThanMd ? 1 : 2;
-  const maxpage = Math.ceil(items.length / perpage);
+  const maxpage = Math.ceil(CERT_DATA.length / perpage);
 
   const handlePageChange = (e, v) => {
     setPage(v);
@@ -411,7 +381,7 @@ function ReducedAnimation({ }) {
           padding: '2px',
         }}
       >
-        {items.slice((page - 1) * perpage, page * perpage).map((v, i) => (
+        {CERT_DATA.slice((page - 1) * perpage, page * perpage).map((v, i) => (
           <StyledGridItem item size={{ xs: 12, md: 6 }} key={i}>
             <ReducedAnimationCard>
               <StyledIcon

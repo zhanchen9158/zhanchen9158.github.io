@@ -21,8 +21,8 @@ import wireframe3 from '../pics/wireframe3.webp';
 import wireframe4 from '../pics/wireframe4.webp';
 import modalbg from '../pics/hudbg.webp';
 import modalbgretinal from '../pics/hudretinal.webp';
-import { getWindowDimRef, getWindowWidth } from '../functions/getWindowDim';
-import ionizationmask from '../pics/ionizationmask2.png';
+import { getWindowWidth } from '../functions/getWindowDim';
+import ionizationmask from '../pics/ionizationmask2.webp';
 
 
 const MotionBox = motion.create(Box);
@@ -285,7 +285,7 @@ export default function SkillsCard() {
 
     const x = useMotionValue(0);
     const y = useMotionValue(0);
-    const windowDimRef = getWindowDimRef();
+    const { windowDimRef } = useAnimateContext();
 
     useEffect(() => {
         const handleGlobalMouseMove = (e) => {
@@ -1400,7 +1400,7 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, globalMouseX
         };
     }, [mode]);
 
-    const windowDimRef = getWindowDimRef();
+    const { windowDimRef } = useAnimateContext();
     const itemRef = useRef(null);
     const rectRef = useRef(null);
 
@@ -1736,7 +1736,7 @@ const wireframeVars = {
             times: [0, 0.4, 1]
         }
     },
-    static: { opacity: 0, scale:1, z: 0, },
+    static: { opacity: 0, scale: 1, z: 0, },
 };
 
 const ionizationVars = {

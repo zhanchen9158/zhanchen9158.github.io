@@ -21,6 +21,7 @@ import entrancebg1 from './pics/entrancebg1.webp';
 import entrancebg2 from './pics/entrancebg2.webp';
 import ionizationmask from './pics/ionizationmask.webp';
 import hyperstream from './pics/hyperstream.webp';
+import Preloader from './components/Preloader';
 
 
 const MotionBox = motion(Box);
@@ -71,6 +72,7 @@ export default function PortfolioPage({ }) {
 
   return (
     <AnimateProvider>
+      <Preloader />
       <AnimatedAppBar activesection={activesection} />
       <HeroEntrance />
       <ScrollContainer
@@ -158,7 +160,7 @@ const IonizationLayer = styled(MotionBox)({
   maskRepeat: 'repeat',
   maskPosition: 'center',
   WebkitMaskPosition: 'center',
-  //maskSize: '100px',
+  maskSize: '100px',
 });
 
 const MaskedImage = styled(MotionBox)(({ theme }) => ({
@@ -183,7 +185,7 @@ const HeroEntrance = memo(function HeroEntrance({ }) {
           <WindowGlass
             initial={{ opacity: 1 }}
             animate={{ opacity: 0 }}
-            transition={{ duration: 8, ease: 'easeInOut' }}
+            transition={{ duration: 6, ease: 'easeInOut' }}
           />
           <RadialHyperstream
             initial={{
@@ -202,7 +204,7 @@ const HeroEntrance = memo(function HeroEntrance({ }) {
           <HeroBlurBg
             initial={{ opacity: 1 }}
             animate={{ opacity: 0 }}
-            transition={{ duration: 3, ease: 'easeInOut' }}
+            transition={{ duration: 2.5, ease: 'easeInOut' }}
           />
           <HeroBg
             initial={{
@@ -211,10 +213,10 @@ const HeroEntrance = memo(function HeroEntrance({ }) {
             }}
             animate={{
               opacity: [1, 0.2, 0],
-              filter: 'brightness(300%)',
+              filter: 'brightness(200%)',
             }}
             transition={{
-              delay: 3,
+              delay: 1.5,
               duration: 2,
               times: [0, 0.5, 1],
               ease: "easeInOut",
@@ -230,13 +232,12 @@ const HeroEntrance = memo(function HeroEntrance({ }) {
               scale: 2,
             }}
             transition={{
-              delay: 3.5,
+              delay: 2,
               duration: 6,
               times: [0, 0.4, 1],
               ease: "easeIn"
             }}
             onAnimationComplete={handleAnimationComplete}
-            style={{ maskSize: '100px' }}
           >
             <MaskedImage
               style={{ backgroundImage: `url(${entrancehero3})` }}

@@ -69,11 +69,25 @@ export const AnimateProvider = ({ children }) => {
     const lesserThanSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
     const lesserThanMd = useMediaQuery((theme) => theme.breakpoints.down('md'));
 
+    const windowDimRef = useRef({
+        w: typeof window !== 'undefined' ? window.innerWidth : 1,
+        h: typeof window !== 'undefined' ? window.innerHeight : 1
+    });
+
+    useEffect(() => {
+        const update = () => {
+            windowDimRef.current = { w: window.innerWidth, h: window.innerHeight };
+        };
+        window.addEventListener('resize', update);
+        return () => window.removeEventListener('resize', update);
+    }, []);
+
     return (
         <AnimateContext.Provider
             value={{
                 manual: mode.manual, system: mode.system, setAniMode,
-                lesserThanSm: lesserThanSm, lesserThanMd: lesserThanMd
+                lesserThanSm: lesserThanSm, lesserThanMd: lesserThanMd,
+                windowDimRef: windowDimRef,
             }}
         >
             {children}
