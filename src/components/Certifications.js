@@ -20,7 +20,7 @@ const Floating3DCanvas = React.lazy(() => import('./Floating3DCanvas'));
 
 const CERT_DATA = [
   {
-    id: 0,
+    id: 'cert0',
     icon: AWSIcon,
     title: 'Amazon Web Services Certified Solutions Architect - Associate',
     descriptions: [
@@ -32,7 +32,7 @@ const CERT_DATA = [
     ],
   },
   {
-    id: 1,
+    id: 'cert1',
     icon: MicrosoftIcon,
     title: 'Foundational C# with Microsoft',
     descriptions: [
@@ -43,7 +43,7 @@ const CERT_DATA = [
     ],
   },
   {
-    id: 2,
+    id: 'cert2',
     icon: FreecodecampIcon,
     title: 'JavaScript Algorithms and Data Structures',
     descriptions: [
@@ -53,7 +53,7 @@ const CERT_DATA = [
     ],
   },
   {
-    id: 3,
+    id: 'cert3',
     icon: FreecodecampIcon,
     title: 'Responsive Web Design Developer',
     descriptions: [
@@ -64,16 +64,16 @@ const CERT_DATA = [
   },
 ];
 
-const MotionContainer = motion(Container);
-const MotionBox = motion(Box);
+const MotionContainer = motion.create(Container);
+const MotionBox = motion.create(Box);
 
 const header = 70;
 
 const SectionContainer = styled(MotionContainer)(({ theme }) => ({
   position: 'fixed',
   width: '100dvw', height: '100dvh',
-  marginTop: `${header}px`,
-  display: 'flex', justifyContent: 'center', alignItems: 'center',
+  //marginTop: `${header}px`,
+  //display: 'flex', justifyContent: 'center', alignItems: 'center',
   overflow: 'hidden',
 }));
 
@@ -100,11 +100,12 @@ export default function Certifications({ refProps, handleViewport }) {
 
   const { onEnter, onLeave } = useSectionReporting('certifications', handleViewport);
 
-  const handleCardSelect = useCallback((v = 0) => {
+  const handleCardSelect = useCallback((v = 'cert0') => {
+    const match = v?.match(/\d+/);
     setCard((prev) => {
-      if (v === null || v >= CERT_DATA.length) return null;
+      if (match === null || match >= CERT_DATA.length) return null;
       if (prev?.id === v) return null;
-      return CERT_DATA[v];
+      return CERT_DATA[match];
     });
   }, []);
 
@@ -117,14 +118,12 @@ export default function Certifications({ refProps, handleViewport }) {
       id="certifications"
       maxWidth="lg"
     >
-      <AnimatePresence>
-        {animationConfig.canvas &&
-          <Animated3dCanvas
-            coordRef={coordRef}
-            handleSelect={handleCardSelect}
-          />
-        }
-      </AnimatePresence>
+      <Animated3dCanvas
+        activeId={card?.id}
+        coordRef={coordRef}
+        handleSelect={handleCardSelect}
+        isInView={isInView}
+      />
       <AnimatePresence>
         {card &&
           <AnimatedModal
@@ -139,20 +138,22 @@ export default function Certifications({ refProps, handleViewport }) {
 }
 
 const CanvasContainer = styled(MotionBox)(({ theme }) => ({
-  position: 'fixed', inset: 0,
-  willChange: 'transform,opacity',
+  position: 'fixed',
+  width: '100vw',
+  height: '100vh',
+  top: 0, left: 0,
+  backfaceVisibility: 'hidden',
 }));
 
 const canvasVars = {
-  initial: { opacity: 0, y: 100 },
+  initial: { opacity: 0 },
   animate: {
     opacity: 1,
-    y: 0,
-    transition: { delay: 1, duration: 2 },
+    transition: { delay: 0.2, duration: 2 },
   },
 };
 
-function Animated3dCanvas({ coordRef, handleSelect }) {
+const Animated3dCanvas = memo(function Animated3dCanvas({ activeId, coordRef, handleSelect, isInView }) {
   return (
     <CanvasContainer
       variants={canvasVars}
@@ -161,13 +162,15 @@ function Animated3dCanvas({ coordRef, handleSelect }) {
       exit={'initial'}
     >
       <Floating3DCanvas
+        activeId={activeId}
         coordRef={coordRef}
         handleSelect={handleSelect}
         certData={CERT_DATA}
+        isInView={isInView}
       />
     </CanvasContainer>
   )
-}
+});
 
 const Modal = styled(MotionBox)(({ theme }) => ({
   position: 'fixed', inset: 0,
@@ -263,8 +266,8 @@ const AnimatedModal = memo(function AnimatedModal({ coordRef, handleSelect, card
     const centerX = w / 2;
     const centerY = h / 2;
 
-    const x = coordRef.current?.x ?? 0;
-    const y = coordRef.current?.y ?? 0;
+    const x = coordRef.current?.pixelX ?? 0;
+    const y = coordRef.current?.pixelY ?? 0;
 
     return {
       startX: `calc(${x}px - 50%)`,
@@ -272,7 +275,7 @@ const AnimatedModal = memo(function AnimatedModal({ coordRef, handleSelect, card
       endX: `calc(${centerX}px - 50%)`,
       endY: `calc(${centerY}px - 50%)`,
     };
-  }, [w, h, coordRef.current]);
+  }, [w, h]);
 
   return (
     <Modal

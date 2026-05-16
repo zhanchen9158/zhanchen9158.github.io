@@ -1,7 +1,8 @@
-import { useRef, useMemo, memo, useEffect } from 'react'
-import { useFrame, extend } from '@react-three/fiber'
-import { shaderMaterial } from '@react-three/drei'
-import * as THREE from 'three'
+import { useRef, useMemo, memo, useEffect } from 'react';
+import { useFrame, extend } from '@react-three/fiber';
+import { shaderMaterial, useTexture } from '@react-three/drei';
+import * as THREE from 'three';
+
 
 const FloatingMaterial = shaderMaterial(
     {
@@ -62,41 +63,46 @@ const FloatingMaterial = shaderMaterial(
       gl_FragColor = color;
     }
   `
-)
+);
 
-extend({ FloatingMaterial })
+extend({ FloatingMaterial });
+
+const TARGET_FPS = 1 / 30;
 
 const FloatingItem = memo(function FloatingItem({ url, position,
     size = { width: 0.75, aspectratio: 1 / 1 },
     rotate = { xStart: 0, xAmp: 0, yStart: 0, yAmp: 0, zStart: 0, zAmp: 0 },
     ytravel = { speed: 0.8, range: 0.5 }, }) {
 
-    const materialRef = useRef()
+    const materialRef = useRef();
+    const accumulator = useRef(0);
 
-    // Memoize geometry and texture as before
     const width = size.width;
     const height = size.width * (1 / size.aspectratio);
 
-    const texture = useMemo(() => {
-        const tex = new THREE.TextureLoader().load(url)
-        tex.anisotropy = 8
-        return tex
-    }, [url])
+    const texture = useTexture(url);
+    useEffect(() => {
+        if (texture) {
+            texture.anisotropy = 8;
+        }
+    }, [texture]);
 
-    useEffect(() => () => texture.dispose(), [texture])
-
-    // Convert degrees to radians once
     const r = useMemo(() => ({
         x: [THREE.MathUtils.degToRad(rotate.xStart), THREE.MathUtils.degToRad(rotate.xAmp)],
         y: [THREE.MathUtils.degToRad(rotate.yStart), THREE.MathUtils.degToRad(rotate.yAmp)],
         z: [THREE.MathUtils.degToRad(rotate.zStart), THREE.MathUtils.degToRad(rotate.zAmp)],
-    }), [rotate])
+    }), [rotate]);
 
-    useFrame((state) => {
+    useFrame((state, delta) => {
+        accumulator.current += delta;
+        if (accumulator.current < TARGET_FPS) return;
+
         if (materialRef.current) {
-            materialRef.current.uTime = state.clock.getElapsedTime()
+            materialRef.current.uTime = state.clock.getElapsedTime();
         }
-    })
+
+        accumulator.current %= TARGET_FPS;
+    });
 
     return (
         <mesh position={position}>

@@ -1,6 +1,6 @@
 import React, { useRef, useMemo, memo, useEffect } from 'react';
 import { useFrame, extend } from '@react-three/fiber';
-import { MeshDistortMaterial, shaderMaterial } from '@react-three/drei';
+import { MeshDistortMaterial, shaderMaterial, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import floatinginkbottle from '../pics/floatinginkbottle.webp';
 
@@ -68,25 +68,26 @@ const InkBottleMaterial = shaderMaterial(
 
 extend({ InkBottleMaterial });
 
+const groupPos = [2.25, -1, 0];
 const INK_COUNT = 12;
 const tempObject = new THREE.Object3D();
 
 const generateInkData = (count = 5) => {
     return Array.from({ length: count }, (_, i) => {
-        const posX = 1.4 + Math.random() * 1.2;
-        const posY = -1.25 + Math.random() * 1;
+        const posX = -0.6 + Math.random() * 1.2;
+        const posY = 0 + Math.random() * 1;
         const posZ = (Math.random() - 0.5) * 0.2;
 
-        const travelX = -0.05 + Math.random() * 0.1;
-        const travelY = -0.1 + Math.random() * 0.2;
+        const travelX = -0.1 + Math.random() * 0.2;
+        const travelY = -0.2 + Math.random() * 0.4;
         const travelZ = (Math.random() - 0.5) * 0.1;
 
-        const s = 0.01 + Math.random() * 0.01;
+        const size = 0.01 + Math.random() * 0.01;
 
         return {
             id: `droplet-${i}`,
             position: [posX, posY, posZ],
-            scale: 0.01 + Math.random() * 0.01,
+            scale: size,
             phase: Math.random() * Math.PI * 2,
             travel: { x: travelX, y: travelY, z: travelZ },
         };
@@ -96,7 +97,7 @@ const generateInkData = (count = 5) => {
 const INK_DATA = generateInkData(INK_COUNT);
 
 const BOTTLE_DATA = {
-    position: [2.25, -1, 0], size: [1.5, 1.5 / (4 / 3)],
+    position: [0, 0, 0], size: [1.5, 1.5 / (4 / 3)],
     rotate: { xStart: 0, xAmp: 0, yStart: 0, yAmp: 0, zStart: 10, zAmp: 15 },
     ytravel: { speed: 0.2, range: 0.1 },
 };
@@ -125,13 +126,12 @@ const FloatingInk = memo(function FloatingInk() {
     const instancedMeshRef = useRef();
     const accumulator = useRef(0);
 
-    const texture = useMemo(() => {
-        const tex = new THREE.TextureLoader().load(floatinginkbottle);
-        tex.anisotropy = 8;
-        return tex;
-    }, []);
-
-    useEffect(() => () => texture.dispose(), [texture]);
+    const inkbottleTextures = useTexture(floatinginkbottle);
+    useEffect(() => {
+        if (inkbottleTextures) {
+            inkbottleTextures.anisotropy = 8;
+        }
+    }, [floatinginkbottle]);
 
     useFrame((state, delta) => {
         accumulator.current += delta;
@@ -158,19 +158,19 @@ const FloatingInk = memo(function FloatingInk() {
         }
 
         if (bottleRef.current) {
-            bottleRef.current.uTime = state.clock.getElapsedTime();
+            bottleRef.current.uTime = t;
         }
 
         accumulator.current %= TARGET_FPS;
-    })
+    });
 
     return (
-        <group>
-            <mesh position={BOTTLE_CONFIG.position}>
+        <group position={groupPos}>
+            <mesh>
                 <planeGeometry args={BOTTLE_CONFIG.size} />
                 <inkBottleMaterial
                     ref={bottleRef}
-                    uTexture={texture}
+                    uTexture={inkbottleTextures}
                     uYTravel={BOTTLE_CONFIG.ytravel}
                     uRotX={BOTTLE_CONFIG.x}
                     uRotY={BOTTLE_CONFIG.y}
@@ -178,6 +178,7 @@ const FloatingInk = memo(function FloatingInk() {
                     transparent
                     alphaTest={0.5}
                     side={THREE.DoubleSide}
+                    depthWrite={false}
                 />
             </mesh>
             <instancedMesh
@@ -186,14 +187,15 @@ const FloatingInk = memo(function FloatingInk() {
             >
                 <sphereGeometry args={[1, 12, 12]} />
                 <MeshDistortMaterial
-                    color="#080808"
+                    //color="#080808"
                     speed={5}
                     distort={0.7}
                     radius={1}
                     metalness={1}
-                    roughness={0.15}
+                    roughness={0.05}
                     transparent={true}
-                    emissive="#000000"
+                    emissive="#080808"
+                    emissiveIntensity={2}
                     side={THREE.DoubleSide}
                 />
             </instancedMesh>

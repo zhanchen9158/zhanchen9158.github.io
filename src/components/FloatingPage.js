@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { motion } from 'framer-motion';
 import { styled } from '@mui/material/styles';
 import { useAnimateContext } from './AnimateContext';
+import useRefRegistry from '../functions/useRefRegistry';
 
 const inkblotimport = import.meta.glob('../pics/inkblot*.webp', {
   eager: true,
@@ -58,21 +59,25 @@ const InkMaterial = shaderMaterial(
     }
 
     void main() {
-      float bigNoise = noise(vUv * 3.0 + uTime * 0.2);
+      float bigNoise = noise(vUv * 6.0 + uTime * 0.2);
       float smallNoise = noise(vUv * 15.0 - uTime * 0.5);
-      float combinedNoise = (bigNoise * 0.8 + smallNoise * 0.2) * 2.0 - 1.0;
+      float combinedNoise = (bigNoise * 0.8 + smallNoise * 0.2) * 2.0;
+      float centeredNoise = combinedNoise - 0.5;
       
       float distortionStrength = 0.5 * smoothstep(0.0, 0.4, uHover); 
       
-      vec2 displacement = (vUv - 0.5) * combinedNoise * distortionStrength;
+      vec2 displacement = (vUv - 0.5) * centeredNoise * distortionStrength;
       vec2 distortedUv = vUv + displacement;
 
       vec4 texColor = texture2D(uTexture, distortedUv);
 
-      float growth = smoothstep(0.1, 0.9, texColor.a + uHover - 1.0);
-      float finalAlpha = growth * uHover;
+      float soakEffect = centeredNoise * 1.2 * (1.1 - uHover);
+      float edge = 1.0 - uHover * uHover + soakEffect;
+      
+      float growth = smoothstep(edge, edge + 0.1, texColor.a);
+      float finalAlpha = growth * smoothstep(0.0, 0.05, uHover);
 
-      gl_FragColor = vec4(texColor.rgb, finalAlpha);
+      gl_FragColor = vec4(uColor, finalAlpha);
     }
   `
 );
@@ -177,10 +182,10 @@ const iconVars = {
 const FloatingPage = memo(function FloatingPage({ id, url, position,
   rotate = { xCenter: 0, yCenter: 45, yAmp: 15, z: 0 }, ytravel = { speed: 0.8, range: 0.5 },
   bend = { number: 1.4, amp: 0 },
-  svgIcon, coordRef, handleSelect
+  svgIcon, coordRef, handleSelect, objectsRef
 }) {
   const [hovered, setHovered] = useState(false);
-  const [currentInkblotKey, setCurrentInkblotKey] = useState('none');
+  const [currentInkblotKey, setCurrentInkblotKey] = useState(getRandomInkblotKey());
 
   const pageMeshRef = useRef();
   const pageMaterialRef = useRef();
@@ -201,8 +206,7 @@ const FloatingPage = memo(function FloatingPage({ id, url, position,
     if (inkTextures) {
       Object.values(inkTextures).forEach((tex) => {
         tex.anisotropy = 8;
-        tex.needsUpdate = true;
-        tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+        //tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
       });
     }
   }, []);
@@ -221,7 +225,6 @@ const FloatingPage = memo(function FloatingPage({ id, url, position,
     if (pageTexture) {
       pageTexture.anisotropy = 8;
       pageTexture.minFilter = THREE.LinearFilter;
-      pageTexture.needsUpdate = true;
     }
   }, [pageTexture]);
 
@@ -236,8 +239,7 @@ const FloatingPage = memo(function FloatingPage({ id, url, position,
     scaleProgress.current += (target - scaleProgress.current) * 0.02;
 
     const p = hoverProgress.current;
-    const influence = hovered ? p : Math.sqrt(p);
-    const isAnimating = Math.abs(target - p) > 0.0001;
+    const isAnimating = Math.abs(target - p) > 0.001;
 
     const sinTime = Math.sin(time * speed);
     const cosTime = Math.cos(time * speed);
@@ -267,7 +269,7 @@ const FloatingPage = memo(function FloatingPage({ id, url, position,
     if (inkMeshRef.current) {
       inkMeshRef.current.position.y = floatY;
 
-      const s = 0.4 + (scaleProgress.current * 0.8);
+      const s = 0.4 + (scaleProgress.current * 0.6);
       inkMeshRef.current.scale.set(s, s, s);
     }
 
@@ -286,12 +288,18 @@ const FloatingPage = memo(function FloatingPage({ id, url, position,
 
     const vector = new THREE.Vector3();
     pageMeshRef.current.getWorldPosition(vector);
+
+    const worldX = vector.x;
+    const worldY = vector.y;
+
     vector.project(camera);
+    const pixelX = (vector.x * 0.5 + 0.5) * windowDimRef.current.w;
+    const pixelY = (-vector.y * 0.5 + 0.5) * windowDimRef.current.h;
 
-    const x = (vector.x * 0.5 + 0.5) * windowDimRef.current.w;
-    const y = (-vector.y * 0.5 + 0.5) * windowDimRef.current.h;
-
-    coordRef.current = { x: x, y: y };
+    coordRef.current = {
+      pixelX: pixelX, pixelY: pixelY,
+      worldX: worldX, worldY: worldY
+    };
 
     handleSelect(id);
   }, [id, camera, size]);
@@ -310,8 +318,14 @@ const FloatingPage = memo(function FloatingPage({ id, url, position,
     document.body.style.cursor = v;
   }, []);
 
+  const { getRefSetter } = useRefRegistry(objectsRef);
+
   return (
-    <group position={position}>
+    <group
+      ref={getRefSetter}
+      name={id}
+      position={position}
+    >
       <mesh ref={inkMeshRef} position={[0, 0, -0.05]}>
         <planeGeometry args={[1.2, 1.2]} />
         <inkMaterial

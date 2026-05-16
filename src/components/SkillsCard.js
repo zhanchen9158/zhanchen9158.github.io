@@ -91,8 +91,8 @@ const SKILLS_DATA = [
                 desc: 'Performance-driven On-Device machine learning inference.'
             },
             {
-                file: 'emotion', name: 'Emotion',
-                desc: 'Component-driven, themable UIs with strict design system fidelity.'
+                file: 'threejs', name: 'Threejs',
+                desc: 'Immersive 3D experience via WebGL and GLSL.'
             },
             {
                 file: 'framermotion', name: 'Framer Motion',
@@ -101,6 +101,10 @@ const SKILLS_DATA = [
             {
                 file: 'vite', name: 'Vite',
                 desc: 'Optimized production asset delivery and streamlined development feedback loops.'
+            },
+            {
+                file: 'emotion', name: 'Emotion',
+                desc: 'Component-driven, themable UIs with strict design system fidelity.'
             },
             {
                 file: 'materialui', name: 'Material UI',
@@ -1788,25 +1792,44 @@ const projectionbeamwidthVars = {
     static: { opacity: 0, width: 0 }
 };
 
-const textshadowVars = {
+const textcontainerVars = {
     initial: {
         z: 0,
     },
     hover: {
+        z: 30,
+        transition: TRANSITIONCONFIG.hoverstart,
+    },
+    rest: {
         z: 0,
         transition: TRANSITIONCONFIG.hoverstart,
     },
     static: { z: 0 },
 };
 
+const textshadowVars = {
+    initial: {
+        z: 0, opacity: 1,
+    },
+    hover: {
+        z: -30, opacity: 0,
+        transition: TRANSITIONCONFIG.hoverstart,
+    },
+    rest: {
+        z: 0, opacity: 1,
+        transition: TRANSITIONCONFIG.hoverstart,
+    },
+    static: { z: 0, opacity: 1, },
+};
+
 const texthoverVars = {
     initial: {
         z: 0,
     },
-    hover: {
-        z: 150,
+    hover: (z = 90) => ({
+        z: z,
         transition: TRANSITIONCONFIG.hoverstart
-    },
+    }),
     rest: {
         z: 0,
         transition: TRANSITIONCONFIG.hoverstart,
@@ -1929,7 +1952,10 @@ const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, an
                     />
                 </WireframeHover>
             }
-            <TextContainer align={textalign} >
+            <TextContainer
+                variants={textcontainerVars}
+                align={textalign}
+            >
                 <TextShadow
                     variants={textshadowVars}
                     style={{
@@ -1960,6 +1986,7 @@ const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, an
                     {item.title}
                 </TextShadow>
                 <TextHover
+                    custom={120}
                     variants={texthoverVars}
                 >
                     <Header
@@ -1971,7 +1998,9 @@ const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, an
                 </TextHover>
             </TextContainer>
             {item.id == 1 && !lesserThanSm && item.icons.map((v, i) => (
-                <TextContainer>
+                <TextContainer
+                    variants={textcontainerVars}
+                >
                     <TextShadow
                         custom={i}
                         variants={textshadowVars}
@@ -1992,7 +2021,7 @@ const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, an
                     </TextShadow>
                     <TextHover
                         key={i}
-                        custom={i}
+                        custom={90}
                         variants={texthoverVars}
                     >
                         <TextClip>

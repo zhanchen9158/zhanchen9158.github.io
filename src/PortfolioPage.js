@@ -19,6 +19,7 @@ import entrancehero2 from './pics/entrancehero2.webp';
 import entrancehero3 from './pics/entrancehero3.webp';
 import entrancebg1 from './pics/entrancebg1.webp';
 import entrancebg2 from './pics/entrancebg2.webp';
+import entrancebg3 from './pics/entrancebg3.webp';
 import ionizationmask from './pics/ionizationmask.webp';
 import hyperstream from './pics/hyperstream.webp';
 import Preloader from './components/Preloader';
@@ -301,10 +302,13 @@ const Page = memo(function Page({ id, sectionRef, containerRef, i, activesection
 
   const gradualEase = cubicBezier(0.45, 0, 0.55, 1);
 
+  const rotateXValue = useMemo(() =>
+    id === 'certifications' ? [0, 0] : [8, 0]
+    , [id]);
   const rotateX = useTransform(
     smoothProgress,
     [0, 0.4, 0.6, 1],
-    [8, 0, 0, 12],
+    [rotateXValue[0], 0, 0, rotateXValue[1]],
     { ease: gradualEase }
   );
 
@@ -317,9 +321,14 @@ const Page = memo(function Page({ id, sectionRef, containerRef, i, activesection
 
   const y = useTransform(smoothProgress, [0.1, 0.45, 0.55, 0.9], ["0%", "0%", "0%", "-15%"]);
 
-  const containerScale = useTransform(smoothProgress, [0, 0.4, 0.6, 1], [0.8, 1, 1, 3], { ease: gradualEase });
+  const scaleValue = useMemo(() =>
+    id === 'certifications' ? [1, 1] : [0.8, 2]
+    , [id]);
+  const containerScale = useTransform(smoothProgress, [0, 0.4, 0.6, 1],
+    [scaleValue[0], 1, 1, scaleValue[1]], { ease: gradualEase });
 
-  const bgScale = useTransform(smoothProgress, [0, 0.4, 0.6, 1], [2, 1, 1, 0.8], { ease: gradualEase });
+  const bgScale = useTransform(smoothProgress, [0, 0.4, 0.6, 1],
+    [2, 1, 1, 0.8], { ease: gradualEase });
 
   const contentY = useTransform(smoothProgress, [0, 0.4, 0.6, 1], [30, 0, 0, -50]);
 
@@ -389,7 +398,10 @@ const AnimatedBackground = memo(function AnimatedBackground({ i, bgScale }) {
         transition={{ duration: 6, ease: 'easeInOut' }}
         style={{
           scale: bgScale,
-          backgroundImage: i === 1 ? `url(${entrancebg1})` : i === 2 ? `url(${entrancebg2})` : 'none',
+          backgroundImage: i === 1 ? `url(${entrancebg1})` || 'none'
+            : i === 2 ? `url(${entrancebg2})` || 'none'
+              : i === 3 ? `url(${entrancebg3})` || 'none'
+                : 'none',
         }}
       />
       <ScrollBackground
