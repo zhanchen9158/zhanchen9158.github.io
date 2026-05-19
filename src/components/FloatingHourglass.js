@@ -1,12 +1,142 @@
 import React, { useRef, useMemo, memo, useEffect } from 'react';
 import { useFrame, extend } from '@react-three/fiber';
-import { MeshDistortMaterial, shaderMaterial, useTexture } from '@react-three/drei';
+import { shaderMaterial, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import hourglass from '../pics/hourglass.webp';
 import sandstream from '../pics/sandstream.webp';
 import sandpile from '../pics/sandpile.webp';
 import nebula from '../pics/nebula.webp';
 
+
+const NebulaMaterial = shaderMaterial(
+    {
+        uTime: 0,
+    },
+    // Vertex Shader
+    `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+    // Fragment Shader
+    `
+    uniform float uTime;
+    varying vec2 vUv;
+
+    float noise(vec2 p) {
+        return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+    }
+
+    float smoothNoise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        float a = noise(i);
+        float b = noise(i + vec2(1.0, 0.0));
+        float c = noise(i + vec2(0.0, 1.0));
+        float d = noise(i + vec2(1.0, 1.0));
+        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+    }
+
+    void main() {
+        // 1. Center the UVs from [0, 1] to [-0.5, 0.5] so the galaxy spins from the middle
+        vec2 uv = vUv - 0.5;
+        
+        // Optional: Simulating the aspect ratio tilt of the reference image
+        // Squeezing the Y axis slightly elongates it into a 3D perspective disc
+        uv.y *= 1.4; 
+
+        // 2. Convert to Polar Coordinates
+        float r = length(uv);        // Distance from center (radius)
+        float angle = atan(uv.y, uv.x); // Rotation angle around center
+
+        // 3. Create the Spiral Distortion Math
+        // The twist Factor multiplies the radius, forcing the texture to wrap tighter 
+        // the further away it gets from the center.
+        float twistFactor = 5.0; 
+        float spiralAngle = angle + (r * twistFactor) - (uTime * 0.2);
+
+        // 4. Sample smoke noise along the curved spiral space
+        // We map the polar coordinates back into a 2D sample space for the noise function
+        vec2 spiralUv = vec2(cos(spiralAngle), sin(spiralAngle)) * 3.0;
+        
+        float n1 = smoothNoise(spiralUv + uTime * 0.05);
+        float n2 = smoothNoise(spiralUv * 2.0 - uTime * 0.1);
+        float smoke = (n1 * 0.6 + n2 * 0.4);
+
+        // 5. Create Core Glow and Edge Falloff Masks
+        // A galaxy needs to fade out into space at the edges, and brighten at the center core.
+        float coreGlow = smoothstep(0.4, 0.0, r) * 0.6; // Soft core bright center
+        float edgeFalloff = smoothstep(0.8, 0.3, r); // Clean falloff masking out the screen edges
+
+        // 6. Combine the noise structure with our masks
+        // Adding 2 arms using cosine wave tracking on our twisted angle space
+        float arms = max(0.0, cos(spiralAngle * 2.0)); // '2.0' defines a two-armed spiral galaxy
+        
+        // Final composite intensity shape
+        float galaxyIntensity = (smoke * 0.4 + arms * 0.4 + coreGlow) * edgeFalloff;
+
+        // 7. Dynamic Color (Bright blue core fading to ionized violet arms like your image)
+        vec3 coreColor = vec3(0.5, 0.8, 1.0);  // Bright turquoise/white core
+        vec3 armColor = vec3(0.1, 0.4, 0.9);   // Deep cosmic blue arms
+        vec3 finalColor = mix(armColor, coreColor, coreGlow);
+
+        // Final alpha opacity balance
+        float alpha = clamp(galaxyIntensity * 0.5, 0.0, 1.0);
+
+        gl_FragColor = vec4(finalColor, alpha);
+    }
+  `
+);
+
+const NebulaCoreMaterial = shaderMaterial(
+    {
+        uTime: 0,
+        uTexture: new THREE.Texture(),
+    },
+    // Vertex Shader
+    `
+    varying vec2 vUv;
+    uniform float uTime;
+
+    // Helper function to rotate a vector
+    mat3 rotationMatrix(vec3 axis, float angle) {
+        float s = sin(angle);
+        float c = cos(angle);
+        float oc = 1.0 - c;
+        return mat3(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,
+                    oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,
+                    oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c);
+    }
+
+    void main() {
+        vUv = uv;
+        vec3 pos = position;
+
+        float PI = 3.14159265359;
+        float fullRotation = 2.0 * PI;
+        float duration = 40.0;
+        
+        float angleZ = (uTime / duration) * fullRotation;
+        pos = rotationMatrix(vec3(0, 0, 1), angleZ) * pos;
+
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+    }
+    `,
+    // Fragment Shader
+    `
+    varying vec2 vUv;
+    uniform sampler2D uTexture;
+
+    void main() {
+      vec4 color = texture2D(uTexture, vUv);
+      if (color.a < 0.1) discard;
+      gl_FragColor = color;
+    }
+    `
+);
 
 const FloatingSandMaterial = shaderMaterial(
     {
@@ -347,6 +477,8 @@ const SandPileMaterial = shaderMaterial(
     `
 );
 
+extend({ NebulaMaterial });
+extend({ NebulaCoreMaterial });
 extend({ FloatingSandMaterial });
 extend({ HourglassMaterial });
 extend({ SandStreamMaterial });
@@ -395,6 +527,12 @@ for (let i = 0; i < SAND_COUNT; i++) {
     speeds[i] = p.speed;
 };
 
+const NEBULA_DATA = {
+    position: [0.2, 2.75, 0], size: [0.5, 0.5 / 0.465],
+    rotate: { xStart: 0, xAmp: 0, yStart: 0, yAmp: 0, zStart: 10, zAmp: 15 },
+    ytravel: { speed: 0.2, range: 0.1 },
+};
+
 const HOURGLASS_DATA = {
     position: [0, -0.5, 0], size: [0.5, 0.5 / 0.465],
     rotate: { xStart: 0, xAmp: 0, yStart: 0, yAmp: 0, zStart: 10, zAmp: 15 },
@@ -429,15 +567,16 @@ const FloatingHourglass = memo(function FloatingHourglass() {
     const sandstreamRef = useRef();
     const sandpileRef = useRef();
     const instancedMeshRef = useRef();
-    const nebulaRef = useRef();
+    const nebulaMaterialRef = useRef();
+    const nebulacoreMaterialRef = useRef();
     const accumulator = useRef(0);
 
-    const hourglassTextures = useTexture(hourglass);
-    const sandstreamTextures = useTexture(sandstream);
+    const hourglassTexture = useTexture(hourglass);
+    const sandstreamTexture = useTexture(sandstream);
     const sandpileTextures = useTexture(sandpile);
-    const nebulaTextures = useTexture(nebula);
+    const nebulaTexture = useTexture(nebula);
     useEffect(() => {
-        const textures = [hourglassTextures, sandstreamTextures, sandpileTextures, nebulaTextures];
+        const textures = [hourglassTexture, sandstreamTexture, sandpileTextures, nebulaTexture];
 
         textures.forEach(texture => {
             if (texture) {
@@ -445,7 +584,7 @@ const FloatingHourglass = memo(function FloatingHourglass() {
                 texture.needsUpdate = true;
             }
         });
-    }, [hourglassTextures, sandstreamTextures, sandpileTextures, nebulaTextures]);
+    }, [hourglassTexture, sandstreamTexture, sandpileTextures, nebulaTexture]);
 
     useFrame((state, delta) => {
         accumulator.current += delta;
@@ -453,10 +592,11 @@ const FloatingHourglass = memo(function FloatingHourglass() {
 
         const t = state.clock.getElapsedTime();
 
-        if (nebulaRef.current) {
-            //nebulaRef.current.rotation.y = t * 0.5;
-            //nebulaRef.current.rotation.z = t * 0.5;
-            //nebulaRef.current.rotation.x = t * 0.1;
+        if (nebulaMaterialRef.current) {
+            nebulaMaterialRef.current.uTime = t;
+        }
+        if (nebulacoreMaterialRef.current) {
+            nebulacoreMaterialRef.current.uTime = t;
         }
         if (instancedMeshRef.current) {
             instancedMeshRef.current.material.uTime = t;
@@ -476,15 +616,36 @@ const FloatingHourglass = memo(function FloatingHourglass() {
 
     return (
         <group position={groupPos}>
-            {/*<mesh ref={nebulaRef} position={[0, 2.5, 0]}>
-                <planeGeometry args={[1.5, 1.0]} />
-                <meshStandardMaterial
-                    map={nebulaTextures}
-                    side={THREE.DoubleSide}
-                    transparent
-                    depthWrite={false}
-                />
-            </mesh>*/}
+            <group position={NEBULA_DATA.position}>
+                <mesh
+                    rotation={[-0.7, 0.5, 0]}
+                    scale={[1, 1, 1]}
+                >
+                    <ringGeometry args={[0.1, 1, 64]} />
+                    <nebulaMaterial
+                        ref={nebulaMaterialRef}
+                        transparent
+                        side={THREE.DoubleSide}
+                        depthTest={false}
+                        depthWrite={false}
+                    />
+                </mesh>
+                <mesh
+                    position={[-0.1, 0, 0]}
+                    rotation={[-1, 0, 0]}
+                    scale={[1, 1, 1]}
+                >
+                    <planeGeometry args={[1, 1]} />
+                    <nebulaCoreMaterial
+                        ref={nebulacoreMaterialRef}
+                        uTexture={nebulaTexture}
+                        transparent
+                        side={THREE.DoubleSide}
+                        depthTest={false}
+                        depthWrite={false}
+                    />
+                </mesh>
+            </group>
             <instancedMesh ref={instancedMeshRef} args={[null, null, SAND_COUNT]}>
                 <sphereGeometry args={[0.5, 4, 4]}>
                     <instancedBufferAttribute
@@ -514,7 +675,7 @@ const FloatingHourglass = memo(function FloatingHourglass() {
                 <planeGeometry args={HOURGLASS_CONFIG.size} />
                 <sandStreamMaterial
                     ref={sandstreamRef}
-                    uTexture={sandstreamTextures}
+                    uTexture={sandstreamTexture}
                     uYTravel={HOURGLASS_CONFIG.ytravel}
                     uRotZ={HOURGLASS_CONFIG.z}
                     transparent
@@ -538,7 +699,7 @@ const FloatingHourglass = memo(function FloatingHourglass() {
                 <planeGeometry args={HOURGLASS_CONFIG.size} />
                 <hourglassMaterial
                     ref={hourglassRef}
-                    uTexture={hourglassTextures}
+                    uTexture={hourglassTexture}
                     uYTravel={HOURGLASS_CONFIG.ytravel}
                     uRotZ={HOURGLASS_CONFIG.z}
                     transparent

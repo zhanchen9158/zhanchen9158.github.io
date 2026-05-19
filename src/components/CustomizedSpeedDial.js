@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo, memo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
 import SpeedDial from '@mui/material/SpeedDial';
 import SpeedDialIcon from '@mui/material/SpeedDialIcon';
 import SpeedDialAction from '@mui/material/SpeedDialAction';
@@ -15,6 +15,11 @@ import getActivesection from '../functions/getActivesection';
 import { useAnimateContext } from './AnimateContext';
 import compass1 from '../pics/compass1.webp';
 import compass2 from '../pics/compass2.webp';
+import { Canvas, useFrame, extend } from '@react-three/fiber';
+import * as THREE from 'three';
+import { shaderMaterial, useTexture } from '@react-three/drei';
+import { Suspense } from 'react';
+import speeddialmain from '../pics/speeddialmain.webp';
 
 
 const MotionBox = motion.create(Box);
@@ -23,7 +28,7 @@ const SECTION_COLORS = {
   introduction: '#E0F7FA',
   projects: '#0F172A',
   highlights: '#FF8C00',
-  certifications: '#E0F7FA',
+  certifications: '#D63031',
 };
 
 const DEFAULT_COLOR = '#E0F7FA';
@@ -32,17 +37,24 @@ const TRANSITION_CONFIG = {
   mainfab: { duration: 0.5, ease: 'easeOut' },
 };
 
-const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
-  position: 'absolute',
+const SpeedDialContainer = styled(Box)(({ theme }) => ({
+  position: 'fixed',
+  width: 56, height: 56,
   bottom: 16, right: 16,
+  background: 'transparent',
+  boxShadow: 'none',
+  [theme.breakpoints.down('sm')]: {
+    width: 48, height: 48,
+  },
+  zIndex: 1050,
+}));
+
+const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
+  position: 'absolute', inset: 0,
   '& .MuiSpeedDial-fab': {
-    width: 56, height: 56,
+    width: '100%', height: '100%', minHeight: '100%',
     background: 'transparent',
     boxShadow: 'none',
-    [theme.breakpoints.down('sm')]: {
-      width: 42, height: 42,
-      minHeight: 42,
-    },
     '&:hover': {
       background: 'transparent',
     },
@@ -124,28 +136,244 @@ export default function CustomizedSpeedDial({ handleScrollsection, activesection
   }, []);
 
   return (
-    <StyledSpeedDial
-      ariaLabel="speeddial"
-      icon={<AnimatedFabIcon color={color} open={open} />}
-      onClose={handleClose}
-      onOpen={handleOpen}
-      open={open}
-    >
-      {actions.map((action, i) => (
-        <StyledSpeedDialAction
-          key={action.name}
-          icon={action.icon(subopen)}
-          onClick={() => handleAction(action.name)}
-          slotProps={{
-            fab: {
-              style: { '--hover-color': color }
-            }
-          }}
-        />
-      ))}
-    </StyledSpeedDial>
+    <SpeedDialContainer>
+      <SpeedDial3DCanvas open={open} />
+      <StyledSpeedDial
+        ariaLabel="speeddial"
+        icon={null}
+        onClose={handleClose}
+        onOpen={handleOpen}
+        open={open}
+      >
+        {actions.map((action, i) => (
+          <StyledSpeedDialAction
+            key={action.name}
+            icon={action.icon(subopen)}
+            onClick={() => handleAction(action.name)}
+            slotProps={{
+              fab: {
+                style: { '--hover-color': color }
+              }
+            }}
+          />
+        ))}
+      </StyledSpeedDial>
+    </SpeedDialContainer>
   );
 }
+
+const StyledCanvas = styled(Canvas)(({ theme }) => ({
+  position: 'absolute',
+  bottom: 0, left: 0,
+  width: '100%', height: '500%', minHeight: '500%',
+  transform: 'translateY(-80%)',
+  transformOrigin: 'bottom center', //background: 'red', opacity: 0.2,
+  contain: 'layout size',
+  pointerEvents: 'none',
+  backfaceVisibility: 'hidden',
+}));
+
+const SpeedDial3DCanvas = memo(function SpeedDial3DCanvas({ open }) {
+  return (
+    <StyledCanvas
+      camera={{ position: [0, 0, 3], fov: 50 }}
+      style={{ pointerEvents: 'none' }}
+      gl={{ antialias: true, alpha: true }}
+    >
+      <ambientLight intensity={1.5} />
+      <Suspense fallback={null}>
+        <CanvasContent isOpen={open} />
+      </Suspense>
+    </StyledCanvas>
+  );
+});
+
+const MarbleMaterial = shaderMaterial(
+  {
+    uTime: 0,
+    uTexture: new THREE.Texture(),
+    uDistortionScale: 9.5,
+    uSpeed: 0.3,
+    uSeed: Math.random() * 1000.0,
+  },
+  // Vertex Shader
+  `
+  varying vec2 vUv;
+  varying vec3 vNormal;
+
+  void main() {
+    vUv = uv;
+    vNormal = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+  `,
+  // Fragment Shader
+  `
+  varying vec2 vUv;
+  varying vec3 vNormal;
+  
+  uniform sampler2D uTexture;
+  uniform float uTime;
+  uniform float uDistortionScale;
+  uniform float uSeed;
+  uniform float uSpeed;
+
+  // Lightweight 2D Noise for UV distortion
+  vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
+  float snoise(vec2 v){
+    const vec4 C = vec4(0.211324865405187, 0.366025403784439,
+             -0.577350269189626, 0.024390243902439);
+    vec2 i  = floor(v + dot(v, C.yy) );
+    vec2 x0 = v -   i + dot(i, C.xx) ;
+    vec2 i1;
+    i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+    vec4 x12 = x0.xyxy + C.xxzz;
+    x12.xy -= i1;
+    i = mod(i, 289.0);
+    vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
+    + i.x + vec3(0.0, i1.x, 1.0 ));
+    vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy),
+      dot(x12.zw,x12.zw)), 0.0);
+    m = m*m ;
+    m = m*m ;
+    vec3 x = 2.0 * fract(p * C.www) - 1.0;
+    vec3 h = abs(x) - 0.5;
+    vec3 a0 = x - floor(x + 0.5);
+    vec3 n = 1.0 - 3.0 * ( 0.5 * (a0*a0 + h*h) );
+    vec3 g;
+    g.x  = a0.x  * x0.x  + h.x  * x0.y;
+    g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+    return 130.0 * dot(m, g);
+  }
+
+  void main() {
+    float time = uTime * uSpeed;
+
+    vec2 seedOffset = vec2(uSeed * 1.37, uSeed * -0.85);
+
+    float noiseX = snoise(vUv * 2.0 + seedOffset + vec2(time, time * 0.4));
+    float noiseY = snoise(vUv * 3.0 - seedOffset - vec2(time * 0.2, time));
+
+    vec2 uvOffset = vec2(noiseX, noiseY) * 0.02 * uDistortionScale;
+    
+    vec2 distortedUv = fract(vUv + uvOffset);
+
+    vec4 color = texture2D(uTexture, distortedUv);
+
+    // 4. SOFT RIM GRADIENT (Fresnel Mask)
+    // Ensures the outer edge smoothly blends into the surrounding box space
+    float rim = max(0.0, dot(vNormal, vec3(0.0, 0.0, 1.0)));
+    float cloudGlow = smoothstep(0.0, 0.5, rim);
+    color.a *= cloudGlow;
+
+    if (color.a < 0.01) discard;
+
+    float brightness = 2.0; 
+    color.rgb *= brightness;
+
+    gl_FragColor = color;
+  }
+  `
+);
+extend({ MarbleMaterial });
+
+const TARGET_FPS = 1 / 30;
+const outerSize = 1;
+const innerSize = 0.5;
+const connectorColor = [1.5, 4, 10];
+const cubeColors = {
+  outerEdge: [2, 10, 20], // Neon Blue
+  outerFace: "#0055ff",
+  innerEdge: [10, 2, 5],  // Neon Pink/Red
+  innerFace: "#ff0055",
+};
+
+const corners = [
+  [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],
+  [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1],
+];
+const connectorPositions = new Float32Array(corners.length * 6);
+for (let i = 0; i < corners.length; i++) {
+  const c = corners[i];
+  const i6 = i * 6;
+  connectorPositions[i6] = c[0] * (outerSize / 2);
+  connectorPositions[i6 + 1] = c[1] * (outerSize / 2);
+  connectorPositions[i6 + 2] = c[2] * (outerSize / 2);
+  connectorPositions[i6 + 3] = c[0] * (innerSize / 2);
+  connectorPositions[i6 + 4] = c[1] * (innerSize / 2);
+  connectorPositions[i6 + 5] = c[2] * (innerSize / 2);
+};
+
+const CanvasContent = memo(function CanvasContent({ isOpen }) {
+  const groupRef = useRef();
+  const marbleMaterialRef = useRef();
+  const shaderTimeRef = useRef(0);
+  const accumulator = useRef(0);
+
+  const marbelTexture = useTexture(speeddialmain);
+  useEffect(() => {
+    if (marbelTexture) {
+      marbelTexture.anisotropy = 8;
+      marbelTexture.needsUpdate = true;
+    }
+  }, [marbelTexture]);
+
+  useFrame((state, delta) => {
+    if (!isOpen) return;
+    accumulator.current += delta;
+    if (accumulator.current < TARGET_FPS) return;
+
+    const t = state.clock.getElapsedTime();
+    shaderTimeRef.current += delta;
+
+    if (groupRef.current) {
+      groupRef.current.rotation.y -= delta * 0.8;
+      groupRef.current.rotation.x -= delta * 0.4;
+    }
+    if (marbleMaterialRef.current) {
+      marbleMaterialRef.current.uTime = shaderTimeRef.current;
+    }
+
+    accumulator.current %= TARGET_FPS;
+  });
+
+
+  return (
+    <group >
+      <mesh ref={groupRef} position={[0, -1.1, 0]}>
+        <sphereGeometry args={[0.2, 32, 32]} />
+        <marbleMaterial
+          ref={marbleMaterialRef}
+          uTexture={marbelTexture}
+          transparent
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+    </group>
+  );
+});
+
+const Cube = memo(function Cube({ size, faceColor, edgeColor, opacity = 0.2, depthWrite }) {
+  return (
+    <group>
+      <mesh>
+        <boxGeometry args={[size, size, size]} />
+        <meshBasicMaterial
+          color={faceColor}
+          transparent
+          opacity={opacity}
+          depthWrite={depthWrite}
+        />
+      </mesh>
+      <lineSegments>
+        <edgesGeometry args={[new THREE.BoxGeometry(size, size, size)]} />
+        <lineBasicMaterial color={edgeColor} toneMapped={false} linewidth={2} />
+      </lineSegments>
+    </group>
+  );
+});
 
 const FabIconContainer = styled(MotionBox)(({ theme }) => ({
   width: 56, height: 56,

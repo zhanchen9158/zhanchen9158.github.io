@@ -8,7 +8,7 @@ const FloatingMaterial = shaderMaterial(
     {
         uTime: 0,
         uTexture: new THREE.Texture(),
-        uYTravel: new THREE.Vector2(0.8, 0.5), // x: speed, y: range
+        uYTravel: new THREE.Vector2(0.2, 0.2), // x: speed, y: range
         uRotX: new THREE.Vector2(0, 0.2),     // x: start, y: amp
         uRotY: new THREE.Vector2(0, 0),       // x: start, y: amp
         uRotZ: new THREE.Vector2(0, 0),       // x: start, y: amp

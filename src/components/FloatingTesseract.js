@@ -1,101 +1,158 @@
-import { useRef, useMemo, memo } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useEffect, useRef, useMemo, memo } from 'react';
+import { useFrame, extend } from '@react-three/fiber';
 import * as THREE from 'three';
+import { shaderMaterial, useTexture } from '@react-three/drei';
 
+const maincubeimport = import.meta.glob('../pics/cube*.webp', {
+    eager: true,
+    query: '?url'
+});
+const maincubearry = Object.values(maincubeimport).map((v, _) => (v.default));
+
+
+const CubeFaceMaterial = shaderMaterial(
+    {
+        uTime: 0,
+        uTexture: new THREE.Texture(),
+        uYTravel: new THREE.Vector2(0.2, 0.2), // x: speed, y: range
+        uZTravel: new THREE.Vector2(0.2, 0.2), // x: speed, y: range
+        uRotX: new THREE.Vector2(0, 0.2),     // x: start, y: amp
+        uRotY: new THREE.Vector2(0, 0),       // x: start, y: amp
+        uRotZ: new THREE.Vector2(0, 0),       // x: start, y: amp
+    },
+    // Vertex Shader
+    `
+    varying vec2 vUv;
+    uniform float uTime;
+    uniform vec2 uYTravel;
+    uniform vec2 uZTravel;
+    uniform vec2 uRotX;
+    uniform vec2 uRotY;
+    uniform vec2 uRotZ;
+
+    // Helper function to rotate a vector
+    mat3 rotationMatrix(vec3 axis, float angle) {
+        float s = sin(angle);
+        float c = cos(angle);
+        float oc = 1.0 - c;
+        return mat3(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,
+                    oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,
+                    oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c);
+    }
+
+    void main() {
+      vUv = uv;
+      vec3 pos = position;
+
+      // 1. Calculate dynamic angles
+      float angleX = uRotX.x + uTime * uRotX.y;
+      float angleY = uRotY.x + uTime * uRotY.y;
+      float angleZ = uRotZ.x + uTime * uRotZ.y;
+
+      // 2. Apply Rotations (Order: XYZ)
+      pos = rotationMatrix(vec3(1, 0, 0), angleX) * pos;
+      pos = rotationMatrix(vec3(0, 1, 0), angleY) * pos;
+      pos = rotationMatrix(vec3(0, 0, 1), angleZ) * pos;
+
+      pos.y += sin(uTime * uYTravel.x) * uYTravel.y;
+      pos.z += -uZTravel.y + abs(sin(uTime * uZTravel.x)) * uZTravel.y;
+
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+    }
+  `,
+    // Fragment Shader
+    `
+    varying vec2 vUv;
+    uniform sampler2D uTexture;
+
+    void main() {
+      vec4 color = texture2D(uTexture, vUv);
+      if (color.a < 0.1) discard;
+      gl_FragColor = color;
+    }
+  `
+);
+
+extend({ CubeFaceMaterial });
+
+const CUBE_DATA = {
+    id: 'cube1',
+    position: [4.0, 1, 0],
+    scale: 0.75,
+    rotate: { xStart: 0, xAmp: -6, yStart: 0, yAmp: 3, zStart: 0, zAmp: 0 },
+    ytravel: { speed: 0.1, range: 0.1 },
+    ztravel: { speed: 0.1, range: 4.0 },
+};
+
+const CUBE_CONFIG = {
+    position: CUBE_DATA.position, scale: CUBE_DATA.scale,
+    x: [
+        THREE.MathUtils.degToRad(CUBE_DATA.rotate.xStart),
+        THREE.MathUtils.degToRad(CUBE_DATA.rotate.xAmp)
+    ],
+    y: [
+        THREE.MathUtils.degToRad(CUBE_DATA.rotate.yStart),
+        THREE.MathUtils.degToRad(CUBE_DATA.rotate.yAmp)
+    ],
+    z: [
+        THREE.MathUtils.degToRad(CUBE_DATA.rotate.zStart),
+        THREE.MathUtils.degToRad(CUBE_DATA.rotate.zAmp)
+    ],
+    ytravel: [CUBE_DATA.ytravel.speed, CUBE_DATA.ytravel.range],
+    ztravel: [CUBE_DATA.ztravel.speed, CUBE_DATA.ztravel.range]
+};
 
 const TARGET_FPS = 1 / 30;
-const outerSize = 0.6;
-const innerSize = 0.3;
-const connectorColor = [1.5, 4, 10];
-const cubeColors = {
-    outerEdge: [2, 10, 20], // Neon Blue
-    outerFace: "#0055ff",
-    innerEdge: [10, 2, 5],  // Neon Pink/Red
-    innerFace: "#ff0055",
-};
 
-const corners = [
-    [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],
-    [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1],
-];
-const connectorPositions = new Float32Array(corners.length * 6);
-for (let i = 0; i < corners.length; i++) {
-    const c = corners[i];
-    const i6 = i * 6;
-    connectorPositions[i6] = c[0] * (outerSize / 2);
-    connectorPositions[i6 + 1] = c[1] * (outerSize / 2);
-    connectorPositions[i6 + 2] = c[2] * (outerSize / 2);
-    connectorPositions[i6 + 3] = c[0] * (innerSize / 2);
-    connectorPositions[i6 + 4] = c[1] * (innerSize / 2);
-    connectorPositions[i6 + 5] = c[2] * (innerSize / 2);
-};
-
-export default function FloatingTesseract() {
-    const groupRef = useRef();
-    const lineRef = useRef();
+const FloatingTesseract = memo(function FloatingTesseract() {
+    const cubeRef = useRef();
     const accumulator = useRef(0);
+
+    const maincubeTextures = useTexture(maincubearry);
+    useEffect(() => {
+        maincubeTextures.forEach(texture => {
+            if (texture) {
+                texture.anisotropy = 8;
+                texture.needsUpdate = true;
+            }
+        });
+    }, [maincubeTextures]);
 
     useFrame((state, delta) => {
         accumulator.current += delta;
         if (accumulator.current < TARGET_FPS) return;
 
         const t = state.clock.getElapsedTime();
-        if (groupRef.current) {
-            groupRef.current.rotation.y = t * 0.2;
-            groupRef.current.rotation.x = t * 0.1;
+        if (cubeRef.current) {
+            cubeRef.current.material.forEach((mat) => {
+                if (mat.uniforms) {
+                    mat.uniforms.uTime.value = t;
+                }
+            });
         }
 
         accumulator.current %= TARGET_FPS;
     });
 
     return (
-        <group ref={groupRef} position={[2, 1, 0]}>
-            <Cube
-                size={outerSize}
-                faceColor={cubeColors.outerFace}
-                edgeColor={cubeColors.outerEdge}
-                opacity={0.2}
-                depthWrite={false}
-            />
-            <Cube
-                size={innerSize}
-                faceColor={cubeColors.innerFace}
-                edgeColor={cubeColors.innerEdge}
-                opacity={0.4}
-            />
-            <lineSegments>
-                <bufferGeometry>
-                    <bufferAttribute
-                        attach="attributes-position"
-                        count={connectorPositions.length / 3}
-                        array={connectorPositions}
-                        itemSize={3}
-                    />
-                </bufferGeometry>
-                <lineBasicMaterial color={connectorColor} toneMapped={false} transparent opacity={0.4} />
-            </lineSegments>
-        </group>
-    );
-}
-
-const Cube = memo(function Cube({ size, faceColor, edgeColor, opacity = 0.2, depthWrite }) {
-    return (
-        <group>
-            <mesh>
-                <boxGeometry args={[size, size, size]} />
-                <meshBasicMaterial
-                    color={faceColor}
+        <mesh ref={cubeRef} position={CUBE_CONFIG.position} scale={CUBE_CONFIG.scale}>
+            <boxGeometry args={[1, 1, 1]} />
+            {maincubeTextures.map((texture, index) => (
+                <cubeFaceMaterial
+                    key={index}
+                    attach={`material-${index}`}
+                    uTexture={texture}
+                    uRotX={CUBE_CONFIG.x}
+                    uRotY={CUBE_CONFIG.y}
+                    uRotZ={CUBE_CONFIG.z}
+                    uYTravel={CUBE_CONFIG.ytravel}
+                    uZTravel={CUBE_CONFIG.ztravel}
                     transparent
-                    opacity={opacity}
-                    metalness={0.5}
-                    roughness={0.2}
-                    depthWrite={depthWrite}
+                    depthWrite={false}
                 />
-            </mesh>
-            <lineSegments>
-                <edgesGeometry args={[new THREE.BoxGeometry(size, size, size)]} />
-                <lineBasicMaterial color={edgeColor} toneMapped={false} linewidth={2} />
-            </lineSegments>
-        </group>
+            ))}
+        </mesh>
     );
 });
+
+export default FloatingTesseract;

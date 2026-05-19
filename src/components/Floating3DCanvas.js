@@ -168,7 +168,7 @@ const CanvasContent = memo(function CanvasContent({ activeId, coordRef, handleSe
                 />
                 <FloatingInk />
                 <FloatingHourglass />
-                {/*<FloatingTesseract />*/}
+                <FloatingTesseract />
                 <FloatingThread
                     objectsRef={objectsRef}
                 />
