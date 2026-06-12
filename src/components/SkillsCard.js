@@ -10,6 +10,7 @@ import {
 } from "motion/react";
 import Box from '@mui/material/Box';
 import { useAnimateContext } from './AnimateContext';
+import { useStateContext } from './StateContext';
 import GlassOverlay from './GlassOverlay';
 import SvgGlow from './SvgGlow';
 import SvgSplitColor, { SvgSplitShadow, SvgBorder } from './SvgSplitColor';
@@ -19,7 +20,6 @@ import wireframe1 from '../pics/wireframe1.webp';
 import wireframe2 from '../pics/wireframe2.webp';
 import wireframe3 from '../pics/wireframe3.webp';
 import wireframe4 from '../pics/wireframe4.webp';
-import modalbg from '../pics/hudbg.webp';
 import modalbgretinal from '../pics/hudretinal.webp';
 import { getWindowWidth } from '../functions/getWindowDim';
 import ionizationmask from '../pics/ionizationmask2.webp';
@@ -267,8 +267,8 @@ const TRANSITIONCONFIG = {
     layoutbg: {
         delay: layoutduration, duration: modalbootupduration, ease: 'easeOut'
     },
-    layoutbgimage: {
-        delay: layoutduration, duration: modalbootupduration, ease: 'easeOut'
+    layoutbganimate: {
+        duration: layoutduration + 0.8, ease: 'easeOut'
     },
     layoutanimate: { duration: layoutduration, ease: 'easeOut' },
 };
@@ -287,20 +287,7 @@ export default function SkillsCard() {
         };
     }, [mode]);
 
-    const x = useMotionValue(0);
-    const y = useMotionValue(0);
-    const { windowDimRef } = useAnimateContext();
-
-    useEffect(() => {
-        const handleGlobalMouseMove = (e) => {
-            if (!windowDimRef?.current) return;
-            x.set(e.clientX / windowDimRef.current.w);
-            y.set(e.clientY / windowDimRef.current.h);
-        };
-
-        window.addEventListener('mousemove', handleGlobalMouseMove);
-        return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
-    }, [x, y]);
+    const { windowDimRef, mouseX, mouseY } = useAnimateContext();
 
     if (lesserThanSm) {
         return (
@@ -311,8 +298,8 @@ export default function SkillsCard() {
                 viewport={{ once: false, amount: 0.5 }}
             >
                 <BentoGrid
-                    globalMouseX={x}
-                    globalMouseY={y}
+                    globalMouseX={mouseX}
+                    globalMouseY={mouseY}
                 />
             </GridContainerSm>
         )
@@ -325,846 +312,33 @@ export default function SkillsCard() {
             whileInView={animationConfig.visible}
             viewport={{ once: false, amount: 0.5 }}
         >
-            <ParallaxShapes
-                mouseX={x}
-                mouseY={y}
-            />
             <BentoGrid
-                globalMouseX={x}
-                globalMouseY={y}
+                globalMouseX={mouseX}
+                globalMouseY={mouseY}
             />
         </GridContainer>
     );
 }
 
-const ParallaxContainer = styled(MotionBox)(({ theme }) => ({
-    position: 'fixed', inset: 0,
-    display: 'flex', justifyContent: 'center', alignItems: 'center',
-    zIndex: -1,
-    pointerEvents: 'none',
-    backfaceVisibility: 'hidden',
-}));
-
-const RingContainer = styled(MotionBox)(({ theme }) => ({
-    //position: 'absolute', inset: 0,
-    width: '100%', height: '100%',
-    display: 'flex', justifyContent: 'center', alignItems: 'center',
-    perspective: '1000px',
-    pointerEvents: 'none',
-    backfaceVisibility: 'hidden',
-}));
-
-const r = 50;
-const RING_CONFIGS = [
-    {
-        id: 'outer', order: 2,
-        radius: 72, strokeWidth: 1, glow: 3,
-        r: r, windowr: r - 1.5,
-        windowdasharray: "2, 1, 4, 2",
-        datar: r - 2.5,
-        rotX: [30, -30], rotY: [-30, 30], rotZ: 45,
-        z: [0, -150],
-        opacity: [0, 0.25],
-    },
-    {
-        id: 'middle', order: 1,
-        radius: 45, strokeWidth: 3, glow: 5,
-        r: r, windowr: r - 3,
-        windowdasharray: "2, 1, 4, 2",
-        datar: r - 5,
-        rotX: [-40, 40], rotY: [-40, 40], rotZ: 90,
-        z: [0, 0],
-        opacity: [0, 0.5],
-    },
-    {
-        id: 'inner', order: 0,
-        radius: 18, strokeWidth: 6, glow: 10,
-        r: r, windowr: r - 7,
-        windowdasharray: "3, 15, 5, 20",
-        datar: r - 14,
-        rotX: [-50, 50], rotY: [50, -50], rotZ: 180,
-        z: [0, 150],
-        opacity: [0, 0.75],
-    }
-];
-
-const ParallaxShapes = memo(function ParallaxShapes({ mouseX, mouseY }) {
-
-    const ringRef = useRef(null);
-    const isInView = useInView(ringRef, { amount: 0.1, margin: "100px" });
-
-    const masterTransform = useTransform(
-        [mouseX, mouseY],
-        ([latestX, latestY]) => {
-            const dx = latestX - 0.5;
-            const dy = latestY - 0.5;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            const parallaxFactor = distance / 0.707;
-            const direction = latestX > 0.5 ? 1 : -1;
-
-            return { parallaxFactor, direction };
-        }
-    );
-
-    const entranceProgress = useMotionValue(0);
-    const animationRef = useRef(null);
-    const timerRef = useRef(null);
-    const handleViewportEnter = useCallback(() => {
-        if (timerRef.current) clearTimeout(timerRef.current);
-        if (animationRef.current) animationRef.current.stop();
-
-        const delay = ringdelay * 1000;
-        timerRef.current = setTimeout(() => {
-            animationRef.current = animate(entranceProgress, 1, {
-                ...TRANSITIONCONFIG.ringentrance,
-                onComplete: () => {
-                    animationRef.current = null;
-                }
-            });
-        }, delay);
-    }, []);
-    const handleViewportLeave = useCallback(() => {
-        if (timerRef.current) clearTimeout(timerRef.current);
-        if (animationRef.current) animationRef.current.stop();
-        entranceProgress.set(0);
-    }, []);
-    const springScale = useSpring(
-        useTransform(entranceProgress, [0, 1], [0.1, 1]),
-        SPRINGCONFIG.parallax
-    );
-
-    useEffect(() => {
-        if (isInView) {
-            handleViewportEnter();
-        } else {
-            handleViewportLeave();
-        }
-    }, [isInView]);
-
-
-    return (
-        <ParallaxContainer>
-            <SvgDefs />
-            <PlexusCanvas
-                mouseX={mouseX}
-                mouseY={mouseY}
-                isInView={isInView}
-            />
-            <RingContainer
-                ref={ringRef}
-            >
-                {RING_CONFIGS.map((config) => (
-                    <Parallax3dRing
-                        key={config.id}
-                        config={config}
-                        mouseX={mouseX} mouseY={mouseY}
-                        masterTransform={masterTransform}
-                        entranceProgress={entranceProgress}
-                        springScale={springScale}
-                        isInView={isInView}
-                    />
-                ))}
-            </RingContainer>
-        </ParallaxContainer>
-    );
-});
-
-const StyledCanvas = styled('canvas')(({ theme }) => ({
-    position: 'fixed', inset: 0,
-    zIndex: -5,
-    pointerEvents: 'none',
-    backfaceVisibility: 'hidden',
-}));
-
-const TAU = 6.283;
-const NODE_SIZE = [1, 2, 2.1, 3, 4];
-const NODE_COLORS = [
-    '#FFFFFF',
-    '#FF6464',
-    '#FF6464',
-    '#BE963C',
-    '#64C8FF',
-];
-const determineProperties = (zValue) => {
-    if (zValue < 0.2) return { color: NODE_COLORS[0], size: NODE_SIZE[0] };
-    if (zValue < 0.4) return { color: NODE_COLORS[1], size: NODE_SIZE[1] };
-    if (zValue < 0.6) return { color: NODE_COLORS[2], size: NODE_SIZE[2] };
-    if (zValue < 0.8) return { color: NODE_COLORS[3], size: NODE_SIZE[3] };
-    return { color: NODE_COLORS[4], size: NODE_SIZE[4] };
-};
-const getApproxDist = (dx, dy) => {
-    dx = Math.abs(dx);
-    dy = Math.abs(dy);
-    return (dx > dy) ? (dx + 0.337 * dy) : (dy + 0.337 * dx);
-};
-const createParticle = (width, height) => {
-    const zValue = Math.random();
-    let x = Math.random() * width;
-    let y = Math.random() * height;
-    const { color, size } = determineProperties(zValue);
-
-    let speed = 0;
-    if (size === 1) { speed = 0; }
-    else if (size === 2) { speed = 0.4; }
-    else if (size === 2.1) { speed = 0.3; }
-    else if (size === 3) { speed = 0.2; }
-    else { speed = 0.0005; }
-
-    const centerX = width >> 1;
-    const centerY = height >> 1;
-    const vmin = Math.min(width, height) / 100;
-    const innerRadius = (RING_CONFIGS.find(ring => ring.id === 'inner')?.radius / 2 || 9) * vmin;
-    const outerRadius = (RING_CONFIGS.find(ring => ring.id === 'outer')?.radius / 2 || 36) * vmin;
-
-    const dx = centerX - x;
-    const dy = centerY - y;
-    const dist = getApproxDist(dx, dy);
-    let unitX = dist > 0 ? dx / dist : 0;
-    let unitY = dist > 0 ? dy / dist : 0;
-
-    let vx = (Math.random() - 0.5) * speed;
-    let vy = (Math.random() - 0.5) * speed;
-
-    let orbitRadius = 0;
-    let orbitAngle = 0;
-
-    if (size === 2 || size === 3) {
-        vx = unitX * speed;
-        vy = unitY * speed;
-    } else if (size === 2.1) {
-        const angle = Math.random() * TAU;
-        unitX = -unitX; unitY = -unitY;
-
-        x = centerX + Math.cos(angle) * innerRadius;
-        y = centerY + Math.sin(angle) * innerRadius;
-        vx = unitX * speed;
-        vy = unitY * speed;
-    } else if (size === 4) {
-        const minOrb = innerRadius + 5 * vmin;
-        const maxOrb = outerRadius - 5 * vmin;
-        orbitRadius = minOrb + Math.random() * (maxOrb - minOrb);
-        orbitAngle = Math.random() * TAU;
-
-        x = centerX + Math.cos(orbitAngle) * orbitRadius;
-        y = centerY + Math.sin(orbitAngle) * orbitRadius;
-        vx = -Math.sin(orbitAngle) * speed;
-        vy = Math.cos(orbitAngle) * speed;
-        unitX = -Math.cos(orbitAngle);
-        unitY = -Math.sin(orbitAngle);
-    }
-
-    let pulseSpeed = 0.001, pulseMag = 0.1, tailLen = 15, tAlpha = 0.4;
-    if (size === 2 || size === 2.1) {
-        pulseSpeed = 0.002; pulseMag = 0.2; tailLen = 20; tAlpha = 0.6;
-    } else if (size === 3) {
-        pulseSpeed = 0.0015; pulseMag = 0.15; tailLen = 15; tAlpha = 0.3;
-    }
-
-    return {
-        x, y, vx, vy, unitX, unitY, size, color, zValue, speed,
-        pulseSpeed, pulseMag, tailLen, tAlpha,
-        centerX, centerY, vmin, innerRadius, outerRadius,
-        orbitRadius, orbitAngle
-    };
-};
-
-const resetShuttle = (p, width, height) => {
-    const side = Math.floor(Math.random() * 4);
-    if (side === 0) { p.x = 0; p.y = Math.random() * height; }
-    if (side === 1) { p.x = width; p.y = Math.random() * height; }
-    if (side === 2) { p.x = Math.random() * width; p.y = 0; }
-    if (side === 3) { p.x = Math.random() * width; p.y = height; }
-
-    const dx = p.centerX - p.x;
-    const dy = p.centerY - p.y;
-    const dist = getApproxDist(dx, dy);
-    p.unitX = dx / dist;
-    p.unitY = dy / dist;
-    p.vx = dist > 0 ? p.unitX * p.speed : 0;
-    p.vy = dist > 0 ? p.unitY * p.speed : 0;
-};
-
-const resetShuttle2 = (p, width, height) => {
-    const angle = Math.random() * TAU;
-
-    p.x = p.centerX + Math.cos(angle) * p.innerRadius;
-    p.y = p.centerY + Math.sin(angle) * p.innerRadius;
-
-    const dx = p.x - p.centerX;
-    const dy = p.y - p.centerY;
-    const dist = getApproxDist(dx, dy);
-    p.unitX = dx / dist;
-    p.unitY = dy / dist;
-    p.vx = dist > 0 ? p.unitX * p.speed : 0;
-    p.vy = dist > 0 ? p.unitY * p.speed : 0;
-};
-
-const drawShuttleShape = (ctx, p, radius, alpha, time) => {
-
-    ctx.fillStyle = p.color;
-    ctx.globalAlpha = alpha;
-
-    ctx.beginPath();
-    if (p.size === 1) {
-        ctx.arc(p.x, p.y, radius, 0, TAU);
-    }
-    else if (p.size === 3) {
-        ctx.moveTo(p.x + p.unitX * radius * 1.5, p.y + p.unitY * radius * 1.5);
-        ctx.lineTo(p.x + p.unitY * radius, p.y - p.unitX * radius);
-        ctx.lineTo(p.x - p.unitX * radius, p.y - p.unitY * radius);
-        ctx.lineTo(p.x - p.unitY * radius, p.y + p.unitX * radius);
-        ctx.closePath();
-    } else if (p.size === 2 || p.size === 2.1) {
-        ctx.moveTo(p.x + p.unitX * p.size * 2, p.y + p.unitY * p.size * 2);
-        ctx.lineTo(p.x - p.unitX * p.size + p.unitY * p.size, p.y - p.unitY * p.size - p.unitX * p.size);
-        ctx.lineTo(p.x - p.unitX * p.size - p.unitY * p.size, p.y - p.unitY * p.size + p.unitX * p.size);
-        ctx.closePath();
-    } else if (p.size === 4) {
-        ctx.globalAlpha = alpha * 0.5;
-        ctx.arc(p.x, p.y, radius, 0, TAU);
-        ctx.fill();
-
-        const baseRadius = radius * 1.2;
-        const spin1 = Math.abs(Math.sin(time * 0.001 + p.zValue * 10));
-        const spin2 = Math.abs(Math.cos(time * 0.0005 + p.zValue * 10));
-
-        ctx.lineWidth = 0.8;
-        ctx.strokeStyle = p.color;
-        ctx.globalAlpha = alpha * 0.8;
-
-        ctx.beginPath();
-        ctx.ellipse(p.x, p.y, baseRadius, baseRadius * spin1, 0, 0, TAU);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.ellipse(p.x, p.y, baseRadius * spin2, baseRadius, 0, 0, TAU);
-        ctx.stroke();
-
-        ctx.globalAlpha = 1.0;
-        return;
-    }
-
-    ctx.fill();
-    ctx.globalAlpha = 1.0;
-};
-
-const drawShuttleTrail = (ctx, p, pulse, radius) => {
-    if (p.speed >= 0.2) {
-        const dynamicTailLen = p.tailLen * pulse;
-        const endX = Math.round(p.x - p.unitX * dynamicTailLen);
-        const endY = Math.round(p.y - p.unitY * dynamicTailLen);
-
-        const grad = ctx.createLinearGradient(p.x, p.y, endX, endY);
-        grad.addColorStop(0, p.color);
-        grad.addColorStop(1, 'transparent');
-
-        ctx.strokeStyle = grad;
-        ctx.lineCap = 'butt';
-
-        if (p.size === 2 || p.size === 2.1) {
-            const offset = p.size * 0.9;
-            const nx = p.unitY * offset;
-            const ny = -p.unitX * offset;
-
-            ctx.globalAlpha = p.tAlpha * pulse * 0.3;
-            ctx.lineWidth = p.size * 1.2;
-            ctx.beginPath();
-            ctx.moveTo(p.x + nx, p.y + ny); ctx.lineTo(endX + nx, endY + ny);
-            ctx.moveTo(p.x - nx, p.y - ny); ctx.lineTo(endX - nx, endY - ny);
-            ctx.stroke();
-
-            ctx.globalAlpha = p.tAlpha * pulse;
-            ctx.lineWidth = p.size * 0.3;
-            ctx.stroke();
-
-        } else {
-            const plumeWidth = radius * 1.5;
-            const rx = p.unitY * plumeWidth;
-            const ry = -p.unitX * plumeWidth;
-
-            ctx.globalAlpha = p.tAlpha * pulse;
-            ctx.fillStyle = grad;
-
-            ctx.beginPath();
-            ctx.moveTo(p.x + rx, p.y + ry);
-            ctx.lineTo(p.x - rx, p.y - ry);
-            ctx.lineTo(endX, endY);
-            ctx.closePath();
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.lineWidth = radius * 0.5;
-            ctx.globalAlpha = p.tAlpha * pulse * 1.2;
-            ctx.moveTo(p.x, p.y);
-            ctx.lineTo(endX, endY);
-            ctx.stroke();
-        }
-    }
-}
-
-const canvasVars = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: TRANSITIONCONFIG.canvasentrance },
-    static: { opacity: 1 },
-};
-
-const PlexusCanvas = memo(function PlexusCanvas({
-    mouseX, mouseY,
-    nodeCount = 20, threshold = 180,
-    isInView = true
-}) {
-    const canvasRef = useRef(null);
-    const requestRef = useRef();
-    const particlesRef = useRef([]);
-    const thresholdSq = threshold * threshold;
-
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        let width, height;
-
-        const resize = () => {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-            init();
-        };
-
-        const init = () => {
-            particlesRef.current = Array.from({ length: nodeCount }, () =>
-                createParticle(width, height)
-            );
-        };
-
-        const animate = () => {
-            if (!isInView) return;
-
-            ctx.clearRect(0, 0, width, height);
-            ctx.globalCompositeOperation = 'lighter';
-
-            const currentMouseX = mouseX.get() * width;
-            const currentMouseY = mouseY.get() * height;
-
-            const time = performance.now();
-
-            const particles = particlesRef.current;
-            const len = particles.length;
-
-            for (let i = 0; i < len; i++) {
-                const p = particles[i];
-                if (p.size === 1) {
-
-                }
-                else if (p.size === 2 || p.size === 3) {
-                    const dx = p.centerX - p.x;
-                    const dy = p.centerY - p.y;
-                    const distSq = dx * dx + dy * dy;
-                    const innerlimit = (p.innerRadius - p.vmin) * (p.innerRadius - p.vmin);
-
-                    if (distSq < innerlimit) {
-                        resetShuttle(p, width, height);
-                    } else {
-                        p.x += p.unitX * p.speed;
-                        p.y += p.unitY * p.speed;
-                    }
-                }
-                else if (p.size === 2.1) {
-                    if (p.x < 0 || p.x > width || p.y < 0 || p.y > height) {
-                        resetShuttle2(p, width, height);
-                    } else {
-                        p.x += p.vx;
-                        p.y += p.vy;
-                    }
-                }
-                else if (p.size === 4) {
-                    p.orbitAngle += p.speed;
-
-                    p.x = p.centerX + Math.cos(p.orbitAngle) * p.orbitRadius;
-                    p.y = p.centerY + Math.sin(p.orbitAngle) * p.orbitRadius;
-
-                    p.unitX = -Math.cos(p.orbitAngle);
-                    p.unitY = -Math.sin(p.orbitAngle);
-                } else {
-                    p.x += p.vx;
-                    p.y += p.vy;
-
-                    if (p.x < 0 || p.x > width) p.vx *= -1;
-                    if (p.y < 0 || p.y > height) p.vy *= -1;
-                }
-
-                const pulse = 1 + Math.sin((time * p.pulseSpeed) + (p.zValue * 10)) * p.pulseMag;
-                const dynamicAlpha = Math.min(((1 - p.zValue) * 0.8 + 0.2) * pulse, 1.0);
-                const currentRadius = (p.size === 3) ? (p.size * pulse) : p.size;
-
-                drawShuttleShape(ctx, p, currentRadius, dynamicAlpha, time);
-                drawShuttleTrail(ctx, p, pulse, currentRadius);
-
-                const mDx = p.x - currentMouseX;
-                const mDy = p.y - currentMouseY;
-                const mDistSq = mDx * mDx + mDy * mDy;
-
-                if (mDistSq < thresholdSq) {
-                    const lineAlpha = (1 - (mDistSq / thresholdSq)) * 0.4;
-                    ctx.beginPath();
-                    ctx.strokeStyle = p.color;
-                    ctx.globalAlpha = lineAlpha;
-                    ctx.lineWidth = 0.6;
-                    ctx.moveTo(p.x, p.y);
-                    ctx.lineTo(currentMouseX, currentMouseY);
-                    ctx.stroke();
-                }
-
-                ctx.globalAlpha = 1.0;
-            };
-
-            requestRef.current = requestAnimationFrame(animate);
-        };
-
-        if (isInView) {
-            window.addEventListener('resize', resize);
-            resize();
-            animate();
-        }
-
-        return () => {
-            window.removeEventListener('resize', resize);
-            cancelAnimationFrame(requestRef.current);
-        };
-    }, [isInView, mouseX, mouseY, nodeCount, threshold]);
-
-    return (
-        <motion.div
-            variants={canvasVars}
-            initial={'hidden'}
-            animate={isInView ? 'visible' : 'hidden'}
-        >
-            <StyledCanvas
-                ref={canvasRef}
-            />
-        </motion.div>
-    );
-});
-
-const RingLayer = styled(MotionBox)(({ theme, config }) => ({
-    position: 'absolute', //inset: 0,
-    width: `${config.radius}vmin`,
-    height: `${config.radius}vmin`,
-    display: 'flex', justifyContent: 'center', alignItems: 'center',
-    borderRadius: '50%',
-    transformStyle: 'preserve-3d',
-    pointerEvents: 'none',
-    backfaceVisibility: 'hidden',
-}));
-
-const Parallax3dRing = memo(function Parallax3dRing({ config,
-    mouseX, mouseY,
-    masterTransform, entranceProgress,
-    springScale, isInView
-}) {
-
-    const rotateX = useSpring(
-        useTransform(mouseY, [0, 1], config.rotX),
-        SPRINGCONFIG.parallax
-    );
-    const rotateY = useSpring(
-        useTransform(mouseX, [0, 1], config.rotY),
-        SPRINGCONFIG.parallax
-    );
-
-    const rotateZ = useSpring(useTransform(
-        [masterTransform, entranceProgress],
-        ([{ parallaxFactor, direction }, progress]) => {
-            const parallaxDeg = parallaxFactor * direction * (-config.rotZ);
-            const entranceOffset = (1 - progress) * -180;
-            return entranceOffset + parallaxDeg;
-        }
-    ), SPRINGCONFIG.parallax);
-    const inverseZ = useTransform(rotateZ, (v) => -v);
-    const shadowZ = useTransform(
-        [rotateX, rotateY, rotateZ],
-        ([rx, ry, rz]) => {
-            const tiltAngle = Math.atan2(ry, rx) * (180 / Math.PI);
-            const finalAngle = tiltAngle - rz;
-
-            return finalAngle + 45;
-        }
-    );
-
-    const entranceOpacity = useSpring(useTransform(
-        entranceProgress, [0, 1], [0, 1]
-    ), SPRINGCONFIG.parallax);
-
-    const shadowOpacity = useSpring(useTransform(
-        masterTransform,
-        ({ parallaxFactor, direction }) => {
-            const [minOpacity, maxOpacity] = [0, 0.9];
-            const parallaxOpacity = minOpacity + parallaxFactor * (maxOpacity - minOpacity);
-            return parallaxOpacity;
-        }
-    ), SPRINGCONFIG.parallax);
-
-    return (
-        <RingLayer
-            config={config}
-            style={{
-                rotateX,
-                rotateY,
-                rotateZ,
-                scale: springScale,
-                '--inverse-z': inverseZ,
-                '--shadow-z': shadowZ,
-            }}
-        >
-            {[...Array(3)].map((_, i) => (
-                <ParallaxRing
-                    key={i}
-                    config={config}
-                    entranceOpacity={entranceOpacity}
-                    shadowOpacity={shadowOpacity}
-                    isInView={isInView}
-                    i={i}
-                />
-            ))}
-        </RingLayer>
-    );
-});
-
-const RingStack = styled(MotionBox)(({ theme }) => ({
-    position: 'absolute', inset: 0,
-    pointerEvents: 'none',
-    backfaceVisibility: 'hidden',
-    willChange: 'transform',
-    shapeRendering: 'geometricPrecision',
-    transform: 'translateZ(0)',
-}));
-
-const RingSvg = styled('svg')({
-    width: '100%', height: '100%',
-    overflow: 'visible',
-    backfaceVisibility: 'hidden',
-});
-
-const Ring3DHull = styled('circle')({
-    vectorEffect: 'non-scaling-stroke',
-    backfaceVisibility: 'hidden',
-});
-
-const RingGlint = styled('circle')({
-    filter: `drop-shadow(0 0 2px white)`,
-    //mixBlendMode: 'plus-lighter',
-    backfaceVisibility: 'hidden',
-});
-
-const RingEtching = styled('circle')({
-    filter: 'blur(0.5px)',
-    //mixBlendMode: 'overlay',
-    backfaceVisibility: 'hidden',
-});
-
-const RingRibs = styled('circle')({
-    mixBlendMode: 'overlay',
-    backfaceVisibility: 'hidden',
-});
-
-const RingBeacons = styled('circle')({
-    filter: 'blur(1px)',
-    backfaceVisibility: 'hidden',
-    animation: 'beaconPulse 2s infinite ease-in-out',
-    '@keyframes beaconPulse': {
-        '0%, 100%': {
-            opacity: 0.2,
-        },
-        '50%': {
-            opacity: 1,
-        },
-    },
-});
-
-const RingWindows = styled('circle')(({ theme, i = 0, isInView = true }) => ({
-    opacity: 0,
-    backfaceVisibility: 'hidden',
-    animation: isInView
-        ? `startupFlicker 1.5s ${4 + i * 0.5}s ease-out forwards`
-        : 'none',
-    '@keyframes startupFlicker': {
-        '0%': { opacity: 0 },
-        '10%, 15%': { opacity: 1 },
-        '20%, 25%': { opacity: 0 },
-        '40%': { opacity: 1, filter: 'brightness(5)', },
-        '100%': { opacity: 1, filter: 'brightness(1)', },
-    },
-}));
-
-const RingDataTube = styled('circle')({
-    backfaceVisibility: 'hidden',
-    animation: 'dataFlow 3s linear infinite',
-    '@keyframes dataFlow': {
-        'from': {
-            strokeDashoffset: 50,
-        },
-        'to': {
-            strokeDashoffset: 0,
-        },
-    },
-});
-
-const getVisualStroke = (base, radius) => (base * 50) / radius;
-
-const ParallaxRing = memo(function ParallaxRing({ config,
-    entranceOpacity, shadowOpacity, isInView, i
-}) {
-
-    const gradientId = `ringGradient-${config.id}`;
-    const hullColor = useMemo(() => {
-        return i === 0 ? `url(#${gradientId})` : `rgba(30, 40, 50, ${0.8 - i * 0.1})`;
-    }, [i, gradientId]);
-    const strokeGradient = useMemo(() => {
-        return `url(#${gradientId})`;
-    }, [gradientId]);
-
-    return (
-        <RingStack
-            style={{
-                z: i * -10,
-                opacity: entranceOpacity,
-            }}
-        >
-            <RingSvg viewBox="0 0 100 100">
-                <defs>
-                    <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="rgba(40, 44, 52, 1)" />
-                        <stop offset="45%" stopColor="rgba(200, 220, 255, 1)" />
-                        <stop offset="50%" stopColor="rgba(255, 255, 255, 1)" />
-                        <stop offset="55%" stopColor="rgba(200, 220, 255, 1)" />
-                        <stop offset="100%" stopColor="rgba(70, 75, 90, 1)" />
-                    </linearGradient>
-                </defs>
-                {i === 1 &&
-                    <circle     //glow
-                        cx="50" cy="50" r={config.r}
-                        fill="none"
-                        stroke="url(#strokeGlow)"
-                        strokeWidth={config.glow}
-                    />
-                }
-                <circle         //RingStructure
-                    cx="50" cy="50" r={config.r}
-                    fill="none"
-                    stroke={strokeGradient}
-                    strokeWidth={config.strokeWidth}
-                />
-                <Ring3DHull
-                    cx="50" cy="50" r={config.r}
-                    fill="none"
-                    stroke={hullColor}
-                    strokeWidth={i === 0 ? config.strokeWidth : config.strokeWidth * 1.5}
-                />
-                {i > 0 && (
-                    <circle     //RingStackDepth
-                        cx="50" cy="50" r={config.r}
-                        fill="none"
-                        stroke="#000000"
-                        strokeWidth={config.strokeWidth}
-                        style={{
-                            opacity: 0.4 + i * 0.1,
-                        }}
-                    />
-                )}
-                <RingRibs
-                    cx="50" cy="50" r={config.r}
-                    fill="none"
-                    stroke="rgba(255, 255, 255, 0.3)"
-                    strokeWidth={config.strokeWidth + 0.5}
-                    strokeDasharray="1, 4"
-                />
-                <circle         //RingPlating
-                    cx="50" cy="50" r={config.r}
-                    fill="none"
-                    stroke="rgba(0, 0, 0, 0.5)"
-                    strokeWidth={config.strokeWidth + 0.1}
-                    strokeDasharray="17, 35"
-                />
-                <RingGlint
-                    cx="50" cy="50" r={config.r}
-                    fill="none"
-                    stroke="url(#glintGradient)"
-                    strokeWidth={getVisualStroke(2, config.radius)}
-                    strokeLinecap="round"
-                    style={{
-                        transform: 'rotate(calc(var(--inverse-z) * 1deg))',
-                        transformOrigin: 'center'
-                    }}
-                />
-                {i === 0 &&
-                    <>
-                        <RingEtching
-                            cx="50" cy="50" r={config.r}
-                            fill="none"
-                            stroke="rgba(255, 255, 255, 0.7)"
-                            strokeWidth={0.2}
-                            strokeDasharray="2, 11"
-                        />
-                        <RingBeacons
-                            cx="50" cy="50" r={config.r}
-                            fill="none"
-                            stroke="#ff3e3e"
-                            strokeWidth={1.2}
-                            strokeDasharray="1, 5, 1, 4, 1, 314"
-                            strokeDashoffset='1'
-                            strokeLinecap="round"
-                        />
-                        <RingWindows
-                            cx="50" cy="50" r={config.windowr}
-                            fill="none"
-                            stroke="rgba(255, 200, 50, 0.6)"
-                            strokeWidth={0.3}
-                            strokeDasharray={config.windowdasharray}
-                            i={config.order}
-                            isInView={isInView}
-                        />
-                        <RingDataTube
-                            cx="50" cy="50" r={config.datar}
-                            fill="none"
-                            stroke="rgba(0, 255, 255, 0.2)"
-                            strokeWidth={0.2}
-                            strokeDasharray="1, 9"
-                        />
-                        <MotionCircle    //RingShadowOverlay
-                            cx="50" cy="50" r={config.r}
-                            fill="none"
-                            stroke="url(#shadowGradient)"
-                            strokeWidth={getVisualStroke(2, config.radius)}
-                            strokeLinecap="round"
-                            style={{
-                                opacity: shadowOpacity,
-                                transform: 'rotate(calc(var(--shadow-z) * 1deg))',
-                                transformOrigin: 'center'
-                            }}
-                        />
-                    </>
-                }
-            </RingSvg>
-        </RingStack>
-    );
-});
-
 const BentoGrid = memo(function BentoGrid({ globalMouseX, globalMouseY }) {
-    const [selectedId, setSelectedId] = useState(null);
     const [lastSelectedId, setLastSelectedId] = useState(null);
 
+    const { activeSkillsId, setActiveSkillsId } = useStateContext();
+
     const selectedItem = useMemo(() => {
-        if (!selectedId) return {};
+        if (!activeSkillsId) return {};
 
-        return SKILLS_DATA.find(i => i.id === selectedId) || {};
-    }, [selectedId]);
+        return SKILLS_DATA.find(i => i.id === activeSkillsId) || {};
+    }, [activeSkillsId]);
 
-    const selectedIdRef = useRef(selectedId);
-    useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
+    const selectedIdRef = useRef(activeSkillsId);
+    useEffect(() => { selectedIdRef.current = activeSkillsId; }, [activeSkillsId]);
 
     const handleItemSelect = useCallback((id) => {
         if (id === null) {
             setLastSelectedId(selectedIdRef.current);
         }
-        setSelectedId(id);
+        setActiveSkillsId(id);
     }, []);
 
     const lastSelectedIdRef = useRef(lastSelectedId);
@@ -1179,7 +353,7 @@ const BentoGrid = memo(function BentoGrid({ globalMouseX, globalMouseY }) {
                 <AnimatedGridItem
                     key={item.id}
                     item={item}
-                    selectedId={selectedId} lastSelectedId={lastSelectedId}
+                    selectedId={activeSkillsId} lastSelectedId={lastSelectedId}
                     handleItemSelect={handleItemSelect}
                     handleGridAnimationComplete={handleGridAnimationComplete}
                     globalMouseX={globalMouseX}
@@ -1187,7 +361,7 @@ const BentoGrid = memo(function BentoGrid({ globalMouseX, globalMouseY }) {
                 />
             ))}
 
-            {selectedId && (
+            {activeSkillsId && (
                 <AnimatedModal
                     key={'animatedmodal'}
                     selectedItem={selectedItem}
@@ -1213,10 +387,57 @@ const GridItemContainer = styled(MotionBox)(({ theme }) => ({
 
 const AnimatedGridItem = memo(function AnimatedGridItem({ item, selectedId, lastSelectedId,
     handleItemSelect, handleGridAnimationComplete, globalMouseX, globalMouseY }) {
+    const [isEntrancing, setIsEntrancing] = useState(true);
+    const timerRef = useRef(null);
+
+    const handleViewportEnter = useCallback(() => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+
+        timerRef.current = setTimeout(() => {
+            setIsEntrancing(false);
+        }, 1000);
+    }, []);
+
+    const handleViewportLeave = useCallback(() => {
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+        setIsEntrancing(true);
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, []);
+
+    const itemRef = useRef(null);
+    const rectRef = useRef(null);
+
+    const tiltStrength = useMotionValue(0);
+    const hoverProgress = useMotionValue(0);
+
+    const handleMouseEnter = useCallback(() => {
+        if (isEntrancing) return;
+        hoverProgress.set(1);
+        if (itemRef.current) {
+            rectRef.current = itemRef.current.getBoundingClientRect();
+        }
+        animate(tiltStrength, 1, { duration: 0.3, ease: "easeOut" });
+    }, [isEntrancing]);
+
+    const handleMouseLeave = useCallback(() => {
+        hoverProgress.set(0);
+        animate(tiltStrength, 0, { duration: 0.5, ease: "easeInOut" });
+    }, []);
 
     return (
         <GridItemContainer
             //variants={itemVars}
+            ref={itemRef}
+            onHoverStart={handleMouseEnter}
+            onHoverEnd={handleMouseLeave}
             custom={item.id}
             layoutId={`skillgriditem-${item.id}`}
             layout
@@ -1228,6 +449,9 @@ const AnimatedGridItem = memo(function AnimatedGridItem({ item, selectedId, last
             whileHover={{
                 zIndex: 99,
             }}
+            onViewportEnter={handleViewportEnter}
+            onViewportLeave={handleViewportLeave}
+            viewport={{ once: false, amount: 0.2 }}
             style={{
                 gridArea: gridMap[item.id] || 'a',
                 zIndex: (selectedId === item.id || lastSelectedId === item.id) ? 10 : 1,
@@ -1236,6 +460,10 @@ const AnimatedGridItem = memo(function AnimatedGridItem({ item, selectedId, last
             <AnimatedGridItem3D item={item}
                 globalMouseX={globalMouseX}
                 globalMouseY={globalMouseY}
+                itemRef={itemRef} rectRef={rectRef}
+                hoverProgress={hoverProgress}
+                tiltStrength={tiltStrength}
+                isEntrancing={isEntrancing}
             />
         </GridItemContainer>
     );
@@ -1255,12 +483,12 @@ const GridItem3D = styled(MotionBox)(({ theme }) => ({
 
 const BORDER = 1.5;
 
-const GridItemBorder = styled(MotionBox)(({ theme, color = '#ffffff' }) => ({
+const GridItemBorder = styled(MotionBox)(({ theme }) => ({
     position: 'absolute',
     inset: `-${BORDER}px`,
     background: `radial-gradient(
         300px circle at var(--mouse-x) var(--mouse-y), 
-        ${color}, 
+        #ffffff, 
         transparent 60%
     ) no-repeat`,
     WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
@@ -1283,35 +511,6 @@ const GridItemBg = styled(MotionBox)(({ theme }) => ({
     pointerEvents: 'none',
     backfaceVisibility: "hidden",
     zIndex: 0,
-}));
-
-const Scanline = styled(MotionBox)(({ theme }) => ({
-    position: 'absolute', inset: 0,
-    borderRadius: 'inherit',
-    overflow: 'hidden',
-    pointerEvents: 'none',
-    backfaceVisibility: "hidden",
-    '&::after': {
-        content: '""',
-        position: 'absolute', inset: 0,
-        background: `linear-gradient(
-            to bottom,
-            transparent 0%,
-            rgba(255, 255, 255, 0) 45%,
-            rgba(255, 255, 255, 0.05) 50%, 
-            rgba(255, 255, 255, 0) 55%,
-            transparent 100%
-        )`,
-        animation: `scanlineMove 16s linear infinite`,
-    },
-    '@keyframes scanlineMove': {
-        '0%': {
-            transform: 'translateY(-55%)',
-        },
-        '100%': {
-            transform: 'translateY(55%)'
-        },
-    },
 }));
 
 const Spotlight = styled(motion.div)({
@@ -1362,31 +561,9 @@ const griditemhoverVars = {
     static: { opacity: 1, },
 };
 
-const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, globalMouseX, globalMouseY }) {
-    const [isEntrancing, setIsEntrancing] = useState(true);
-    const timerRef = useRef(null);
-
-    const handleViewportEnter = useCallback(() => {
-        if (timerRef.current) clearTimeout(timerRef.current);
-
-        timerRef.current = setTimeout(() => {
-            setIsEntrancing(false);
-        }, 1000);
-    }, []);
-
-    const handleViewportLeave = useCallback(() => {
-        if (timerRef.current) {
-            clearTimeout(timerRef.current);
-            timerRef.current = null;
-        }
-        setIsEntrancing(true);
-    }, []);
-
-    useEffect(() => {
-        return () => {
-            if (timerRef.current) clearTimeout(timerRef.current);
-        };
-    }, []);
+const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, globalMouseX, globalMouseY,
+    itemRef, rectRef, hoverProgress, tiltStrength, isEntrancing
+}) {
 
     const { manual, system, lesserThanSm } = useAnimateContext();
     const mode = system || manual;
@@ -1405,8 +582,6 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, globalMouseX
     }, [mode]);
 
     const { windowDimRef } = useAnimateContext();
-    const itemRef = useRef(null);
-    const rectRef = useRef(null);
 
     const localX = useTransform(globalMouseX, (latestX) => {
         if (!windowDimRef.current || !itemRef.current || !rectRef.current) return 0;
@@ -1441,23 +616,6 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, globalMouseX
     const springX = useSpring(useTransform(localY, [-0.5, 0.5], [12, -12]), SPRINGCONFIG.griditem3d);
     const springY = useSpring(useTransform(localX, [-0.5, 0.5], [-12, 12]), SPRINGCONFIG.griditem3d);
 
-    const tiltStrength = useMotionValue(0);
-
-    const hoverProgress = useMotionValue(0);
-    const handleMouseEnter = useCallback(() => {
-        if (isEntrancing) return;
-        hoverProgress.set(1);
-        if (itemRef.current) {
-            rectRef.current = itemRef.current.getBoundingClientRect();
-        }
-        animate(tiltStrength, 1, { duration: 0.3, ease: "easeOut" });
-    }, [isEntrancing]);
-
-    const handleMouseLeave = useCallback(() => {
-        hoverProgress.set(0);
-        animate(tiltStrength, 0, { duration: 0.5, ease: "easeInOut" });
-    }, []);
-
     const rotateX = useTransform([springX, tiltStrength], ([val, s]) => val * s);
     const rotateY = useTransform([springY, tiltStrength], ([val, s]) => val * s);
 
@@ -1475,9 +633,7 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, globalMouseX
 
     return (
         <GridItem3D
-            ref={itemRef}
-            onHoverStart={handleMouseEnter}
-            onHoverEnd={handleMouseLeave}
+
             style={{
                 rotateX: lesserThanSm ? 0 : rotateX,
                 rotateY: lesserThanSm ? 0 : rotateY,
@@ -1489,21 +645,17 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, globalMouseX
             animate={animationConfig.rest}
             whileInView={animationConfig.visible}
             whileHover={isEntrancing ? undefined : animationConfig.hover}
-            onViewportEnter={handleViewportEnter}
-            onViewportLeave={handleViewportLeave}
-            viewport={{ once: false, amount: 0.2 }}
+
         >
             {/*<GridItemBorder
                 variants={griditemhoverVars}
-            />
+            />*/}
             <Spotlight
                 variants={griditemhoverVars}
-            />*/}
+            />
             <GridItemBg
                 variants={griditemhoverVars}
-            >
-                <Scanline />
-            </GridItemBg>
+            />
             <AnimatedGridItemContent item={item} animationConfig={animationConfig}
                 hoverProgress={hoverProgress}
             />
@@ -1526,59 +678,6 @@ const GridItemContent = styled(MotionBox)(({ theme }) => ({
     [theme.breakpoints.down('sm')]: {
         padding: theme.spacing(2),
     },
-}));
-
-const WireframeHover = styled(MotionBox)(({ theme }) => ({
-    position: 'absolute', inset: 0,
-    borderRadius: 'inherit',
-    transformStyle: "preserve-3d",
-    pointerEvents: 'none',
-    backfaceVisibility: "hidden",
-}));
-
-const Wireframe = styled(MotionBox)(({ theme }) => ({
-    position: 'absolute', inset: 0,
-    borderRadius: 'inherit',
-    backgroundSize: '90% 90%',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
-    outline: "1px solid transparent",
-    transformStyle: "preserve-3d",
-    pointerEvents: 'none',
-    backfaceVisibility: "hidden",
-    maskImage: `
-        linear-gradient(to right, transparent 10%, black 20%, black 80%, transparent 90%), 
-        linear-gradient(to bottom, transparent 10%, black 20%, black 80%, transparent 90%)`,
-    WebkitMaskImage: `
-        linear-gradient(to right, transparent 10%, black 20%, black 80%, transparent 90%), 
-        linear-gradient(to bottom, transparent 10%, black 20%, black 80%, transparent 90%)`,
-    maskComposite: 'intersect',
-    WebkitMaskComposite: 'source-in',
-    maskSize: '100% 100%',
-    WebkitMaskSize: '100% 100%',
-}));
-
-const IonizationLayer = styled(MotionBox)({
-    position: 'fixed', inset: 0,
-    zIndex: 10,
-    pointerEvents: 'none',
-    backfaceVisibility: 'hidden',
-    willChange: 'transform, opacity, mask-size',
-    transform: 'translateZ(0)',
-
-    maskImage: `url(${ionizationmask})`,
-    maskRepeat: 'repeat',
-    maskPosition: 'center',
-    WebkitMaskPosition: 'center',
-    maskSize: '100px',
-});
-
-const MaskedImage = styled(MotionBox)(({ theme }) => ({
-    width: '100%', height: '100%',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    pointerEvents: 'none',
-    backfaceVisibility: 'hidden',
 }));
 
 const TextContainer = styled(MotionBox)(({ theme, align = 'auto' }) => ({
@@ -1718,58 +817,6 @@ const itemcontentVars = {
     static: { z: 0, },
 };
 
-const scale = 1.4;
-const wireframeVars = {
-    initial: {
-        opacity: 0, scale: scale, z: wireframez,
-        transition: TRANSITIONCONFIG.hoverbgend,
-    },
-    hover: {
-        opacity: [0, 0, 0.6],
-        scale: 1,
-        z: wireframez,
-        transition: {
-            ...TRANSITIONCONFIG.hoverstart,
-            times: [0, 0.3, 1]
-        }
-    },
-    rest: {
-        opacity: [0.6, 0, 0], scale: scale, z: wireframez,
-        transition: {
-            ...TRANSITIONCONFIG.hoverbgend,
-            times: [0, 0.4, 1]
-        }
-    },
-    static: { opacity: 0, scale: 1, z: 0, },
-};
-
-const ionizationVars = {
-    initial: {
-        opacity: 0, scale: scale,
-        rotate: -5, z: wireframez, filter: "blur(8px) brightness(200%)",
-    },
-    hover: {
-        opacity: [0, 1, 0], scale: 1,
-        rotate: 0, z: wireframez, filter: "blur(0px) brightness(100%)",
-        transition: {
-            ...TRANSITIONCONFIG.hoverstart,
-            opacity: {
-                duration: 6 * hover,
-                times: [0, 0.17, 1]
-            },
-        },
-    },
-    rest: {
-        opacity: [0, 1, 0], scale: scale,
-        rotate: -5, z: wireframez, filter: "blur(8px) brightness(200%)",
-        transition: {
-            ...TRANSITIONCONFIG.hoverbgend,
-            times: [0, 0.4, 1]
-        },
-    },
-    static: { opacity: 0, scale: 1, rotate: 0, z: 0, filter: 'blur(0px) brightness(100%)' },
-};
-
 const projectionbeamheightVars = {
     initial: {
         opacity: 0, height: 0,
@@ -1898,60 +945,10 @@ const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, an
             : lesserThanMd ? 'flex-end' : 'flex-start'
         , [lesserThanSm, lesserThanMd])
 
-    const griditemRef = useRef(null);
-    const griditemwidthRef = useRef(0);
-
-    useLayoutEffect(() => {
-        if (!griditemRef.current) return;
-
-        const observer = new ResizeObserver((entries) => {
-            for (let entry of entries) {
-                griditemwidthRef.current = entry.contentRect.width;
-            }
-        });
-
-        observer.observe(griditemRef.current);
-
-        return () => observer.disconnect();
-    }, []);
-
-    const wireframeimage = useMemo(() => {
-        return item.id === 1
-            ? `url(${wireframe1})`
-            : item.id === 2
-                ? `url(${wireframe2})`
-                : item.id === 3
-                    ? `url(${wireframe3})`
-                    : `url(${wireframe4})`
-    }, []);
-
     return (
         <GridItemContent
-            ref={griditemRef}
             variants={itemcontentVars}
         >
-            {!lesserThanSm &&
-                <WireframeHover>
-                    <IonizationLayer
-                        variants={ionizationVars}
-                    >
-                        <MaskedImage
-                            style={{ backgroundImage: wireframeimage }}
-                        />
-                    </IonizationLayer>
-                    <Wireframe
-                        variants={wireframeVars}
-                        style={{
-                            backgroundImage: wireframeimage,
-                        }}
-                    />
-                    <LeaderLines
-                        item={item}
-                        griditemwidthRef={griditemwidthRef}
-                        hoverProgress={hoverProgress}
-                    />
-                </WireframeHover>
-            }
             <TextContainer
                 variants={textcontainerVars}
                 align={textalign}
@@ -1971,14 +968,6 @@ const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, an
                         variants={projectionbeamheightVars}
                         hexcolor={item.color}
                     />
-                    {/*<ProjectionBeamBottom
-                        variants={projectionbeamheightVars}
-                        hexcolor={item.color}
-                    />
-                    <ProjectionBeamLeft
-                        variants={projectionbeamwidthVars}
-                        hexcolor={item.color}
-                    />*/}
                     <ProjectionBeamRight
                         variants={projectionbeamwidthVars}
                         hexcolor={item.color}
@@ -2036,149 +1025,6 @@ const AnimatedGridItemContent = memo(function AnimatedGridItemContent({ item, an
                 </TextContainer>
             ))}
         </GridItemContent>
-    );
-});
-
-const StyledLeaderLine = styled(MotionSvg)({
-    position: 'absolute',
-    transformStyle: "preserve-3d",
-    pointerEvents: 'none',
-    backfaceVisibility: 'hidden',
-    overflow: 'visible',
-});
-
-const StyledGlyphs = styled(MotionText)({
-    position: 'absolute',
-    fontSize: '8px',
-    fontFamily: 'Spectral',
-    letterSpacing: '1px',
-    transformStyle: "preserve-3d",
-    userSelect: 'none',
-    pointerEvents: 'none',
-    backfaceVisibility: 'hidden',
-});
-
-const leaderlineVars = {
-    initial: {
-        pathLength: 0,
-        opacity: 0,
-        transition: TRANSITIONCONFIG.hoverstart,
-    },
-    hover: {
-        pathLength: 1,
-        opacity: [0, 1, 0.2, 1, 0.6, 1],
-        transition: {
-            pathLength: TRANSITIONCONFIG.hoverstart,
-            opacity: {
-                ...TRANSITIONCONFIG.hoverstart,
-                times: [0, 0.1, 0.4, 0.6, 0.8, 1]
-            }
-        }
-    },
-    rest: {
-        pathLength: 0,
-        opacity: 0,
-        transition: TRANSITIONCONFIG.hoverstart,
-    },
-    static: { pathLength: 1, opacity: 1 },
-};
-
-const GLYPHS = `アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌ
-  フムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン
-  01234567789ABCDEFGHIJKLMNOPQRSTUVWXYZ_&*+!?@#`;
-
-const randomGlyphs = (count = 5) => Array.from({ length: count }, () =>
-    GLYPHS[Math.floor(Math.random() * GLYPHS.length)]
-).join("");
-
-const generateHudLines = (count = 4, width) => {
-    return [...Array(count)].map((_, i) => {
-        const isLeftSide = Math.random() > 0.5 ? true : false;
-        const leftVal = isLeftSide
-            ? Math.floor(Math.random() * (21)) + 20
-            : Math.floor(Math.random() * (21)) + 70;
-
-        const sectionHeight = 60 / count;
-        const sectionStart = 20 + (i * sectionHeight);
-        const topVal = sectionStart + (Math.random() * (sectionHeight * 0.8));
-        const zVal = Math.floor(Math.random() * 20) + wireframez - 10;
-
-        const direction = leftVal < 50 ? -1 : 1;
-        const length = width / 3 + Math.random() * 30;
-        const bend = Math.random() > 0.5 ? 1 : -1;
-        const endX = (length + 15) * direction;
-        const bendY = bend * 10;
-        const pathData = `M 0,0 L ${length * direction},0 L ${endX},${bendY}`;
-
-        const glyphlength = Math.floor(Math.random() * 5) + 5;
-        const glyph = randomGlyphs(glyphlength);
-
-        return {
-            id: `hud-line-${i}`,
-            top: `${topVal}%`,
-            left: `${leftVal}%`,
-            scale: 0.8 + Math.random() * 0.4,
-            opacity: 0.4 + Math.random() * 0.2,
-            z: zVal,
-            direction: direction,
-            endX: endX,
-            bendY: bendY,
-            pathData: pathData,
-            glyphtext: glyph,
-        };
-    });
-};
-
-const LeaderLines = memo(function LeaderLines({ item, griditemwidthRef, hoverProgress }) {
-    const [hudLines, setHudLines] = useState([]);
-
-    const activeVariant = useMemo(() => hudLines.length > 0 ? 'hover' : 'rest', [hudLines]);
-
-    useMotionValueEvent(hoverProgress, "change", (latest) => {
-        if (latest === 1 && griditemwidthRef.current) {
-            setHudLines(generateHudLines(4, griditemwidthRef.current));
-        } else if (latest === 0) {
-            setHudLines([]);
-        }
-    });
-
-    return (
-        <>
-            {hudLines.map((line) => (
-                <StyledLeaderLine
-                    key={line.id}
-                    width="100" height="100"
-                    style={{
-                        top: line.top,
-                        left: line.left,
-                        scale: line.scale,
-                        opacity: line.opacity,
-                        z: line.z,
-                    }}
-                    initial='initial'
-                    animate={activeVariant}
-                    exit='initial'
-                >
-                    <MotionPath
-                        d={line.pathData}
-                        fill="none"
-                        stroke={item.shuttlecolor}
-                        strokeWidth="1.5"
-                        variants={leaderlineVars}
-                    />
-                    <StyledGlyphs
-                        x={line.endX + (line.direction === 1 ? 5 : -5)}
-                        y={line.bendY + (line.bendY > 0 ? 3 : -3)}
-                        fill={item.shuttlecolor}
-                        textAnchor={line.direction === 1 ? "start" : "end"}
-                        dominantBaseline="middle"
-                        variants={leaderlineVars}
-                    >
-                        {line.glyphtext}
-                    </StyledGlyphs>
-                </StyledLeaderLine>
-            ))}
-        </>
     );
 });
 
@@ -2246,6 +1092,14 @@ const titleglowVars = {
     },
     static: { opacity: 1, scale: 1 },
 };
+
+const GLYPHS = `アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌ
+  フムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン
+  01234567789ABCDEFGHIJKLMNOPQRSTUVWXYZ_&*+!?@#`;
+
+const randomGlyphs = (count = 5) => Array.from({ length: count }, () =>
+    GLYPHS[Math.floor(Math.random() * GLYPHS.length)]
+).join("");
 
 const generateBootupLogs = (count = 5, wordlength = 15, dotlen) => {
 
@@ -2315,15 +1169,65 @@ const AnimatedModal = memo(function AnimatedModal({ selectedItem, handleItemSele
     );
 });
 
-const ModalBg = styled(MotionBox)(({ theme, bgcolor }) => ({
+const ModalBg = styled(MotionBox)(({ theme }) => ({
     position: 'absolute',
     width: '80%', maxWidth: 675, height: 450,
     borderRadius: '32px', padding: 0,
-    //background: bgcolor,
-    backdropFilter: 'blur(20px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-    //willChange: 'transform, opacity',
     backfaceVisibility: "hidden",
+}));
+
+const WireframeAnimate = styled(MotionBox)(({ theme }) => ({
+    position: 'absolute', inset: 0,
+    borderRadius: 'inherit',
+    transformStyle: "preserve-3d",
+    pointerEvents: 'none',
+    backfaceVisibility: "hidden",
+    //zIndex: -1,
+}));
+
+const IonizationLayer = styled(MotionBox)({
+    position: 'fixed', inset: 0,
+    zIndex: 10,
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
+    willChange: 'transform, opacity, mask-size',
+    transform: 'translateZ(0)',
+
+    maskImage: `url(${ionizationmask})`,
+    maskRepeat: 'repeat',
+    maskPosition: 'center',
+    WebkitMaskPosition: 'center',
+    maskSize: '100px',
+});
+
+const MaskedImage = styled(MotionBox)(({ theme }) => ({
+    width: '100%', height: '100%',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    pointerEvents: 'none',
+    backfaceVisibility: 'hidden',
+}));
+
+const Wireframe = styled(MotionBox)(({ theme }) => ({
+    position: 'absolute', inset: 0,
+    borderRadius: 'inherit',
+    backgroundSize: '90% 90%',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    outline: "1px solid transparent",
+    transformStyle: "preserve-3d",
+    pointerEvents: 'none',
+    backfaceVisibility: "hidden",
+    maskImage: `
+        linear-gradient(to right, transparent 10%, black 20%, black 80%, transparent 90%), 
+        linear-gradient(to bottom, transparent 10%, black 20%, black 80%, transparent 90%)`,
+    WebkitMaskImage: `
+        linear-gradient(to right, transparent 10%, black 20%, black 80%, transparent 90%), 
+        linear-gradient(to bottom, transparent 10%, black 20%, black 80%, transparent 90%)`,
+    maskComposite: 'intersect',
+    WebkitMaskComposite: 'source-in',
+    maskSize: '100% 100%',
+    WebkitMaskSize: '100% 100%',
 }));
 
 const ModalBootupText = styled(MotionBox)(({ theme }) => ({
@@ -2355,19 +1259,6 @@ const BootupLetter = styled(MotionSpan)(({
     backfaceVisibility: 'hidden',
 }));
 
-
-const ModalBgImage = styled(MotionBox)(({ theme }) => ({
-    position: 'absolute', inset: 0,
-    borderRadius: 'inherit',
-    backgroundImage: `url(${modalbg})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
-    transformOrigin: 'center center',
-    pointerEvents: 'none',
-    backfaceVisibility: 'hidden',
-}));
-
 const ModalBgRetinal = styled(MotionBox)(({ theme }) => ({
     position: 'absolute',
     top: '50%', left: '50%',
@@ -2393,18 +1284,56 @@ const modalbgVars = {
     },
 };
 
-const modalbgimageVars = {
+const scale = 1.4;
+const ionizationVars = {
     initial: {
-        opacity: 0,
-        transition: TRANSITIONCONFIG.layoutbg
+        opacity: 0, scale: scale,
+        rotate: -5, z: wireframez, filter: "blur(8px) brightness(200%)",
     },
     animate: {
-        opacity: [0, 0.6, 0.2, 0.6, 0.4, 0.6],
+        opacity: [0, 1, 0], scale: 1,
+        rotate: 0, z: wireframez, filter: "blur(0px) brightness(100%)",
         transition: {
-            ...TRANSITIONCONFIG.layoutbg,
-            times: [0, 0.2, 0.4, 0.6, 0.8, 1]
+            ...TRANSITIONCONFIG.layoutbganimate,
+            opacity: {
+                duration: 6 * hover,
+                times: [0, 0.17, 1]
+            },
+        },
+    },
+    rest: {
+        opacity: [0, 1, 0], scale: scale,
+        rotate: -5, z: wireframez, filter: "blur(8px) brightness(200%)",
+        transition: {
+            ...TRANSITIONCONFIG.layoutbganimate,
+            times: [0, 0.4, 1]
+        },
+    },
+    static: { opacity: 0, scale: 1, rotate: 0, z: 0, filter: 'blur(0px) brightness(100%)' },
+};
+
+const wireframeVars = {
+    initial: {
+        opacity: 0, scale: scale, z: wireframez,
+        transition: TRANSITIONCONFIG.layoutbganimate,
+    },
+    animate: {
+        opacity: [0, 0, 0.6],
+        scale: 1,
+        z: wireframez,
+        transition: {
+            ...TRANSITIONCONFIG.layoutbganimate,
+            times: [0, 0.3, 1]
         }
     },
+    rest: {
+        opacity: [0.6, 0, 0], scale: scale, z: wireframez,
+        transition: {
+            ...TRANSITIONCONFIG.layoutbganimate,
+            times: [0, 0.4, 1]
+        }
+    },
+    static: { opacity: 0, scale: 1, z: 0, },
 };
 
 const bootuptextVars = {
@@ -2459,7 +1388,6 @@ const AnimatedModalBg = memo(function AnimatedModalBg({ selectedItem }) {
     const opacity = useMotionValue(0);
 
     const runRetinalBootup = useCallback(async (delay = 0, totalduration = 2.5) => {
-
         const runOpacity = async () => {
             opacity.set(0);
             await animate(opacity, 1, {
@@ -2475,7 +1403,6 @@ const AnimatedModalBg = memo(function AnimatedModalBg({ selectedItem }) {
         };
 
         const runRotate = async () => {
-
             const rotate = (target, delay, duration, ease) =>
                 animate(rotation, target, { delay: delay, duration: duration, ease: ease }).finished;
 
@@ -2505,17 +1432,44 @@ const AnimatedModalBg = memo(function AnimatedModalBg({ selectedItem }) {
         return Math.min(w / 400, 1);
     });
 
+    const wireframeimage = useMemo(() => {
+        return selectedItem.id === 1
+            ? `url(${wireframe1})`
+            : selectedItem.id === 2
+                ? `url(${wireframe2})`
+                : selectedItem.id === 3
+                    ? `url(${wireframe3})`
+                    : `url(${wireframe4})`
+    }, []);
+
     return (
         <ModalBg
             variants={modalbgVars}
-            bgcolor={hexToRgba(selectedItem.cardcolors[1], 0.15)}
         >
-            {/*<GrainOverlay />*/}
+            <GrainOverlay
+                bgcolor={'#000000'}
+                contrast={'200%'}
+                opacity={0.75}
+                zIndex={0}
+            />
             {!lesserThanSm &&
-                <ModalBgImage
-                    variants={modalbgimageVars}
-                    style={{ scale: responsivescale }}
-                />
+                <WireframeAnimate
+                    initial='initial'
+                    animate='animate'
+                    exit='rest'
+                >
+                    <IonizationLayer
+                        variants={ionizationVars}
+                    >
+                        <MaskedImage
+                            style={{ backgroundImage: wireframeimage }}
+                        />
+                    </IonizationLayer>
+                    <Wireframe
+                        variants={wireframeVars}
+                        style={{ backgroundImage: wireframeimage }}
+                    />
+                </WireframeAnimate>
             }
             <ModalBgRetinal
                 style={{
@@ -2736,7 +1690,16 @@ const AnimatedCard = memo(function AnimatedCard({ content = {} }) {
         };
     }, [mode]);
 
+    const lastHoverTime = useRef(0);
+    const HOVER_THRESHOLD = 80;
+
     const handleHovered = useCallback((v) => {
+        const now = performance.now();
+        if (now - lastHoverTime.current < HOVER_THRESHOLD) {
+            return;
+        }
+        lastHoverTime.current = now;
+
         setHoveredIcon((prev) => {
             if (lesserThanSm && prev?.name === v?.name) return null;
             return v;

@@ -2,12 +2,14 @@ import { useEffect, useRef, useMemo, memo } from 'react';
 import { useFrame, extend } from '@react-three/fiber';
 import * as THREE from 'three';
 import { shaderMaterial, useTexture } from '@react-three/drei';
+import { useCanvasSectionFrame } from './CanvasContext';
+import useConfigureTextures from '../functions/useConfigureTextures';
 
 const maincubeimport = import.meta.glob('../pics/cube*.webp', {
     eager: true,
     query: '?url'
 });
-const maincubearry = Object.values(maincubeimport).map((v, _) => (v.default));
+const maincubearray = Object.values(maincubeimport).map((v, _) => (v.default));
 
 
 const CubeFaceMaterial = shaderMaterial(
@@ -108,17 +110,11 @@ const FloatingTesseract = memo(function FloatingTesseract() {
     const cubeRef = useRef();
     const accumulator = useRef(0);
 
-    const maincubeTextures = useTexture(maincubearry);
-    useEffect(() => {
-        maincubeTextures.forEach(texture => {
-            if (texture) {
-                texture.anisotropy = 8;
-                texture.needsUpdate = true;
-            }
-        });
-    }, [maincubeTextures]);
+    const maincubeTextures = useTexture(
+        maincubearray
+    );
 
-    useFrame((state, delta) => {
+    useCanvasSectionFrame((state, delta) => {
         accumulator.current += delta;
         if (accumulator.current < TARGET_FPS) return;
 

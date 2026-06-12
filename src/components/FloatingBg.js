@@ -3,7 +3,52 @@ import { useThree, useFrame, extend } from '@react-three/fiber';
 import { shaderMaterial, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import canvas3bg from '../pics/canvas3bg.webp';
+import canvas3bgentrance from '../pics/canvas3bgentrance.webp';
+import useConfigureTextures from '../functions/useConfigureTextures';
 
+const BgEntranceMaterial = shaderMaterial(
+    {
+        uTime: 0,
+        uProgress: 0,
+        uTexture: new THREE.Texture(),
+        uScale: 1.5,
+    },
+    // Vertex Shader
+    `
+    varying vec2 vUv;
+    uniform float uProgress;
+    uniform float uScale;
+
+    void main() {
+        vUv = uv;
+        
+        float scale = mix(uScale, 1.0, uProgress);
+        
+        vec3 scaledPosition = vec3(position.xy * scale, position.z);
+        
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(scaledPosition, 1.0);
+    }
+    `,
+    // Fragment Shader
+    `
+    varying vec2 vUv;
+    uniform sampler2D uTexture;
+    uniform float uTime;
+    uniform float uProgress;
+
+    void main() {
+        vec4 color = texture2D(uTexture, vUv);
+        if (color.a < 0.1) discard;
+
+        float invertedProgress = 1.0 - uProgress;
+        float alpha = smoothstep(0.0, 1.0, invertedProgress);
+
+        gl_FragColor = vec4(color.rgb, alpha);
+    }
+  `
+);
+
+extend({ BgEntranceMaterial });
 
 const BgMaterial = shaderMaterial(
     {
@@ -104,15 +149,12 @@ const BgOverlayMaterial = shaderMaterial(
         
         // Combine layers (fBm)
         float cn = (n1 * 0.6 + n2 * 0.4);
-        cn = cn - 0.25;
-        cn = max(0.0, cn);
-        cn = cn * 1.5;
         
         float alpha = cn * 0.15;
         
         float colorMixFactor = clamp(cn * 1.5, 0.0, 1.0);
-        vec3 baseColor = vec3(0.6, 0.0, 0.7); 
-        vec3 secondColor = vec3(0.15, 0.35, 0.65); 
+        vec3 baseColor   = vec3(0.22, 0.11, 0.07);
+        vec3 secondColor = vec3(0.85, 0.51, 0.24);
     
         vec3 finalColor = mix(baseColor, secondColor, colorMixFactor);
         
@@ -126,35 +168,35 @@ extend({ BgOverlayMaterial });
 const FloatingBg = memo(function FloatingBg({ isInView = false }) {
 
     const groupRef = useRef();
+    const bgentranceMaterialRef = useRef();
     const bgMaterialRef = useRef();
     const bgoverlayMaterialRef = useRef();
 
     const entranceProgress = useRef(0);
 
-    const prevCamZ = useRef(10);
     const prevInViewRef = useRef(isInView);
+    const delayStartTimeRef = useRef(0);
+    const DELAY_MS = 2800;
 
     const { viewport, camera } = useThree();
     const MESH_Z = -5;
     const meshTargetPos = new THREE.Vector3();
 
-    const bgTexture = useTexture(canvas3bg);
-    useEffect(() => {
-        if (bgTexture) {
-            bgTexture.anisotropy = 8;
-        }
-    }, [bgTexture]);
+    const [
+        bgEntranceTexture,
+        bgTexture
+    ] = useTexture(
+        [canvas3bgentrance, canvas3bg]
+    );
 
     useFrame((state, delta) => {
         if (!isInView) {
             entranceProgress.current = 0;
-            prevCamZ.current = 10;
+            delayStartTimeRef.current = 0;
             return;
         }
 
         const turnedInView = isInView && !prevInViewRef.current;
-        const cameraIsMoving = Math.abs(state.camera.position.z - prevCamZ.current) > 0.001;
-        const scaleCalc = turnedInView || cameraIsMoving;
 
         if (turnedInView && groupRef.current) {
             groupRef.current.position.x = state.camera.position.x;
@@ -173,11 +215,17 @@ const FloatingBg = memo(function FloatingBg({ isInView = false }) {
 
         const time = state.clock.getElapsedTime();
 
-        const target = isInView ? 1 : 0;
-        entranceProgress.current += (target - entranceProgress.current) * 0.02;
+        const hasDelayPassed = (time - delayStartTimeRef.current) >= (DELAY_MS / 1000);
+        const target = (isInView) ? 1 : 0;
+        entranceProgress.current += (target - entranceProgress.current) * 0.009;
 
         const p = entranceProgress.current;
         const isAnimating = Math.abs(target - p) > 0.001;
+
+        if (bgentranceMaterialRef.current && isAnimating) {
+            bgentranceMaterialRef.current.uTime = time;
+            bgentranceMaterialRef.current.uProgress = entranceProgress.current;
+        }
 
         if (bgMaterialRef.current && isAnimating) {
             bgMaterialRef.current.uTime = time;
@@ -187,12 +235,20 @@ const FloatingBg = memo(function FloatingBg({ isInView = false }) {
         if (bgoverlayMaterialRef.current) {
             bgoverlayMaterialRef.current.uTime = time;
         }
-
-        prevCamZ.current = state.camera.position.z;
     });
 
     return (
         <group ref={groupRef}>
+            <mesh>
+                <planeGeometry args={[1, 1]} />
+                <bgEntranceMaterial
+                    ref={bgentranceMaterialRef}
+                    uTexture={bgEntranceTexture}
+                    uScale={1.5}
+                    transparent
+                    depthWrite={false}
+                />
+            </mesh>
             <mesh>
                 <planeGeometry args={[1, 1]} />
                 <bgMaterial

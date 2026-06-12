@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo, memo } from 'react';
+import React, { useState, useRef, useCallback, useMemo, memo, use } from 'react';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
@@ -9,60 +9,12 @@ import { motion, AnimatePresence, useInView } from "motion/react";
 import { styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useAnimateContext } from './AnimateContext';
+import { useStateContext } from './StateContext';
 import Pagination from '@mui/material/Pagination';
 import Grid from '@mui/material/Grid';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import useSectionReporting from '../functions/useSectionReporting';
-import { useWindowDim } from '../functions/getWindowDim';
 
-
-const Floating3DCanvas = React.lazy(() => import('./Floating3DCanvas'));
-
-const CERT_DATA = [
-  {
-    id: 'cert0',
-    icon: AWSIcon,
-    title: 'Amazon Web Services Certified Solutions Architect - Associate',
-    descriptions: [
-      'Identify and design ideal cloud solutions that incorporate AWS services to meet current and future business requirements.',
-      'Design architectures with secure accesses and appropriate data security controls.',
-      'Design architectures that are scalable, highly-available, and fault-tolerant.',
-      'Design architectures with appropriate services and configurations that meet performance demands.',
-      'Design cost-optimized architectures.',
-    ],
-  },
-  {
-    id: 'cert1',
-    icon: MicrosoftIcon,
-    title: 'Foundational C# with Microsoft',
-    descriptions: [
-      'Thorough foundational knowledge of the core concepts, syntax, data structures, and algorithms of C#.',
-      'Identify and structure code solutions based on reusable and maintainability principles.',
-      'Create applications that adhere to exception handling principles.',
-      'Troubleshoot applications through the use of debugging processes and Visual Studio Code debugger.',
-    ],
-  },
-  {
-    id: 'cert2',
-    icon: FreecodecampIcon,
-    title: 'JavaScript Algorithms and Data Structures',
-    descriptions: [
-      'Fundamental and advanced knowledge focused on ES6+, Object-Oriented Programming (OOP), and Functional Programming paradigms.',
-      'Develope algorithmic solutions for data manipulation, including regular expression, recursion, and complex state logic.',
-      'Produce optimized solutions utilizing algorithmic efficiency, memoization and dynamic programming, and mathematical optimization.',
-    ],
-  },
-  {
-    id: 'cert3',
-    icon: FreecodecampIcon,
-    title: 'Responsive Web Design Developer',
-    descriptions: [
-      'Thorough foundational knowledge in HTML, CSS, and responsive web design.',
-      'Implemente modern layout techniques including mobile-first responsive strategy, fluid grids, and responsive UI to create complex, fluid user interfaces.',
-      'Apply Web Content Accessibility Guidelines (WCAG) standards, utilizing semantic HTML to ensure screen-reader compatibility and SEO optimization.',
-    ],
-  },
-];
 
 const MotionContainer = motion.create(Container);
 const MotionBox = motion.create(Box);
@@ -78,7 +30,8 @@ const SectionContainer = styled(MotionContainer)(({ theme }) => ({
 }));
 
 export default function Certifications({ refProps, handleViewport }) {
-  const [card, setCard] = useState(null);
+
+  const { cert, handleCertSelect, certCoordRef, CERT_DATA } = useStateContext();
 
   const containerRef = useRef(null);
   const isInView = useInView(containerRef, {
@@ -96,18 +49,7 @@ export default function Certifications({ refProps, handleViewport }) {
     };
   }, [mode, isInView]);
 
-  const coordRef = useRef({ x: 0, y: 0 });
-
   const { onEnter, onLeave } = useSectionReporting('certifications', handleViewport);
-
-  const handleCardSelect = useCallback((v = 'cert0') => {
-    const match = v?.match(/\d+/);
-    setCard((prev) => {
-      if (match === null || match >= CERT_DATA.length) return null;
-      if (prev?.id === v) return null;
-      return CERT_DATA[match];
-    });
-  }, []);
 
   return (
     <SectionContainer
@@ -118,59 +60,18 @@ export default function Certifications({ refProps, handleViewport }) {
       id="certifications"
       maxWidth="lg"
     >
-      <Animated3dCanvas
-        activeId={card?.id}
-        coordRef={coordRef}
-        handleSelect={handleCardSelect}
-        isInView={isInView}
-      />
       <AnimatePresence>
-        {card &&
+        {cert &&
           <AnimatedModal
-            coordRef={coordRef}
-            card={card}
-            handleSelect={handleCardSelect}
+            coordRef={certCoordRef}
+            card={cert}
+            handleSelect={handleCertSelect}
           />
         }
       </AnimatePresence>
     </SectionContainer>
   );
 }
-
-const CanvasContainer = styled(MotionBox)(({ theme }) => ({
-  position: 'fixed',
-  width: '100vw',
-  height: '100vh',
-  top: 0, left: 0,
-  backfaceVisibility: 'hidden',
-}));
-
-const canvasVars = {
-  initial: { opacity: 0 },
-  animate: {
-    opacity: 1,
-    transition: { delay: 0.2, duration: 2 },
-  },
-};
-
-const Animated3dCanvas = memo(function Animated3dCanvas({ activeId, coordRef, handleSelect, isInView }) {
-  return (
-    <CanvasContainer
-      variants={canvasVars}
-      initial='initial'
-      animate='animate'
-      exit={'initial'}
-    >
-      <Floating3DCanvas
-        activeId={activeId}
-        coordRef={coordRef}
-        handleSelect={handleSelect}
-        certData={CERT_DATA}
-        isInView={isInView}
-      />
-    </CanvasContainer>
-  )
-});
 
 const Modal = styled(MotionBox)(({ theme }) => ({
   position: 'fixed', inset: 0,
@@ -260,9 +161,10 @@ const StyledListText = styled(Typography)(({ theme }) => ({
 
 const AnimatedModal = memo(function AnimatedModal({ coordRef, handleSelect, card }) {
 
-  const { w, h } = useWindowDim();
+  const { windowDimRef } = useAnimateContext();
 
   const { startX, startY, endX, endY } = useMemo(() => {
+    const { w, h } = windowDimRef.current;
     const centerX = w / 2;
     const centerY = h / 2;
 
@@ -275,7 +177,7 @@ const AnimatedModal = memo(function AnimatedModal({ coordRef, handleSelect, card
       endX: `calc(${centerX}px - 50%)`,
       endY: `calc(${centerY}px - 50%)`,
     };
-  }, [w, h]);
+  }, [card]);
 
   return (
     <Modal
@@ -355,8 +257,10 @@ const ReducedAnimationCard = styled(Box)(({ theme }) => ({
 function ReducedAnimation({ }) {
   const [page, setPage] = useState(1);
 
+  const { CERT_DATA } = useStateContext();
+  const { lesserThanMd } = useAnimateContext();
+
   const theme = useTheme();
-  const lesserThanMd = useMediaQuery(theme.breakpoints.down('md'));
 
   const perpage = lesserThanMd ? 1 : 2;
   const maxpage = Math.ceil(CERT_DATA.length / perpage);

@@ -7,6 +7,7 @@ import { styled, useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
 import getActivesection from '../functions/getActivesection';
 import { motion, AnimatePresence } from "motion/react";
+import { useStateContext } from './StateContext';
 
 
 const MotionBox = motion(Box);
@@ -50,7 +51,8 @@ const footVars = {
   },
 }
 
-export default function Footer({ activesection }) {
+export default function Footer() {
+  const { activesection } = useStateContext();
 
   const section = getActivesection(activesection);
 

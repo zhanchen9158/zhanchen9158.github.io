@@ -3,6 +3,7 @@ import { styled } from '@mui/material/styles';
 import getActivesection from '../functions/getActivesection';
 import { motion, AnimatePresence } from "motion/react";
 import Box from '@mui/material/Box';
+import { useStateContext } from './StateContext';
 
 
 const MotionBox = motion(Box);
@@ -72,14 +73,16 @@ const sectionToIndex = {
   'certifications': 3
 };
 
-const AnimatedAppBar = memo(function AnimatedAppBar({ activesection }) {
+const AnimatedAppBar = memo(function AnimatedAppBar() {
+  const { activesection } = useStateContext();
 
   const { key, name, textcolor } = useMemo(() => {
     const s = getActivesection(activesection);
+    const name = s === 'introduction' ? "Portfolio - Zhan Chen" : s;
     const index = sectionToIndex[s] ?? 0;
     return {
       key: s,
-      name: s === 'introduction' ? "Portfolio - Zhan Chen" : s,
+      name: name,
       textcolor: colorgradient[index]
     };
   }, [activesection]);

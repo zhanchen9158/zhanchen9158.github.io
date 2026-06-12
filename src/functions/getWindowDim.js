@@ -26,36 +26,4 @@ function getWindowWidth() {
     return windowWidth;
 }
 
-let listeners = new Set();
-let windowSize = {
-    w: typeof window !== 'undefined' ? window.innerWidth : 1,
-    h: typeof window !== 'undefined' ? window.innerHeight : 1
-};
-
-const handleResize = () => {
-    windowSize = { w: window.innerWidth, h: window.innerHeight };
-    listeners.forEach(listener => listener(windowSize));
-};
-
-function useWindowDim() {
-    const [dim, setDim] = useState(windowSize);
-
-    useEffect(() => {
-        if (listeners.size === 0) {
-            window.addEventListener('resize', handleResize);
-        }
-
-        listeners.add(setDim);
-
-        return () => {
-            listeners.delete(setDim);
-            if (listeners.size === 0) {
-                window.removeEventListener('resize', handleResize);
-            }
-        };
-    }, []);
-
-    return dim;
-}
-
-export { getWindowWidth, useWindowDim };
+export { getWindowWidth };

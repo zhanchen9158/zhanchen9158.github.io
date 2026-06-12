@@ -28,4 +28,11 @@ export default defineConfig({
       },
     },
   },
+  assetsInclude: ['**/*.ktx2'],
+  server: {
+    watch: {
+      // Tell Vite's file watcher to completely ignore changes to KTX2 files
+      ignored: ['**/*.ktx2']
+    }
+  },
 });

@@ -5,7 +5,7 @@ import React, {
 } from 'react';
 import { useThree, Canvas, useFrame } from '@react-three/fiber';
 import {
-    Preload, AdaptiveDpr, AdaptiveEvents,
+    Preload, AdaptiveDpr, AdaptiveEvents, MeshTransmissionMaterial
 } from '@react-three/drei';
 import * as THREE from 'three';
 import { styled, useTheme } from '@mui/material/styles';
@@ -16,12 +16,17 @@ import floatingpencap from '../pics/floatingpencap.webp';
 import FloatingItem from './FloatingItem';
 import FloatingInk from './FloatingInk';
 import { useAnimateContext } from './AnimateContext';
+import { useStateContext } from './StateContext';
 import { easing } from 'maath';
 import FloatingThread from './FloatingThread';
 import FloatingHourglass from './FloatingHourglass';
 import FloatingTesseract from './FloatingTesseract';
 import FloatingSequence from './FloatingSequence';
 import FloatingBg from './FloatingBg';
+import getActiveSection from '../functions/getActivesection';
+import { CanvasSection } from './CanvasContext';
+import SpaceStation from './SpaceStation';
+import SpaceStationBg from './SpaceStationBg';
 
 const pageimport = import.meta.glob('../pics/page*.webp', {
     eager: true,
@@ -112,13 +117,15 @@ const StyledCanvas = styled(Canvas)(({ theme }) => ({
 }));
 
 const Floating3DCanvas = memo(function Floating3DCanvas({ activeId, coordRef, handleSelect,
-    certData, isInView }) {
+    certData, activesection }) {
+
+    const section = useMemo(() => getActiveSection(activesection),
+        [activesection]);
 
     return (
         <StyledCanvas
             dpr={[1, 2]}
             camera={{ position: [0, 0, 10], fov: 35 }}
-            frameloop={isInView ? 'always' : 'never'}
             gl={{
                 antialias: true,
                 powerPreference: "high-performance",
@@ -131,18 +138,22 @@ const Floating3DCanvas = memo(function Floating3DCanvas({ activeId, coordRef, ha
                     coordRef={coordRef}
                     handleSelect={handleSelect}
                     certData={certData}
-                    isInView={isInView}
+                    section={section}
                 />
+                <CanvasBackDrop />
             </Suspense>
         </StyledCanvas>
     )
 });
 
 const CanvasContent = memo(function CanvasContent({ activeId, coordRef, handleSelect,
-    certData, isInView }) {
+    certData, section }) {
 
     const canvasRef = useRef();
     const objectsRef = useRef({});
+
+    const heroActive = useMemo(() => section === 'introduction', [section]);
+    const certActive = useMemo(() => section === 'certifications', [section]);
 
     return (
         <>
@@ -150,16 +161,16 @@ const CanvasContent = memo(function CanvasContent({ activeId, coordRef, handleSe
             <AdaptiveEvents />
             <Preload all />
             <ambientLight intensity={0.5} />
-            {/*<pointLight
-                position={[-2.5, 0, 5]}
-                intensity={15}
-                decay={2}
-                distance={20}
-            />*/}
             <CameraZoom activeId={activeId} coordRef={coordRef} />
-            <group>
+            <CanvasSection isActive={heroActive}>
+                <SpaceStationBg isInView={heroActive} />
+                <SpaceStation
+                    isInView={heroActive}
+                />
+            </CanvasSection>
+            <CanvasSection isActive={certActive}>
                 <FloatingBg
-                    isInView={isInView}
+                    isInView={certActive}
                 />
                 <FloatingSequence
                     {...BOOKSEQ_CONFIG}
@@ -179,6 +190,7 @@ const CanvasContent = memo(function CanvasContent({ activeId, coordRef, handleSe
                 ))}
                 {PAGE_CONFIG.map((page, i) => (
                     <FloatingPage key={page.id}
+                        isInView={certActive}
                         {...page}
                         svgIcon={certData[[idNumberArr[i]]].icon}
                         coordRef={coordRef}
@@ -186,7 +198,7 @@ const CanvasContent = memo(function CanvasContent({ activeId, coordRef, handleSe
                         objectsRef={objectsRef}
                     />
                 ))}
-            </group>
+            </CanvasSection>
         </>
     )
 });
@@ -211,5 +223,36 @@ function CameraZoom({ activeId, coordRef }) {
 
     return null;
 };
+
+const CanvasBackDrop = memo(function CanvasBackDrop() {
+    const { activeSkillsId } = useStateContext();
+
+    if (activeSkillsId === null) return null;
+
+    return (
+        <mesh position={[0, 0, 5]} scale={[8, 5, 1]}>
+            <planeGeometry />
+            <MeshTransmissionMaterial
+                backside={false}
+                samples={2}
+                resolution={256}
+                anisotropy={0}
+
+                roughness={0.2}
+                thickness={0.2}
+                chromaticAberration={0.05}
+                distortion={0.0}
+                distortionScale={0.0}
+                temporalDistortion={0.0}
+                clearcoat={1}
+                attenuationDistance={0.5}
+                attenuationColor="#ffffff"
+                color="#ffffff"
+                transmission={1}
+                buffer={null}
+            />
+        </mesh>
+    )
+});
 
 export default Floating3DCanvas;

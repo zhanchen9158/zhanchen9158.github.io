@@ -2,7 +2,7 @@ import { styled } from '@mui/material/styles';
 
 
 const GrainOverlay = styled('div')(({ theme, opacity = 0.05,
-  bgcolor, contrast = "150%" }) => {
+  bgcolor, contrast = "150%", zIndex = 9999 }) => {
 
   const color = (theme.vars || theme).palette.background.default;
 
@@ -10,7 +10,7 @@ const GrainOverlay = styled('div')(({ theme, opacity = 0.05,
     position: 'absolute', inset: 0,
     borderRadius: 'inherit',
     pointerEvents: 'none',
-    zIndex: 9999,
+    zIndex: zIndex,
     opacity: opacity,
     filter: `contrast(${contrast}) brightness(100%)`,
     backgroundColor: bgcolor || color,

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo, memo, lazy, Suspense } from 'react';
 import Box from '@mui/material/Box';
 import AnimatedAppBar from './components/AnimatedAppBar';
 import Hero from './components/Hero';
@@ -13,16 +13,22 @@ import {
 import CustomizedSpeedDial from './components/CustomizedSpeedDial';
 import { styled } from '@mui/material/styles';
 import { AnimateProvider } from './components/AnimateContext';
+import { useStateContext } from './components/StateContext';
 import GrainOverlay from './components/GrainOverlay';
+
+import loadingbg from './pics/loadingbg.webp';
 import entrancehero from './pics/entrancehero1.webp';
 import entrancehero2 from './pics/entrancehero2.webp';
 import entrancehero3 from './pics/entrancehero3.webp';
 import entrancebg1 from './pics/entrancebg1.webp';
 import entrancebg2 from './pics/entrancebg2.webp';
-import entrancebg3 from './pics/entrancebg3.webp';
+import bg1 from './pics/bg1.webp';
+import bg2 from './pics/bg2.webp';
 import ionizationmask from './pics/ionizationmask.webp';
 import hyperstream from './pics/hyperstream.webp';
 import Preloader from './components/Preloader';
+
+const Floating3DCanvas = lazy(() => import('./components/Floating3DCanvas'));
 
 
 const MotionBox = motion(Box);
@@ -34,15 +40,10 @@ const ScrollContainer = styled(Box)(({ theme }) => ({
   backgroundColor: '#0f1011',
 }));
 
-export default function PortfolioPage({ }) {
-  const [activesection, setActivesection] = useState({});
+export default function PortfolioPage() {
+  const { sectionRef, handleViewport } = useStateContext();
 
   const scrollContainerRef = useRef(null);
-  const sectionRef = useRef({});
-
-  const handleViewport = useCallback((section, inview) => {
-    setActivesection(prev => ({ ...prev, [section]: inview }));
-  }, []);
 
   const handleScrollsection = useCallback((section) => {
     sectionRef.current[section].scrollIntoView({
@@ -74,7 +75,8 @@ export default function PortfolioPage({ }) {
   return (
     <AnimateProvider>
       <Preloader />
-      <AnimatedAppBar activesection={activesection} />
+      <AnimatedAppBar />
+      <Animated3dCanvas />
       <HeroEntrance />
       <ScrollContainer
         ref={scrollContainerRef}
@@ -85,39 +87,51 @@ export default function PortfolioPage({ }) {
             id={v.id}
             sectionRef={sectionRef}
             containerRef={scrollContainerRef}
-            i={i} activesection={activesection}
+            i={i}
           >
             {v.component}
           </Page>
         ))}
       </ScrollContainer>
-      <Footer activesection={activesection} />
-      <CustomizedSpeedDial handleScrollsection={handleScrollsection} activesection={activesection} />
+      <Footer />
+      <CustomizedSpeedDial handleScrollsection={handleScrollsection} />
     </AnimateProvider>
   );
 }
 
-const WindowGlass = styled(MotionBox)(({ theme }) => ({
+const CanvasContainer = styled(MotionBox)(({ theme }) => ({
   position: 'fixed', inset: 0,
-  zIndex: 10,
-  backgroundColor: 'rgba(255, 255, 255, 0.02)',
-  background: `linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, 
-    rgba(255, 255, 255, 0.01) 100%),
-    linear-gradient(115deg, 
-      transparent 10%, 
-      rgba(255,255,255,0.08) 12%, transparent 15%,   /* Streak 1 (Thin) */
-      transparent 25%, 
-      rgba(255,255,255,0.06) 30%, transparent 35%,   /* Streak 2 */
-      transparent 45%, 
-      rgba(255,255,255,0.1) 50%, transparent 55%,    /* Streak 3 (Brightest) */
-      transparent 70%, 
-      rgba(255,255,255,0.04) 75%, transparent 80%,   /* Streak 4 (Soft) */
-      transparent 90%
-    )
-  `,
-  pointerEvents: 'none',
   backfaceVisibility: 'hidden',
 }));
+
+const Animated3dCanvas = memo(function Animated3dCanvas() {
+
+  const { activesection, handleScroll, handleTouchStart, handleTouchEnd,
+    cert, handleCertSelect, certCoordRef, CERT_DATA } = useStateContext();
+
+  const handleClick = useCallback(() => {
+    if (cert !== null) {
+      handleCertSelect(null);
+    }
+  }, [cert?.id]);
+
+  return (
+    <CanvasContainer
+      onWheel={handleScroll}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onClick={handleClick}
+    >
+      <Floating3DCanvas
+        activeId={cert?.id}
+        coordRef={certCoordRef}
+        handleSelect={handleCertSelect}
+        certData={CERT_DATA}
+        activesection={activesection}
+      />
+    </CanvasContainer>
+  )
+});
 
 const RadialHyperstream = styled(MotionBox)({
   position: 'fixed', inset: 0,
@@ -172,6 +186,36 @@ const MaskedImage = styled(MotionBox)(({ theme }) => ({
   backfaceVisibility: 'hidden',
 }));
 
+const InitializingBg = styled(MotionBox)(({ theme }) => ({
+  position: 'fixed', inset: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center', alignItems: 'center',
+  gap: '12px',
+  background: '#08050f',
+  color: '#fff2d9',
+  fontFamily: 'sans-serif',
+  zIndex: 40,
+  pointerEvents: 'none',
+  backfaceVisibility: 'hidden',
+}));
+
+const Header = styled(MotionBox)(({ theme }) => ({
+  margin: 0,
+  fontSize: '2.5rem',
+  fontWeight: 700,
+  letterSpacing: '2px'
+}));
+
+const Subheader = styled(MotionBox)(({ theme }) => ({
+  fontSize: '1rem',
+  letterSpacing: '4px',
+  textTransform: 'uppercase',
+  opacity: 0.7,
+}));
+
+const initDuration = 2;
+
 const HeroEntrance = memo(function HeroEntrance({ }) {
   const [isMounted, setIsMounted] = useState(true);
 
@@ -180,14 +224,9 @@ const HeroEntrance = memo(function HeroEntrance({ }) {
   }, []);
 
   return (
-    <AnimatePresence>
+    <>
       {isMounted && (
         <>
-          <WindowGlass
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 0 }}
-            transition={{ duration: 6, ease: 'easeInOut' }}
-          />
           <RadialHyperstream
             initial={{
               scale: 1,
@@ -198,14 +237,19 @@ const HeroEntrance = memo(function HeroEntrance({ }) {
               opacity: 0,
             }}
             transition={{
-              duration: 2.5,
+              delay: initDuration - 1,
+              duration: 3.5,
               ease: "easeOut",
             }}
           />
           <HeroBlurBg
             initial={{ opacity: 1 }}
             animate={{ opacity: 0 }}
-            transition={{ duration: 2.5, ease: 'easeInOut' }}
+            transition={{
+              delay: initDuration,
+              duration: 2.5,
+              ease: 'easeInOut'
+            }}
           />
           <HeroBg
             initial={{
@@ -217,7 +261,7 @@ const HeroEntrance = memo(function HeroEntrance({ }) {
               filter: 'brightness(200%)',
             }}
             transition={{
-              delay: 1.5,
+              delay: initDuration + 1.5,
               duration: 2,
               times: [0, 0.5, 1],
               ease: "easeInOut",
@@ -233,7 +277,7 @@ const HeroEntrance = memo(function HeroEntrance({ }) {
               scale: 2,
             }}
             transition={{
-              delay: 2,
+              delay: initDuration + 2,
               duration: 6,
               times: [0, 0.4, 1],
               ease: "easeIn"
@@ -244,9 +288,53 @@ const HeroEntrance = memo(function HeroEntrance({ }) {
               style={{ backgroundImage: `url(${entrancehero3})` }}
             />
           </IonizationLayer>
+          <InitializingBg
+            initial={{
+              opacity: 1,
+            }}
+            animate={{
+              opacity: [1, 0.5, 0],
+            }}
+            transition={{
+              duration: initDuration,
+              times: [0, 0.5, 1],
+              ease: "easeIn",
+            }}
+          >
+            <Header
+              initial={{
+                opacity: 1,
+              }}
+              animate={{
+                opacity: [1, 0.5, 0],
+              }}
+              transition={{
+                duration: initDuration / 2,
+                times: [0, 0.5, 1],
+                ease: "easeIn",
+              }}
+            >
+              Portfolio
+            </Header>
+            <Subheader
+              initial={{
+                opacity: 1,
+              }}
+              animate={{
+                opacity: [1, 0.5, 0],
+              }}
+              transition={{
+                duration: initDuration / 2,
+                times: [0, 0.5, 1],
+                ease: "easeIn",
+              }}
+            >
+              Loading...
+            </Subheader>
+          </InitializingBg>
         </>
       )}
-    </AnimatePresence>
+    </>
   );
 });
 
@@ -283,7 +371,7 @@ const ScrollContent = styled(MotionBox)(({ theme }) => ({
   backfaceVisibility: 'hidden',
 }));
 
-const Page = memo(function Page({ id, sectionRef, containerRef, i, activesection, children, ...props }) {
+const Page = memo(function Page({ id, sectionRef, containerRef, i, children, ...props }) {
 
   const pageRef = useRef(null);
 
@@ -335,8 +423,9 @@ const Page = memo(function Page({ id, sectionRef, containerRef, i, activesection
   return (
     <ScrollPageContainer
       ref={pageRef}
-      sx={{
+      style={{
         zIndex: 4 - i,
+        pointerEvents: id === 'certifications' ? 'none' : 'auto',
       }}
       {...props}
     >
@@ -395,13 +484,12 @@ const AnimatedBackground = memo(function AnimatedBackground({ i, bgScale }) {
         initial={{ opacity: 1 }}
         whileInView={{ opacity: 0 }}
         viewport={{ once: false, amount: 0.2 }}
-        transition={{ duration: 6, ease: 'easeInOut' }}
+        transition={{ duration: 4, ease: 'easeInOut' }}
         style={{
           scale: bgScale,
           backgroundImage: i === 1 ? `url(${entrancebg1})` || 'none'
             : i === 2 ? `url(${entrancebg2})` || 'none'
-              : i === 3 ? `url(${entrancebg3})` || 'none'
-                : 'none',
+              : 'none',
         }}
       />
       <ScrollBackground
@@ -409,7 +497,9 @@ const AnimatedBackground = memo(function AnimatedBackground({ i, bgScale }) {
           scale: bgScale,
         }}
         sx={(theme) => ({
-          backgroundImage: (theme.vars || theme).palette.background.images[i],
+          backgroundImage: i === 1 ? `url(${bg1})` || 'none'
+            : i === 2 ? `url(${bg2})` || 'none'
+              : 'none',
         })}
       />
     </>

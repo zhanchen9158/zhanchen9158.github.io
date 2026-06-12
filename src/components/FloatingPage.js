@@ -6,6 +6,8 @@ import { motion } from 'framer-motion';
 import { styled } from '@mui/material/styles';
 import { useAnimateContext } from './AnimateContext';
 import useRefRegistry from '../functions/useRefRegistry';
+import { useCanvasSectionFrame } from './CanvasContext';
+import useConfigureTextures from '../functions/useConfigureTextures';
 
 const inkblotimport = import.meta.glob('../pics/inkblot*.webp', {
   eager: true,
@@ -182,7 +184,7 @@ const iconVars = {
 const FloatingPage = memo(function FloatingPage({ id, url, position,
   rotate = { xCenter: 0, yCenter: 45, yAmp: 15, z: 0 }, ytravel = { speed: 0.8, range: 0.5 },
   bend = { number: 1.4, amp: 0 },
-  svgIcon, coordRef, handleSelect, objectsRef
+  svgIcon, coordRef, handleSelect, objectsRef, isInView
 }) {
   const [hovered, setHovered] = useState(false);
   const [currentInkblotKey, setCurrentInkblotKey] = useState(getRandomInkblotKey());
@@ -200,16 +202,18 @@ const FloatingPage = memo(function FloatingPage({ id, url, position,
   const scaleProgress = useRef(0);
   const seedRef = useRef(0);
 
-  const inkTextures = useTexture(inkblotobject);
+  const keys = useMemo(() => Object.keys(inkblotobject), []);
+  const filePaths = useMemo(() => Object.values(inkblotobject), []);
+  const loadedTexturesArray = useTexture(filePaths);
+  const inkTextures = useMemo(() => {
+    const textureMap = {};
+    keys.forEach((key, index) => {
+      textureMap[key] = loadedTexturesArray[index];
+    });
+    return textureMap;
+  }, [keys, loadedTexturesArray]);
+
   const activeInkTexture = inkTextures[currentInkblotKey];
-  useEffect(() => {
-    if (inkTextures) {
-      Object.values(inkTextures).forEach((tex) => {
-        tex.anisotropy = 8;
-        //tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
-      });
-    }
-  }, []);
 
   const baseY = position[1];
   const { speed, range } = ytravel;
@@ -228,7 +232,7 @@ const FloatingPage = memo(function FloatingPage({ id, url, position,
     }
   }, [pageTexture]);
 
-  useFrame((state, delta) => {
+  useCanvasSectionFrame((state, delta) => {
     accumulator.current += delta;
     if (accumulator.current < TARGET_FPS) return;
 
@@ -283,6 +287,9 @@ const FloatingPage = memo(function FloatingPage({ id, url, position,
 
   const handleClick = useCallback((e) => {
     e.stopPropagation();
+    if (e.nativeEvent) {
+      e.nativeEvent.stopPropagation();
+    }
 
     if (!pageMeshRef.current || !coordRef) return;
 
@@ -347,26 +354,28 @@ const FloatingPage = memo(function FloatingPage({ id, url, position,
           uFrequency={bend.number}
         />
       </mesh>
-      <mesh
-        visible={false}
-        onPointerEnter={(e) => handleHover(e, 'pointer')}
-        onPointerLeave={(e) => handleHover(e, 'auto')}
-        onClick={handleClick}
-      >
-        <planeGeometry args={[0.6, 0.9]} />
-        <meshBasicMaterial />
-        <Html position={[-0.4, -0.2, 0]} pointerEvents='none'>
-          <CertIcon
-            variants={iconVars}
-            initial='initial'
-            animate={hovered ? 'animate' : 'initial'}
-          >
-            <SvgIcon
-              src={svgIcon}
-            />
-          </CertIcon>
-        </Html>
-      </mesh>
+      {isInView && (
+        <mesh
+          visible={false}
+          onPointerEnter={(e) => handleHover(e, 'pointer')}
+          onPointerLeave={(e) => handleHover(e, 'auto')}
+          onClick={handleClick}
+        >
+          <planeGeometry args={[0.6, 0.9]} />
+          <meshBasicMaterial />
+          <Html position={[-0.4, -0.2, 0]} pointerEvents='none'>
+            <CertIcon
+              variants={iconVars}
+              initial='initial'
+              animate={hovered ? 'animate' : 'initial'}
+            >
+              <SvgIcon
+                src={svgIcon}
+              />
+            </CertIcon>
+          </Html>
+        </mesh>
+      )}
     </group>
   )
 });

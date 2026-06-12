@@ -3,7 +3,8 @@ import { useFrame, extend } from '@react-three/fiber';
 import { shaderMaterial, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import { TextureLoader } from 'three';
-import { useLoader } from '@react-three/fiber';
+import { useCanvasSectionFrame } from './CanvasContext';
+
 
 const SequenceMaterial = shaderMaterial(
     {
@@ -157,7 +158,7 @@ const FloatingSequence = memo(function FloatingSequence({ position = [0, 0, 0],
         z: [THREE.MathUtils.degToRad(rotate.zStart), THREE.MathUtils.degToRad(rotate.zAmp)],
     }), [rotate]);
 
-    useFrame((state, delta) => {
+    useCanvasSectionFrame((state, delta) => {
         accumulator.current += delta;
         if (accumulator.current < TARGET_FPS) return;
 

@@ -3,6 +3,7 @@ import React, {
     createContext, useContext, useState
 } from 'react';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import { useMotionValue } from 'framer-motion';
 
 
 const AnimateContext = createContext();
@@ -82,12 +83,35 @@ export const AnimateProvider = ({ children }) => {
         return () => window.removeEventListener('resize', update);
     }, []);
 
+    const mouseX = useMotionValue(0);
+    const mouseY = useMotionValue(0);
+    const mousePosRef = useRef({ x: 0, y: 0 });
+
+    useEffect(() => {
+        const handleGlobalMouseMove = (event) => {
+            if (!windowDimRef?.current) return;
+
+            const x = event.clientX / windowDimRef.current.w;
+            const y = event.clientY / windowDimRef.current.h;
+
+            mouseX.set(x);
+            mouseY.set(y);
+
+            mousePosRef.current.x = x * 2 - 1;
+            mousePosRef.current.y = y * 2 - 1;
+        };
+
+        window.addEventListener('mousemove', handleGlobalMouseMove);
+        return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
+    }, [mouseX, mouseY]);
+
     return (
         <AnimateContext.Provider
             value={{
                 manual: mode.manual, system: mode.system, setAniMode,
                 lesserThanSm: lesserThanSm, lesserThanMd: lesserThanMd,
                 windowDimRef: windowDimRef,
+                mouseX: mouseX, mouseY: mouseY, mousePosRef: mousePosRef
             }}
         >
             {children}

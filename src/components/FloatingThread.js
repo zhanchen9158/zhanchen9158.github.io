@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useMemo, memo, useCallback } from '
 import { Line, QuadraticBezierLine, useTexture } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import threadhead from '../pics/threadhead.webp';
+import { useCanvasSectionFrame } from './CanvasContext';
 
 
 const generateVibrantColor = () => `hsl(${Math.random() * 360}, 100%, 70%)`;
@@ -77,11 +77,7 @@ const AnimatedThread = memo(function AnimatedThread({ id, start, end, color, onC
         }
     }, []);
 
-    const spriteRef = useRef();
-    const glowTexture = useTexture(threadhead);
-    const tempPos = new THREE.Vector3();
-
-    useFrame((state, delta) => {
+    useCanvasSectionFrame((state, delta) => {
         if (!lineRef.current || stateRef.current.hasCompleted) return;
 
         const material = lineRef.current.material;
@@ -123,21 +119,6 @@ const AnimatedThread = memo(function AnimatedThread({ id, start, end, color, onC
             stateRef.current.hasCompleted = true;
             if (onComplete) onComplete(id);
         }
-
-        if (spriteRef.current && !stateRef.current.hasCompleted) {
-            const distanceProgress = Math.max(0, Math.min(p, 1.0));
-            curve.getPointAt(distanceProgress, tempPos);
-            spriteRef.current.position.copy(tempPos);
-
-            let spriteOpacity = material.opacity * 2;
-            if (p > 0.8) {
-                const fadeProgress = (p - 0.8) / (1.0 - 0.8);
-                const fadeFactor = Math.max(0, 1 - fadeProgress);
-                spriteOpacity *= fadeFactor;
-            }
-            spriteRef.current.material.opacity = spriteOpacity;
-            spriteRef.current.visible = p < 1.05;
-        }
     });
 
     return (
@@ -154,15 +135,6 @@ const AnimatedThread = memo(function AnimatedThread({ id, start, end, color, onC
                 dashScale={1}
                 depthTest={false}
             />
-            {/*<sprite ref={spriteRef} scale={[0.1, 0.1, 1]}>
-                <spriteMaterial
-                    map={glowTexture}
-                    transparent
-                    depthTest={false}
-                    //blending={THREE.AdditiveBlending}
-                    color={color}
-                />
-            </sprite>*/}
         </>
     );
 });

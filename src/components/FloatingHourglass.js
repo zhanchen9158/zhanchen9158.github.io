@@ -6,6 +6,8 @@ import hourglass from '../pics/hourglass.webp';
 import sandstream from '../pics/sandstream.webp';
 import sandpile from '../pics/sandpile.webp';
 import nebula from '../pics/nebula.webp';
+import { useCanvasSectionFrame } from './CanvasContext';
+import useConfigureTextures from '../functions/useConfigureTextures';
 
 
 const NebulaMaterial = shaderMaterial(
@@ -571,22 +573,16 @@ const FloatingHourglass = memo(function FloatingHourglass() {
     const nebulacoreMaterialRef = useRef();
     const accumulator = useRef(0);
 
-    const hourglassTexture = useTexture(hourglass);
-    const sandstreamTexture = useTexture(sandstream);
-    const sandpileTextures = useTexture(sandpile);
-    const nebulaTexture = useTexture(nebula);
-    useEffect(() => {
-        const textures = [hourglassTexture, sandstreamTexture, sandpileTextures, nebulaTexture];
+    const [
+        hourglassTexture,
+        sandstreamTexture,
+        sandpileTextures,
+        nebulaTexture
+    ] = useTexture(
+        [hourglass, sandstream, sandpile, nebula]
+    );
 
-        textures.forEach(texture => {
-            if (texture) {
-                texture.anisotropy = 8;
-                texture.needsUpdate = true;
-            }
-        });
-    }, [hourglassTexture, sandstreamTexture, sandpileTextures, nebulaTexture]);
-
-    useFrame((state, delta) => {
+    useCanvasSectionFrame((state, delta) => {
         accumulator.current += delta;
         if (accumulator.current < TARGET_FPS) return;
 

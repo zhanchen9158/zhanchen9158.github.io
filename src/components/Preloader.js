@@ -1,6 +1,9 @@
 import React, { useEffect, memo } from 'react';
 
-const criticalimport = import.meta.glob('../pics/inkblot*.webp', {
+const criticalimport = import.meta.glob([
+    '../pics/inkblot*.webp',
+    '../pics/wireframe*.webp'
+], {
     eager: true,
     query: '?url'
 });

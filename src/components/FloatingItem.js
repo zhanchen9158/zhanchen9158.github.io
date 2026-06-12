@@ -2,6 +2,8 @@ import { useRef, useMemo, memo, useEffect } from 'react';
 import { useFrame, extend } from '@react-three/fiber';
 import { shaderMaterial, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
+import { useCanvasSectionFrame } from './CanvasContext';
+import useConfigureTextures from '../functions/useConfigureTextures';
 
 
 const FloatingMaterial = shaderMaterial(
@@ -80,12 +82,11 @@ const FloatingItem = memo(function FloatingItem({ url, position,
     const width = size.width;
     const height = size.width * (1 / size.aspectratio);
 
-    const texture = useTexture(url);
-    useEffect(() => {
-        if (texture) {
-            texture.anisotropy = 8;
-        }
-    }, [texture]);
+    const [
+        texture
+    ] = useTexture(
+        [url]
+    );
 
     const r = useMemo(() => ({
         x: [THREE.MathUtils.degToRad(rotate.xStart), THREE.MathUtils.degToRad(rotate.xAmp)],
@@ -93,7 +94,7 @@ const FloatingItem = memo(function FloatingItem({ url, position,
         z: [THREE.MathUtils.degToRad(rotate.zStart), THREE.MathUtils.degToRad(rotate.zAmp)],
     }), [rotate]);
 
-    useFrame((state, delta) => {
+    useCanvasSectionFrame((state, delta) => {
         accumulator.current += delta;
         if (accumulator.current < TARGET_FPS) return;
 

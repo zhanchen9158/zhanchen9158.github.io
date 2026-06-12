@@ -3,6 +3,8 @@ import { useFrame, extend } from '@react-three/fiber';
 import { MeshDistortMaterial, shaderMaterial, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import floatinginkbottle from '../pics/floatinginkbottle.webp';
+import { useCanvasSectionFrame } from './CanvasContext';
+import useConfigureTextures from '../functions/useConfigureTextures';
 
 
 const InkBottleMaterial = shaderMaterial(
@@ -126,14 +128,13 @@ const FloatingInk = memo(function FloatingInk() {
     const instancedMeshRef = useRef();
     const accumulator = useRef(0);
 
-    const inkbottleTextures = useTexture(floatinginkbottle);
-    useEffect(() => {
-        if (inkbottleTextures) {
-            inkbottleTextures.anisotropy = 8;
-        }
-    }, [floatinginkbottle]);
+    const [
+        inkbottleTexture
+    ] = useTexture(
+        [floatinginkbottle]
+    );
 
-    useFrame((state, delta) => {
+    useCanvasSectionFrame((state, delta) => {
         accumulator.current += delta;
         if (accumulator.current < TARGET_FPS) return;
 
@@ -170,7 +171,7 @@ const FloatingInk = memo(function FloatingInk() {
                 <planeGeometry args={BOTTLE_CONFIG.size} />
                 <inkBottleMaterial
                     ref={bottleRef}
-                    uTexture={inkbottleTextures}
+                    uTexture={inkbottleTexture}
                     uYTravel={BOTTLE_CONFIG.ytravel}
                     uRotX={BOTTLE_CONFIG.x}
                     uRotY={BOTTLE_CONFIG.y}

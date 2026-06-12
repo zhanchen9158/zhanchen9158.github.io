@@ -13,13 +13,12 @@ import { motion, AnimatePresence, useMotionValue, useSpring, color } from "motio
 import Box from '@mui/material/Box';
 import getActivesection from '../functions/getActivesection';
 import { useAnimateContext } from './AnimateContext';
-import compass1 from '../pics/compass1.webp';
-import compass2 from '../pics/compass2.webp';
 import { Canvas, useFrame, extend } from '@react-three/fiber';
 import * as THREE from 'three';
 import { shaderMaterial, useTexture } from '@react-three/drei';
 import { Suspense } from 'react';
 import speeddialmain from '../pics/speeddialmain.webp';
+import { useStateContext } from './StateContext';
 
 
 const MotionBox = motion.create(Box);
@@ -28,7 +27,7 @@ const SECTION_COLORS = {
   introduction: '#E0F7FA',
   projects: '#0F172A',
   highlights: '#FF8C00',
-  certifications: '#D63031',
+  certifications: '#FF0000',
 };
 
 const DEFAULT_COLOR = '#E0F7FA';
@@ -78,9 +77,11 @@ const StyledSpeedDialAction = styled(SpeedDialAction)(({ theme }) => ({
   },
 }));
 
-export default function CustomizedSpeedDial({ handleScrollsection, activesection }) {
+export default function CustomizedSpeedDial({ handleScrollsection }) {
   const [open, setOpen] = useState(false);
   const [subopen, setSubopen] = useState(null);
+
+  const { activesection } = useStateContext();
 
   const section = useMemo(() => getActivesection(activesection),
     [activesection]);
@@ -352,120 +353,6 @@ const CanvasContent = memo(function CanvasContent({ isOpen }) {
         />
       </mesh>
     </group>
-  );
-});
-
-const Cube = memo(function Cube({ size, faceColor, edgeColor, opacity = 0.2, depthWrite }) {
-  return (
-    <group>
-      <mesh>
-        <boxGeometry args={[size, size, size]} />
-        <meshBasicMaterial
-          color={faceColor}
-          transparent
-          opacity={opacity}
-          depthWrite={depthWrite}
-        />
-      </mesh>
-      <lineSegments>
-        <edgesGeometry args={[new THREE.BoxGeometry(size, size, size)]} />
-        <lineBasicMaterial color={edgeColor} toneMapped={false} linewidth={2} />
-      </lineSegments>
-    </group>
-  );
-});
-
-const FabIconContainer = styled(MotionBox)(({ theme }) => ({
-  width: 56, height: 56,
-  minHeight: 56,
-  borderRadius: '50%',
-  backfaceVisibility: 'hidden',
-  [theme.breakpoints.down('sm')]: {
-    width: 42, height: 42,
-    minHeight: 42,
-  },
-}));
-
-const FabBgHover = styled(MotionBox)(({ theme }) => ({
-  position: 'absolute',
-  width: '100%', height: '100%',
-  borderRadius: 'inherit',
-  background: (theme.vars || theme).palette.primary.dark,
-  filter: 'blur(8px)',
-  backfaceVisibility: 'hidden',
-}));
-
-const CompassIcon = styled(MotionBox)(({ theme }) => ({
-  position: 'absolute',
-  width: '100%', height: '100%',
-  borderRadius: 'inherit',
-  backfaceVisibility: 'hidden',
-}));
-
-const fabBgHoverVars = {
-  initial: {
-    opacity: 0, scale: 0.2,
-    transition: TRANSITION_CONFIG.mainfab,
-  },
-  animate: {
-    opacity: 0.6, scale: 0.8,
-    transition: TRANSITION_CONFIG.mainfab,
-  },
-};
-
-const compass1Vars = {
-  initial: {
-    rotate: 0,
-    rotateX: 0, rotateY: 0,
-    transition: TRANSITION_CONFIG.mainfab,
-  },
-  animate: {
-    rotate: 45,
-    rotateX: 90, rotateY: 90,
-    transition: TRANSITION_CONFIG.mainfab,
-  },
-};
-
-const compass2Vars = {
-  initial: {
-    rotate: 0,
-    rotateX: -90, rotateY: -90,
-    transition: TRANSITION_CONFIG.mainfab,
-  },
-  animate: {
-    rotate: 45,
-    rotateX: 0, rotateY: 0,
-    transition: TRANSITION_CONFIG.mainfab,
-  },
-};
-
-const AnimatedFabIcon = memo(function AnimatedFabIcon({ color, open }) {
-
-  return (
-    <FabIconContainer
-      initial='initial'
-      animate={open ? 'animate' : 'initial'}
-    >
-      <FabBgHover
-        variants={fabBgHoverVars}
-      />
-      <CompassIcon
-        variants={compass1Vars}
-        style={{
-          mask: `url(${compass1}) no-repeat center / 56px`,
-          WebkitMask: `url(${compass1}) no-repeat center / 56px`,
-          backgroundColor: '#ffffff'
-        }}
-      />
-      <CompassIcon
-        variants={compass2Vars}
-        style={{
-          mask: `url(${compass2}) no-repeat center / 56px`,
-          WebkitMask: `url(${compass2}) no-repeat center / 56px`,
-          backgroundColor: '#ffffff'
-        }}
-      />
-    </FabIconContainer>
   );
 });
 
