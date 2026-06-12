@@ -174,10 +174,8 @@ const SpaceStation = memo(function SpaceStation({ isInView = false }) {
             entranceProgress.current = 0;
         }
 
-        const entranceOffset = (1 - entranceProgress.current) * -Math.PI;
         const scaleProgress = initscale + (1.0 - initscale) * entranceProgress.current;
 
-        groupRef.current.rotation.z = entranceOffset;
         groupRef.current.scale.set(scaleProgress, scaleProgress, scaleProgress);
 
         accumulator.current %= TARGET_FPS;
@@ -188,14 +186,17 @@ const SpaceStation = memo(function SpaceStation({ isInView = false }) {
             <Core
                 isInView={isInView}
                 config={RING_CONFIG.slice(2)}
+                entranceProgress={entranceProgress}
             />
             <InnerRing
                 isInView={isInView}
                 config={RING_CONFIG[1]}
+                entranceProgress={entranceProgress}
             />
             <OuterRing
                 isInView={isInView}
                 config={RING_CONFIG[0]}
+                entranceProgress={entranceProgress}
             />
         </group>
     );
@@ -768,7 +769,7 @@ function assignLineIds(geometry) {
     return geometry;
 }
 
-function Core({ config = [], isInView = false }) {
+function Core({ config = [], isInView = false, entranceProgress }) {
     const groupRef = useRef();
     const strutGroupRef = useRef()
     const spireGroupRef = useRef();
@@ -874,7 +875,8 @@ function Core({ config = [], isInView = false }) {
         groupRef.current.rotation.x = lerp(groupRef.current.rotation.x, targetX, 0.1);
         groupRef.current.rotation.y = lerp(groupRef.current.rotation.y, targetY, 0.1);
 
-        groupRef.current.rotation.z = t * (config[0]?.rotZSpeed || -0.04);
+        const entranceOffset = (1 - entranceProgress.current) * -Math.PI;
+        groupRef.current.rotation.z = entranceOffset + t * (config[0]?.rotZSpeed || -0.04);
 
         if (strutGroupRef.current) {
             strutGroupRef.current.traverse((child) => {
@@ -1312,7 +1314,7 @@ const InnerRingFaceMaterial = shaderMaterial(
 );
 extend({ InnerRingFaceMaterial });
 
-const InnerRing = memo(function InnerRing({ config, isInView = false }) {
+const InnerRing = memo(function InnerRing({ config, isInView = false, entranceProgress }) {
     const innerRingRef = useRef();
     const outerwallMaterialRef = useRef();
     const innerwallMaterialRef = useRef();
@@ -1366,7 +1368,8 @@ const InnerRing = memo(function InnerRing({ config, isInView = false }) {
         innerRingRef.current.rotation.x = lerp(innerRingRef.current.rotation.x, targetX, 0.1);
         innerRingRef.current.rotation.y = lerp(innerRingRef.current.rotation.y, targetY, 0.1);
 
-        innerRingRef.current.rotation.z = t * config.rotZSpeed;
+        const entranceOffset = (1 - entranceProgress.current) * -Math.PI;
+        innerRingRef.current.rotation.z = entranceOffset + t * config.rotZSpeed;
 
         if (outerwallMaterialRef.current) {
             outerwallMaterialRef.current.uTime = t;
@@ -1838,7 +1841,7 @@ const OuterRingFaceMaterial = shaderMaterial(
 );
 extend({ OuterRingFaceMaterial });
 
-const OuterRing = memo(function OuterRing({ config, isInView = false }) {
+const OuterRing = memo(function OuterRing({ config, isInView = false, entranceProgress }) {
     const outerRingRef = useRef();
     const outerwallMaterialRef = useRef();
     const innerwallMaterialRef = useRef();
@@ -1892,7 +1895,8 @@ const OuterRing = memo(function OuterRing({ config, isInView = false }) {
         outerRingRef.current.rotation.x = lerp(outerRingRef.current.rotation.x, targetX, 0.1);
         outerRingRef.current.rotation.y = lerp(outerRingRef.current.rotation.y, targetY, 0.1);
 
-        outerRingRef.current.rotation.z = t * config.rotZSpeed;
+        const entranceOffset = (1 - entranceProgress.current) * -Math.PI;
+        outerRingRef.current.rotation.z = entranceOffset + t * config.rotZSpeed;
 
         if (outerwallMaterialRef.current) {
             outerwallMaterialRef.current.uTime = t;
