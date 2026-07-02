@@ -45,6 +45,7 @@ const RING_CONFIG = [
         outerRadius: 2.5, innerRadius: 1.8,
         depth: 0.5,
         segments: 32,
+        startX: -90, startY: 60,
         rotX: [-90, 90], rotY: [-90, 90],
         rotZSpeed: 0.05,
         face: ktx2object.spacestationface1,
@@ -60,6 +61,7 @@ const RING_CONFIG = [
         outerRadius: 1.5, innerRadius: 1.0,
         depth: 0.4,
         segments: 32,
+        startX: 90, startY: 90,
         rotX: [120, -120], rotY: [120, -120],
         rotZSpeed: -0.04,
         face: ktx2object.spacestationface2,
@@ -72,6 +74,7 @@ const RING_CONFIG = [
     {
         id: 'corestrut',
         width: 0.15, height: 0.4, depth: 2.0,
+        startX: 120, startY: 120,
         rotX: [120, -120], rotY: [120, -120],
         rotZSpeed: -0.04,
         texture: ktx2object.spacestationcorestrut,
@@ -791,6 +794,8 @@ function Core({ config = [], isInView = false, entranceProgress }) {
         width: strutwidth, height: strutheight, depth: strutdepth,
         texture: corestrut, emissivemask: corestrutemissive, windowsmask: corestrutwindows,
     } = config[0];
+    const startX = config[0].startX * (Math.PI / 180);
+    const startY = config[0].startY * (Math.PI / 180);
     const {
         latticeRadius, detail,
         latticeRotXSpeed, latticeRotYSpeed, latticeRotZSpeed
@@ -869,14 +874,18 @@ function Core({ config = [], isInView = false, entranceProgress }) {
 
         const t = state.clock.getElapsedTime();
 
-        const targetX = (mousePosRef.current.y * (config[0].rotX[1] - config[0].rotX[0])) * (Math.PI / 180);
-        const targetY = (mousePosRef.current.x * (config[0].rotY[1] - config[0].rotY[0])) * (Math.PI / 180);
+        const progress = entranceProgress.current;
+        const entranceOffset = (1 - entranceProgress.current) * -Math.PI;
+        groupRef.current.rotation.z = entranceOffset + t * (config[0]?.rotZSpeed || -0.04);
+
+        const baseX = (mousePosRef.current.y * (config[0].rotX[1] - config[0].rotX[0])) * (Math.PI / 180);
+        const baseY = (mousePosRef.current.x * (config[0].rotY[1] - config[0].rotY[0])) * (Math.PI / 180);
+
+        const targetX = startX + (baseX - startX) * progress;
+        const targetY = startY + (baseY - startY) * progress;
 
         groupRef.current.rotation.x = lerp(groupRef.current.rotation.x, targetX, 0.1);
         groupRef.current.rotation.y = lerp(groupRef.current.rotation.y, targetY, 0.1);
-
-        const entranceOffset = (1 - entranceProgress.current) * -Math.PI;
-        groupRef.current.rotation.z = entranceOffset + t * (config[0]?.rotZSpeed || -0.04);
 
         if (strutGroupRef.current) {
             strutGroupRef.current.traverse((child) => {
@@ -1134,6 +1143,8 @@ const InnerRingOuterWallMaterial = shaderMaterial(
         float edgeCityMask = sampleIndividualMaps(edgeLayerIndex, offsetUv);
 
         float cityMask = max(centerCityMask, edgeCityMask);
+        float edgeGlowDriver = smoothstep(0.4, 0.5, distFromCenterX) * 0.5;
+        float finalCityMask = max(cityMask, edgeGlowDriver);
 
         vec2 globalGridCoords = floor(vec2(globalX, vUv.y) * uGridSize);
         float sectorRandom = hash(globalGridCoords);
@@ -1147,8 +1158,9 @@ const InnerRingOuterWallMaterial = shaderMaterial(
         float flickerStability = mix(0.2, 0.6, cityWeight);
         float dynamicGlowModifier = mix(1.0, flicker, 1.0 - flickerStability);
         
+        float edgeBrightnessBoost = edgeWeight * 2.0;
         float centerBrightnessBoost = 1.0 + (cityWeight * 2.5);
-        float totalGlowIntensity = cityMask * centerBrightnessBoost * dynamicGlowModifier * 2.5;
+        float totalGlowIntensity = finalCityMask * (centerBrightnessBoost + edgeBrightnessBoost) * dynamicGlowModifier * 2.5;
         vec3 cityGlow = uCityColor * totalGlowIntensity;
 
         float activeScreenMask = cityMask * step(0.02, cityMask);
@@ -1326,6 +1338,8 @@ const InnerRing = memo(function InnerRing({ config, isInView = false, entrancePr
     const { mousePosRef } = useAnimateContext();
 
     const { outerRadius, innerRadius, depth, segments } = config;
+    const startX = config.startX * (Math.PI / 180);
+    const startY = config.startY * (Math.PI / 180);
     const { face, emissivemask, windowsmask, outerwall, innerwall, innerwallemissive } = config;
     const seed = useMemo(() => Math.random() * 1000, []);
 
@@ -1362,14 +1376,18 @@ const InnerRing = memo(function InnerRing({ config, isInView = false, entrancePr
 
         const t = state.clock.getElapsedTime();
 
-        const targetX = (mousePosRef.current.y * (config.rotX[1] - config.rotX[0])) * (Math.PI / 180);
-        const targetY = (mousePosRef.current.x * (config.rotY[1] - config.rotY[0])) * (Math.PI / 180);
+        const progress = entranceProgress.current;
+        const entranceOffset = (1 - entranceProgress.current) * -Math.PI;
+        innerRingRef.current.rotation.z = entranceOffset + t * config.rotZSpeed;
+
+        const baseX = (mousePosRef.current.y * (config.rotX[1] - config.rotX[0])) * (Math.PI / 180);
+        const baseY = (mousePosRef.current.x * (config.rotY[1] - config.rotY[0])) * (Math.PI / 180);
+
+        const targetX = startX + (baseX - startX) * progress;
+        const targetY = startY + (baseY - startY) * progress;
 
         innerRingRef.current.rotation.x = lerp(innerRingRef.current.rotation.x, targetX, 0.1);
         innerRingRef.current.rotation.y = lerp(innerRingRef.current.rotation.y, targetY, 0.1);
-
-        const entranceOffset = (1 - entranceProgress.current) * -Math.PI;
-        innerRingRef.current.rotation.z = entranceOffset + t * config.rotZSpeed;
 
         if (outerwallMaterialRef.current) {
             outerwallMaterialRef.current.uTime = t;
@@ -1853,6 +1871,8 @@ const OuterRing = memo(function OuterRing({ config, isInView = false, entrancePr
     const { mousePosRef } = useAnimateContext();
 
     const { outerRadius, innerRadius, depth, segments } = config;
+    const startX = config.startX * (Math.PI / 180);
+    const startY = config.startY * (Math.PI / 180);
     const {
         face, emissivemask, windowsmask,
         outerwall, innerwall, outerwallemissive, outerwallwindows
@@ -1889,14 +1909,18 @@ const OuterRing = memo(function OuterRing({ config, isInView = false, entrancePr
 
         const t = state.clock.getElapsedTime();
 
-        const targetX = (mousePosRef.current.y * (config.rotX[1] - config.rotX[0])) * (Math.PI / 180);
-        const targetY = (mousePosRef.current.x * (config.rotY[1] - config.rotY[0])) * (Math.PI / 180);
+        const progress = entranceProgress.current;
+        const entranceOffset = (1 - entranceProgress.current) * -Math.PI;
+        outerRingRef.current.rotation.z = entranceOffset + t * config.rotZSpeed;
+
+        const baseX = (mousePosRef.current.y * (config.rotX[1] - config.rotX[0])) * (Math.PI / 180);
+        const baseY = (mousePosRef.current.x * (config.rotY[1] - config.rotY[0])) * (Math.PI / 180);
+
+        const targetX = startX + (baseX - startX) * progress;
+        const targetY = startY + (baseY - startY) * progress;
 
         outerRingRef.current.rotation.x = lerp(outerRingRef.current.rotation.x, targetX, 0.1);
         outerRingRef.current.rotation.y = lerp(outerRingRef.current.rotation.y, targetY, 0.1);
-
-        const entranceOffset = (1 - entranceProgress.current) * -Math.PI;
-        outerRingRef.current.rotation.z = entranceOffset + t * config.rotZSpeed;
 
         if (outerwallMaterialRef.current) {
             outerwallMaterialRef.current.uTime = t;

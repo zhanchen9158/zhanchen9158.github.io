@@ -8,7 +8,7 @@ import { useStateContext } from './StateContext';
 
 const MotionBox = motion(Box);
 
-const AppBar = styled(Box)(({ theme }) => ({
+const AppBar = styled(MotionBox)(({ theme }) => ({
   position: 'fixed',
   left: 0, right: 0, margin: '1rem auto',
   width: '90%', height: '50px',
@@ -17,20 +17,17 @@ const AppBar = styled(Box)(({ theme }) => ({
   borderRadius: '12px',
   border: '1px solid',
   borderColor: `rgba(${(theme.vars || theme).palette.primary.lightChannel} / 0.3)`,
-  backgroundColor: `rgba(${(theme.vars || theme).palette.background.defaultChannel}/0.1)`,
+  backgroundColor: `rgba(${(theme.vars || theme).palette.background.defaultChannel} / 0.1)`,
   boxShadow: `0 10px 15px -3px rgba(${(theme.vars || theme).palette.background.contrastChannel} / 0.1)`,
   zIndex: 9999,
 }));
 
-const AppBarHeader = styled(MotionBox)(({ theme, textcolor }) => ({
+const AppBarHeader = styled(MotionBox)(({ theme }) => ({
   width: 'fit-content',
   textAlign: 'center', textTransform: 'capitalize',
   fontFamily: 'Playfair Display',
   fontWeight: 800,
   lineHeight: 1.5,
-  background: textcolor,
-  WebkitBackgroundClip: 'text',
-  backgroundClip: 'text',
   color: 'transparent',
   fontSize: '32px',
   [theme.breakpoints.down('sm')]: {
@@ -40,7 +37,21 @@ const AppBarHeader = styled(MotionBox)(({ theme, textcolor }) => ({
   backfaceVisibility: "hidden",
 }));
 
-const itemVars = {
+const appbarVars = {
+  initial: {
+    opacity: 0,
+  },
+  animate: {
+    opacity: 1,
+    transition: {
+      delay: 3,
+      duration: 0.8,
+      ease: 'easeInOut',
+    }
+  },
+};
+
+const headerVars = {
   initial: {
     opacity: 0,
     scale: 1,
@@ -88,14 +99,18 @@ const AnimatedAppBar = memo(function AnimatedAppBar() {
   }, [activesection]);
 
   return (
-    <AppBar>
+    <AppBar
+      variants={appbarVars}
+      initial='initial'
+      animate="animate"
+    >
       <AnimatePresence>
         <AppBarHeader
           key={key}
-          textcolor={textcolor}
-          variants={itemVars}
+          variants={headerVars}
           initial='initial'
           animate="animate"
+          style={{ background: textcolor, WebkitBackgroundClip: 'text', backgroundClip: 'text' }}
         >
           {name}
         </AppBarHeader>

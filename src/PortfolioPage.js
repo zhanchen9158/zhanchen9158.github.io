@@ -143,16 +143,6 @@ const RadialHyperstream = styled(MotionBox)({
   backfaceVisibility: 'hidden',
 });
 
-const HeroBlurBg = styled(MotionBox)(({ theme }) => ({
-  position: 'fixed', inset: 0,
-  zIndex: 30,
-  backgroundImage: `url(${entrancehero})`,
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
-  pointerEvents: 'none',
-  backfaceVisibility: 'hidden',
-}));
-
 const HeroBg = styled(MotionBox)(({ theme }) => ({
   position: 'fixed', inset: 0,
   zIndex: 20,
@@ -214,7 +204,7 @@ const Subheader = styled(MotionBox)(({ theme }) => ({
   opacity: 0.7,
 }));
 
-const initDuration = 2;
+const initDuration = 3;
 
 const HeroEntrance = memo(function HeroEntrance({ }) {
   const [isMounted, setIsMounted] = useState(true);
@@ -242,15 +232,6 @@ const HeroEntrance = memo(function HeroEntrance({ }) {
               ease: "easeOut",
             }}
           />
-          <HeroBlurBg
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 0 }}
-            transition={{
-              delay: initDuration,
-              duration: 2.5,
-              ease: 'easeInOut'
-            }}
-          />
           <HeroBg
             initial={{
               opacity: 1,
@@ -261,7 +242,7 @@ const HeroEntrance = memo(function HeroEntrance({ }) {
               filter: 'brightness(200%)',
             }}
             transition={{
-              delay: initDuration + 1.5,
+              delay: initDuration,
               duration: 2,
               times: [0, 0.5, 1],
               ease: "easeInOut",

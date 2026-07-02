@@ -33,7 +33,7 @@ function useConfigureTextures(textureMap, options = {}, format = 'ktx2') {
       texture.magFilter = magFilter;
       texture.wrapS = wrapS;
       texture.wrapT = wrapT;
-      if (!isKTX2) texture.needsUpdate = true;
+      texture.needsUpdate = true;
     });
   }, [textureMap, anisotropy, minFilter, magFilter, wrapS, wrapT, isKTX2]);
 }

@@ -262,6 +262,7 @@ const TRANSITIONCONFIG = {
     hoverbgend: { duration: 2 * hover, ease: 'easeOut' },
 
     hoverstart: { duration: 2.5 * hover, ease: 'easeOut' },
+    shadowhoverstart: { delay: 1, duration: 2.5 * hover, ease: 'easeOut' },
     hoverend: { duration: hover, ease: 'easeOut' },
 
     layoutbg: {
@@ -633,7 +634,6 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, globalMouseX
 
     return (
         <GridItem3D
-
             style={{
                 rotateX: lesserThanSm ? 0 : rotateX,
                 rotateY: lesserThanSm ? 0 : rotateY,
@@ -645,7 +645,6 @@ const AnimatedGridItem3D = memo(function AnimatedGridItem3D({ item, globalMouseX
             animate={animationConfig.rest}
             whileInView={animationConfig.visible}
             whileHover={isEntrancing ? undefined : animationConfig.hover}
-
         >
             {/*<GridItemBorder
                 variants={griditemhoverVars}
@@ -859,12 +858,12 @@ const textshadowVars = {
         z: 0, opacity: 1,
     },
     hover: {
-        z: -30, opacity: 0,
-        transition: TRANSITIONCONFIG.hoverstart,
+        z: 0, opacity: 0,
+        transition: TRANSITIONCONFIG.shadowhoverstart,
     },
     rest: {
         z: 0, opacity: 1,
-        transition: TRANSITIONCONFIG.hoverstart,
+        transition: TRANSITIONCONFIG.shadowhoverstart,
     },
     static: { z: 0, opacity: 1, },
 };
