@@ -777,6 +777,11 @@ const Header = styled(MotionBox)(({ theme, textcolor = '#000000' }) => ({
     position: 'relative',
     ...HeaderStyle,
     color: textcolor,
+    textShadow: `
+        0px 1.5px 0px rgba(0, 0, 0, 0.95),
+        1px 3px 4px rgba(0, 0, 0, 0.8),
+        3px 15px 30px rgba(0, 0, 0, 0.9)
+    `,
     transformStyle: "preserve-3d",
     backfaceVisibility: "hidden",
 }));
@@ -885,17 +890,17 @@ const texthoverVars = {
 
 const headerVars = {
     initial: {
-        textShadow: '2px 0px 0px rgba(255, 0, 0, 1), -2px 0px 0px rgba(0, 0, 255, 1)',
+        opacity: 0,
     },
     visible: {
-        textShadow: '0px 0px 0px rgba(255, 0, 0, 0), 0px 0px 0px rgba(0, 0, 255, 0)',
+        opacity: 1,
         transition: {
             duration: 2,
             ease: [0.22, 1, 0.36, 1],
             delay: pagedelay - 0.2
         }
     },
-    static: { textShadow: '0px 0px 0px rgba(255, 0, 0, 0), 0px 0px 0px rgba(0, 0, 255, 0)', },
+    static: { opacity: 1, },
 };
 
 const subheadershadowVars = {
