@@ -25,6 +25,7 @@ import FloatingSequence from './FloatingSequence';
 import FloatingBg from './FloatingBg';
 import getActiveSection from '../functions/getActivesection';
 import { CanvasSection } from './CanvasContext';
+import WaterRipples from './WaterRipples';
 import SpaceStation from './SpaceStation';
 import SpaceStationBg from './SpaceStationBg';
 
@@ -153,6 +154,7 @@ const CanvasContent = memo(function CanvasContent({ activeId, coordRef, handleSe
     const objectsRef = useRef({});
 
     const heroActive = useMemo(() => section === 'introduction', [section]);
+    const highlightsActive = useMemo(() => section === 'highlights', [section]);
     const certActive = useMemo(() => section === 'certifications', [section]);
 
     return (
@@ -167,6 +169,9 @@ const CanvasContent = memo(function CanvasContent({ activeId, coordRef, handleSe
                 <SpaceStation
                     isInView={heroActive}
                 />
+            </CanvasSection>
+            <CanvasSection isActive={highlightsActive}>
+                <WaterRipples isInView={highlightsActive} />
             </CanvasSection>
             <CanvasSection isActive={certActive}>
                 <FloatingBg

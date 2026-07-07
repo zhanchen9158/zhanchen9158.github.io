@@ -204,7 +204,7 @@ const Subheader = styled(MotionBox)(({ theme }) => ({
   opacity: 0.7,
 }));
 
-const initDuration = 3;
+const initDuration = 4;
 
 const HeroEntrance = memo(function HeroEntrance({ }) {
   const [isMounted, setIsMounted] = useState(true);
@@ -469,8 +469,7 @@ const AnimatedBackground = memo(function AnimatedBackground({ i, bgScale }) {
         style={{
           scale: bgScale,
           backgroundImage: i === 1 ? `url(${entrancebg1})` || 'none'
-            : i === 2 ? `url(${entrancebg2})` || 'none'
-              : 'none',
+            : 'none',
         }}
       />
       <ScrollBackground
@@ -479,8 +478,7 @@ const AnimatedBackground = memo(function AnimatedBackground({ i, bgScale }) {
         }}
         sx={(theme) => ({
           backgroundImage: i === 1 ? `url(${bg1})` || 'none'
-            : i === 2 ? `url(${bg2})` || 'none'
-              : 'none',
+            : 'none',
         })}
       />
     </>

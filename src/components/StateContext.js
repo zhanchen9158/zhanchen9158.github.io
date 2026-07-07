@@ -1,4 +1,5 @@
 import React, { createContext, useRef, useState, useCallback, useMemo, useContext } from 'react';
+import { useMotionValue } from "motion/react";
 import AWSIcon from '../icons/aws.svg';
 import MicrosoftIcon from '../icons/microsoft.svg';
 import FreecodecampIcon from '../icons/freecodecamp.svg';
@@ -55,12 +56,9 @@ const StateContext = createContext();
 
 export function StateProvider({ children }) {
   const [activeSkillsId, setActiveSkillsId] = useState(null);
-
   const [activesection, setActivesection] = useState({});
-  const [cert, setCert] = useState(null);
 
   const sectionRef = useRef({});
-  const certCoordRef = useRef({ x: 0, y: 0 });
 
   const section = useMemo(() => getActiveSection(activesection), [activesection]);
 
@@ -68,7 +66,7 @@ export function StateProvider({ children }) {
     setActivesection(prev => ({ ...prev, [section]: inview }));
   }, []);
 
-  const handleScroll = (e) => {
+  const handleScroll = useCallback((e) => {
     if (section !== 'certifications') return;
     if (e.deltaY < 0 && sectionRef.current?.['highlights']) {
       sectionRef.current['highlights'].scrollIntoView({
@@ -76,17 +74,17 @@ export function StateProvider({ children }) {
         block: 'end',
       });
     }
-  };
+  }, [section]);
 
   const touchStartY = useRef(0);
   const SWIPE_THRESHOLD = 50;
 
-  const handleTouchStart = (e) => {
+  const handleTouchStart = useCallback((e) => {
     if (section !== 'certifications') return;
     touchStartY.current = e.touches[0].clientY;
-  };
+  }, [section]);
 
-  const handleTouchEnd = (e) => {
+  const handleTouchEnd = useCallback((e) => {
     if (section !== 'certifications') return;
     if (!touchStartY.current) return;
 
@@ -108,8 +106,11 @@ export function StateProvider({ children }) {
     }
 
     touchStartY.current = 0;
-  };
+  }, [section]);
 
+
+  const [cert, setCert] = useState(null);
+  const certCoordRef = useRef({ x: 0, y: 0 });
   const handleCertSelect = useCallback((v = 'cert0') => {
     if (v === null) {
       setCert(null);
@@ -127,15 +128,35 @@ export function StateProvider({ children }) {
     });
   }, []);
 
+
+  const [highlightImage, setHighlightImage] = useState(null);
+  const handleActivatingHighlightImage = useCallback((v) => {
+    setHighlightImage(v);
+  }, []);
+  const highlightHovered = useRef(null);
+
+  const contextValue = useMemo(() => ({
+    activeSkillsId, setActiveSkillsId,
+    activesection, handleViewport,
+    sectionRef, handleScroll,
+    handleTouchStart, handleTouchEnd,
+    highlightImage, handleActivatingHighlightImage,
+    highlightHovered,
+    cert, handleCertSelect,
+    certCoordRef, CERT_DATA,
+  }), [
+    activeSkillsId, setActiveSkillsId,
+    activesection, handleViewport,
+    sectionRef, handleScroll,
+    handleTouchStart, handleTouchEnd,
+    highlightImage, handleActivatingHighlightImage,
+    highlightHovered,
+    cert, handleCertSelect,
+    certCoordRef, CERT_DATA
+  ]);
+
   return (
-    <StateContext.Provider value={{
-      activeSkillsId, setActiveSkillsId,
-      activesection, handleViewport,
-      sectionRef, handleScroll,
-      handleTouchStart, handleTouchEnd,
-      cert, handleCertSelect,
-      certCoordRef, CERT_DATA,
-    }}>
+    <StateContext.Provider value={contextValue}>
       {children}
     </StateContext.Provider>
   );

@@ -1,0 +1,632 @@
+import React, { useState, useRef, useCallback, useMemo, useEffect, memo } from 'react';
+import { useMotionValueEvent } from "framer-motion";
+import { useThree, useFrame, extend } from '@react-three/fiber';
+import { shaderMaterial, useTexture } from '@react-three/drei';
+import * as THREE from 'three';
+import { useAnimateContext } from './AnimateContext';
+import { useStateContext } from './StateContext';
+import canvas3bg from '../pics/bg2.webp';
+import canvas3bgentrance from '../pics/entrancebg2.webp';
+import useConfigureTextures from '../functions/useConfigureTextures';
+import { PROJECT_HIGHLIGHTS } from "../pics/assets";
+
+
+const WaterRipples = memo(function WaterRipples({ isInView = false }) {
+    const groupRef = useRef();
+
+    const wasInView = useRef(false);
+    const entranceProgress = useRef(0);
+    const accumulator = useRef(0);
+
+    useFrame((state, delta) => {
+        if (!isInView) {
+            entranceProgress.current = 0;
+            wasInView.current = false;
+            return;
+        }
+        accumulator.current += delta;
+        if (accumulator.current < TARGET_FPS) return;
+        accumulator.current %= TARGET_FPS;
+
+        const time = state.clock.getElapsedTime();
+
+        if (!wasInView.current && isInView) {
+            wasInView.current = true;
+        }
+
+        const target = isInView ? 1.0 : 0.0;
+        const p = entranceProgress.current;
+        entranceProgress.current += (target - p) * 0.009;
+        const isAnimating = Math.abs(target - p) > 0.001;
+
+        if (!isAnimating && entranceProgress.current !== target) {
+            entranceProgress.current = target;
+        }
+    });
+
+    return (
+        <group ref={groupRef}>
+            <WaterRipplesBg
+                isInView={isInView}
+                wasInView={wasInView}
+                entranceProgress={entranceProgress}
+            />
+            <BokehParticles
+                isInView={isInView}
+                entranceProgress={entranceProgress}
+            />
+        </group>
+    );
+});
+
+const HIGHTLIGHT_PATHS = Object.values(PROJECT_HIGHLIGHTS).flatMap(project => Object.values(project));
+const BOKEH_COUNT = HIGHTLIGHT_PATHS.length / 3;
+const BOKEH_DURATION = 24.0;
+
+const MESH_Z = -5;
+const CANVAS_SIZE = 256;
+const RIPPLE_SIZE = 15;
+const SCRATCH_VECTOR = new THREE.Vector3();
+const TARGET_FPS = 1 / 30;
+
+const BokehDriftMaterial = shaderMaterial(
+    {
+        uTime: 0,
+        uProgress: 0,
+        uActiveImage: 0,
+        uSelectedIndex: -1,
+        uHoveredTexture: new THREE.Texture(),
+        uHoverProgress: 0,
+        uColor: new THREE.Color("#ffffff"),
+        uLifeDuration: BOKEH_DURATION,
+        uLockedTime: 0,
+        uLockedProgress: 0,
+    },
+    // Vertex Shader
+    `
+    uniform float uTime;
+    uniform float uSelectedIndex;
+    uniform float uHoverProgress;
+    uniform float uLifeDuration;
+    uniform float uLockedTime;
+    uniform float uLockedProgress;
+    
+    attribute vec3 aRandoms; // x: angle, y: speed, z: startTime/offset
+    attribute float aIndex;
+    
+    varying float vAlpha;
+    varying vec2 vUv;
+    varying float vIsSelected;
+
+    const float TWO_PI = 6.28318530718;
+
+    // High-precision pseudo-random generator
+    float rand(vec2 co) {
+        return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
+    }
+
+    void main() {
+        vUv = uv;
+
+        vIsSelected = 1.0 - step(0.1, abs(aIndex - uSelectedIndex));
+
+        float normalTotalTime = uTime + aRandoms.z * uLifeDuration;
+        float normalProgress = mod(normalTotalTime, uLifeDuration) / uLifeDuration;
+
+        float evalTime = mix(uTime, uLockedTime, vIsSelected);
+        float evalProgress = mix(normalProgress, uLockedProgress, vIsSelected);
+
+
+        float totalTime = evalTime + aRandoms.z * uLifeDuration;
+        float loopCycle = floor(totalTime / uLifeDuration);
+        
+        float seedX = rand(vec2(aRandoms.x, loopCycle));
+        float seedY = rand(vec2(loopCycle, aRandoms.y));
+        float seedScale = rand(vec2(seedX, seedY));
+
+        float baseScale = 0.1 + seedScale * 0.2;
+        float targetScaleMultiplier = mix(1.0, 10.5, uHoverProgress);
+        float dynamicScale = baseScale * mix(1.0, targetScaleMultiplier, vIsSelected);
+        
+        float spawnAngle = seedX * TWO_PI; 
+        float spawnRadius = 1.5 + seedY * 1.5; 
+        
+        vec3 dynamicStartPos = vec3(cos(spawnAngle), sin(spawnAngle), 0.0) * spawnRadius;
+        vec3 driftDir = normalize(dynamicStartPos);
+        float speed = aRandoms.y * 0.6;
+        
+        vec3 driftOffset = dynamicStartPos + (driftDir * speed * evalProgress);
+        vec3 finalLocalPosition = (position * dynamicScale) + driftOffset;
+        
+        vAlpha = smoothstep(0.0, 0.2, evalProgress) * smoothstep(1.0, 0.7, evalProgress);
+        
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(finalLocalPosition, 1.0);
+    }
+    `,
+    // Fragment Shader
+    `
+    varying float vAlpha;
+    varying vec2 vUv;
+    varying float vIsSelected;
+
+    uniform float uProgress;
+    uniform float uActiveImage;
+    uniform float uHoverProgress;
+    
+    uniform sampler2D uHoveredTexture;
+    uniform vec3 uColor;
+
+    void main() {
+        float dist = length(vUv - vec2(0.5));
+        float circle = smoothstep(0.5, 0.3, dist);
+
+        vec4 textureColor = texture2D(uHoveredTexture, vUv);
+        vec3 bokehColor = mix(uColor, textureColor.rgb, vIsSelected);
+
+        float selectedAlpha = smoothstep(0.2, 1.0, uHoverProgress);
+        float baseAlpha = mix(0.2, selectedAlpha, vIsSelected);
+
+        float progressAlpha = smoothstep(0.0, 1.0, uProgress);
+        float finalAlpha = circle * vAlpha * baseAlpha * progressAlpha * (1.0 - uActiveImage);
+        
+        gl_FragColor = vec4(bokehColor, finalAlpha);
+    }
+    `
+);
+extend({ BokehDriftMaterial });
+
+const BokehParticles = memo(function BokehParticles({ isInView = false, entranceProgress }) {
+    const { highlightImage, highlightHovered } = useStateContext();
+
+    const meshRef = useRef();
+    const lastHoveredRef = useRef(null);
+    const hoverProgress = useRef(0);
+    const accumulator = useRef(0);
+
+    const indicesArray = useMemo(() => {
+        const arr = new Float32Array(BOKEH_COUNT);
+        for (let i = 0; i < BOKEH_COUNT; i++) arr[i] = i;
+        return arr;
+    }, []);
+
+    const randomsArray = useMemo(() => {
+        const randoms = new Float32Array(BOKEH_COUNT * 3);
+        for (let i = 0; i < BOKEH_COUNT; i++) {
+            randoms[i * 3 + 0] = Math.random() * Math.PI * 2;
+            randoms[i * 3 + 1] = Math.random();
+            randoms[i * 3 + 2] = Math.random();
+        }
+        return randoms;
+    }, [BOKEH_COUNT]);
+
+    const activeImage = useMemo(() => {
+        return highlightImage ? 1.0 : 0.0;
+    }, [highlightImage]);
+
+    const highlightTextures = useTexture(HIGHTLIGHT_PATHS);
+    useConfigureTextures(highlightTextures);
+
+    useFrame((state, delta) => {
+        if (!isInView) return;
+        accumulator.current += delta;
+        if (accumulator.current < TARGET_FPS) return;
+        accumulator.current %= TARGET_FPS;
+
+        const time = state.clock.getElapsedTime();
+
+        if (meshRef.current && meshRef.current.material) {
+            const materialRef = meshRef.current.material;
+
+            materialRef.uTime = time;
+            materialRef.uProgress = entranceProgress.current;
+            materialRef.uActiveImage = activeImage;
+
+            const currentHover = highlightHovered.current;
+            const lastHover = lastHoveredRef.current;
+
+            if (!currentHover) {
+                materialRef.uSelectedIndex = -1;
+                materialRef.uHoveredTexture = null;
+                materialRef.blending = THREE.AdditiveBlending;
+            }
+            else if (!lastHover && currentHover) {
+                const selectedIdx = Math.floor(Math.random() * BOKEH_COUNT);
+                materialRef.uSelectedIndex = selectedIdx;
+
+                const particleOffset = randomsArray[selectedIdx * 3 + 2];
+                const totalParticleTime = time + particleOffset * BOKEH_DURATION;
+                const currentProgress = (totalParticleTime % BOKEH_DURATION) / BOKEH_DURATION;
+
+                materialRef.uLockedTime = time;
+                materialRef.uLockedProgress = currentProgress;
+
+                const matchedTexture = highlightTextures.find(texture =>
+                    texture.image.src.endsWith(currentHover)
+                );
+                if (matchedTexture) {
+                    materialRef.uHoveredTexture = matchedTexture;
+                }
+                materialRef.blending = THREE.NormalBlending;
+            }
+            lastHoveredRef.current = currentHover;
+
+            const target = currentHover ? 1.0 : 0.0;
+            const p = hoverProgress.current;
+            hoverProgress.current += (target - p) * 0.009;
+            const isAnimating = Math.abs(target - p) > 0.001;
+            materialRef.uHoverProgress = p;
+        }
+    });
+
+    return (
+        <instancedMesh
+            ref={meshRef}
+            args={[null, null, BOKEH_COUNT]}
+        >
+            <planeGeometry args={[1, 1]}>
+                <instancedBufferAttribute
+                    attach="attributes-aIndex"
+                    args={[indicesArray, 1]}
+                />
+                <instancedBufferAttribute
+                    attach="attributes-aRandoms"
+                    args={[randomsArray, 3]}
+                />
+            </planeGeometry>
+            <bokehDriftMaterial
+                attach="material"
+                transparent
+                depthWrite={false}
+            />
+        </instancedMesh>
+    );
+});
+
+const WaterRipplesBgEntranceMaterial = shaderMaterial(
+    {
+        uTime: 0,
+        uProgress: 0,
+        uTexture: new THREE.Texture(),
+        uScale: 1.5,
+    },
+    // Vertex Shader
+    `
+    varying vec2 vUv;
+    uniform float uProgress;
+    uniform float uScale;
+
+    void main() {
+        vUv = uv;
+        
+        float scale = mix(uScale, 1.0, uProgress);
+        
+        vec3 scaledPosition = vec3(position.xy * scale, position.z);
+        
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(scaledPosition, 1.0);
+    }
+    `,
+    // Fragment Shader
+    `
+    varying vec2 vUv;
+    uniform sampler2D uTexture;
+    uniform float uTime;
+    uniform float uProgress;
+
+    void main() {
+        vec4 color = texture2D(uTexture, vUv);
+        if (color.a < 0.1) discard;
+
+        float invertedProgress = 1.0 - uProgress;
+        float alpha = smoothstep(0.0, 1.0, invertedProgress);
+
+        gl_FragColor = vec4(color.rgb, alpha);
+    }
+    `
+);
+extend({ WaterRipplesBgEntranceMaterial });
+
+const WaterRipplesBgMaterial = shaderMaterial(
+    {
+        uTime: 0,
+        uProgress: 0,
+        uBgTexture: new THREE.Texture(),
+        uActiveTexture: new THREE.Texture(),
+        uTransitionProgress: 0,
+        uRippleCenter: new THREE.Vector2(0.5, 0.5),
+        uRippleDir: 1.0,
+        uDuration: 6.0,
+        uStartTime: 0.0,
+        uWaveFrequency: 40.0,
+        uWaveStrength: 0.09,
+        uRipplesTexture: new THREE.Texture(),
+        uCanvasSize: 256.0,
+    },
+    // Vertex Shader
+    `
+    varying vec2 vUv;
+
+    void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+    `,
+    // Fragment Shader
+    `
+    varying vec2 vUv;
+    uniform float uTime;
+    uniform float uProgress;
+    uniform sampler2D uBgTexture;
+    uniform sampler2D uActiveTexture;
+    uniform float uTransitionProgress;
+    uniform sampler2D uRipplesTexture;
+    uniform vec2 uRippleCenter;
+    uniform float uRippleDir;
+    uniform float uDuration;
+    uniform float uStartTime;
+    uniform float uWaveFrequency;
+    uniform float uWaveStrength;
+    uniform float uCanvasSize;
+
+    void main() {
+        float elapsedTime = uTime - uStartTime;
+        
+        float postEntranceMask = step(uDuration, elapsedTime); 
+        float entranceMask = 1.0 - postEntranceMask;
+
+        const float waveSpeed = 4.0;
+
+        vec2 totalDistortion = vec2(0.0);
+
+
+        vec2 toCenterA = vUv - uRippleCenter;
+        float distA = length(toCenterA);
+        float safeDistA = max(distA, 0.0001);
+
+        float entranceLife = clamp(elapsedTime / uDuration, 0.0, 1.0);
+        float entranceRadius = elapsedTime * (waveSpeed / uWaveFrequency);
+        float entranceWave = uRippleDir * sin(distA * uWaveFrequency - elapsedTime * waveSpeed);
+        
+        float entranceOuter = smoothstep(entranceRadius + 0.1, entranceRadius, distA);
+        float entranceInner = smoothstep(entranceRadius - 0.15, entranceRadius, distA);
+        
+        float startMask = step(0.0001, elapsedTime);
+        float entranceFinalStrength = uWaveStrength * (1.0 - entranceLife) * (entranceOuter * entranceInner) * startMask * entranceMask;
+
+        totalDistortion += (toCenterA / safeDistA) * entranceWave * entranceFinalStrength;
+
+
+        float texelSize = 1.0 / uCanvasSize;
+
+        vec2 offsetH = vec2(texelSize * postEntranceMask, 0.0);
+        vec2 offsetV = vec2(0.0, texelSize * postEntranceMask);
+
+        float rLeft  = texture2D(uRipplesTexture, vUv - offsetH).r;
+        float rRight = texture2D(uRipplesTexture, vUv + offsetH).r;
+        float rDown  = texture2D(uRipplesTexture, vUv - offsetV).r;
+        float rUp    = texture2D(uRipplesTexture, vUv + offsetV).r;
+        float currentR = texture2D(uRipplesTexture, vUv).r;
+
+        vec2 mouseNormal = vec2(rRight - rLeft, rUp - rDown);
+        
+        float mouseWave = sin(currentR * 30.0 - uTime * 10.0) * currentR * postEntranceMask;
+
+        totalDistortion += mouseNormal * mouseWave * (uWaveStrength * 2.5);
+
+
+        vec2 distortedUv = vUv + totalDistortion;
+        vec4 texBg = texture2D(uBgTexture, distortedUv);
+        vec4 texActive = texture2D(uActiveTexture, distortedUv);
+
+        vec4 color = mix(texBg, texActive, uTransitionProgress);
+        if (color.a < 0.1) discard; 
+
+        float alpha = smoothstep(0.0, 1.0, uProgress);
+        gl_FragColor = vec4(color.rgb, alpha);
+    }
+    `
+);
+extend({ WaterRipplesBgMaterial });
+
+const WaterRipplesBg = memo(function WaterRipplesBg({ isInView = false, wasInView, entranceProgress }) {
+    const { highlightImage } = useStateContext();
+
+    const groupRef = useRef();
+    const bgentranceMaterialRef = useRef();
+    const bgMaterialRef = useRef();
+
+    const lastHighlightImageRef = useRef(null);
+    const lastActiveTextureRef = useRef(null);
+    const activeimageProgress = useRef(0);
+
+    const accumulator = useRef(0);
+
+    const { viewport, camera } = useThree();
+
+    const [
+        bgEntranceTexture,
+        bgTexture
+    ] = useTexture(
+        [canvas3bgentrance, canvas3bg]
+    );
+
+    const highlightTextures = useTexture(HIGHTLIGHT_PATHS);
+    useConfigureTextures(highlightTextures);
+
+    const activeTexture = useMemo(() => {
+        if (!highlightImage) return null;
+        return highlightTextures.find(texture => texture.image.src.endsWith(highlightImage.image)) || null;
+    }, [highlightImage, highlightTextures]);
+
+    if (activeTexture) {
+        lastActiveTextureRef.current = activeTexture;
+    }
+
+    SCRATCH_VECTOR.set(camera.position.x, camera.position.y, MESH_Z);
+    const { width, height } = viewport.getCurrentViewport(camera, SCRATCH_VECTOR);
+
+    useEffect(() => {
+        if (!isInView || !groupRef.current) return;
+
+        groupRef.current.position.x = camera.position.x;
+        groupRef.current.position.y = camera.position.y;
+        groupRef.current.position.z = MESH_Z;
+
+        const parallaxFactor = 0.5;
+        const finalWidth = THREE.MathUtils.lerp(width, width * 1.5, parallaxFactor * (10 - camera.position.z) / 8);
+        const finalHeight = THREE.MathUtils.lerp(height, height * 1.5, parallaxFactor * (10 - camera.position.z) / 8);
+
+        groupRef.current.scale.set(finalWidth, finalHeight, 1);
+
+    }, [isInView, camera, viewport]);
+
+    const { mousePosRef } = useAnimateContext();
+    const lastMouse = useRef({ x: 0, y: 0 });
+    const trailLifetime = useRef(0.0);
+
+    const [canvas, ctx, canvasTexture] = useMemo(() => {
+        const c = document.createElement('canvas');
+        c.width = c.height = CANVAS_SIZE;
+        const context = c.getContext('2d', { alpha: false });
+
+        context.fillStyle = 'black';
+        context.fillRect(0, 0, c.width, c.height);
+
+        const tex = new THREE.CanvasTexture(c);
+        tex.minFilter = THREE.LinearFilter;
+        tex.generateMipmaps = false;
+
+        return [c, context, tex];
+    }, []);
+
+    useFrame((state, delta) => {
+        if (!isInView) {
+            entranceProgress.current = 0;
+            wasInView.current = false;
+            return;
+        }
+        accumulator.current += delta;
+        if (accumulator.current < TARGET_FPS) return;
+        accumulator.current %= TARGET_FPS;
+
+        const time = state.clock.getElapsedTime();
+        const matRef = bgMaterialRef.current;
+
+        if (!wasInView.current && isInView) {
+            if (matRef) {
+                matRef.uStartTime = time;
+                matRef.uWaveFrequency = 40.0;
+                matRef.uWaveStrength = 0.09;
+                matRef.uRippleCenter.set(0.5, 0.5);
+                matRef.uRippleDir = 1.0;
+            }
+        }
+
+        if (matRef) {
+            matRef.uTime = time;
+
+            const elapsedTime = time - matRef.uStartTime;
+            const duration = matRef.uDuration || 6.0;
+
+            if (elapsedTime > duration) {
+                const mX = (mousePosRef.current.x + 1.0) * 0.5 * canvas.width;
+                const mY = (mousePosRef.current.y + 1.0) * 0.5 * canvas.height;
+
+                const hasMoved = mX !== lastMouse.current.x || mY !== lastMouse.current.y;
+
+                if (hasMoved) {
+                    trailLifetime.current = 1.0;
+
+                    ctx.save();
+                    ctx.globalCompositeOperation = 'screen';
+
+                    const gradient = ctx.createRadialGradient(mX, mY, 0, mX, mY, RIPPLE_SIZE);
+                    gradient.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+                    gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.4)');
+                    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(mX, mY, RIPPLE_SIZE, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+
+                    lastMouse.current = { x: mX, y: mY };
+                }
+
+                if (trailLifetime.current > 0.0) {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    canvasTexture.needsUpdate = true;
+
+                    if (!hasMoved) {
+                        trailLifetime.current -= 0.03;
+
+                        if (trailLifetime.current <= 0.0) {
+                            ctx.fillStyle = 'black';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            canvasTexture.needsUpdate = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        const p = entranceProgress.current;
+
+        if (bgentranceMaterialRef.current) {
+            bgentranceMaterialRef.current.uTime = time;
+            bgentranceMaterialRef.current.uProgress = p;
+        }
+        if (matRef) matRef.uProgress = p;
+
+        const activeimageTarget = activeTexture ? 1.0 : 0.0;
+        matRef.uTransitionProgress = THREE.MathUtils.lerp(
+            matRef.uTransitionProgress,
+            activeimageTarget,
+            0.1
+        );
+        if (!lastHighlightImageRef.current && highlightImage) {
+            if (matRef) {
+                matRef.uStartTime = time;
+                matRef.uWaveFrequency = 20.0;
+                matRef.uWaveStrength = 0.02;
+
+                const u = (mousePosRef.current.x + 1) / 2;
+                const v = (-mousePosRef.current.y + 1) / 2;
+                matRef.uRippleCenter.set(u, v);
+                matRef.uRippleDir = -1.0;
+            }
+        }
+        lastHighlightImageRef.current = highlightImage;
+    });
+
+    return (
+        <group ref={groupRef}>
+            <mesh>
+                <planeGeometry args={[1, 1]} />
+                <waterRipplesBgEntranceMaterial
+                    ref={bgentranceMaterialRef}
+                    uTexture={bgEntranceTexture}
+                    uScale={1.5}
+                    transparent
+                    depthWrite={false}
+                />
+            </mesh>
+            <mesh>
+                <planeGeometry args={[1, 1]} />
+                <waterRipplesBgMaterial
+                    ref={bgMaterialRef}
+                    uBgTexture={bgTexture}
+                    uActiveTexture={activeTexture || lastActiveTextureRef.current || bgTexture}
+                    uRipplesTexture={canvasTexture}
+                    uCanvasSize={CANVAS_SIZE}
+                    transparent
+                    depthWrite={false}
+                />
+            </mesh>
+        </group>
+    )
+});
+
+export default WaterRipples;

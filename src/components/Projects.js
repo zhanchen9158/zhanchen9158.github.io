@@ -1303,6 +1303,7 @@ const NavDotWrapper = styled(MotionBox)(({ theme }) => ({
 const NavDot = styled(MotionBox)(({ theme }) => ({
   width: '100%', height: '100%',
   borderRadius: 'inherit',
+  background: '#ffff',
   cursor: 'inherit',
 }));
 
@@ -1310,7 +1311,7 @@ const StartingDot = styled(MotionBox)(({ theme }) => ({
   position: 'absolute', left: 0,
   width: ActiveDotSize, height: ActiveDotSize,
   borderRadius: ActiveDotSize,
-  background: '#fff',
+  background: (theme.vars || theme).palette.primary.dark,
   boxShadow: '0 0 10px rgba(255, 255, 255, 0.4)',
   pointerEvents: 'none',
   zIndex: 1,
@@ -1320,7 +1321,9 @@ const ActiveDot = styled(MotionBox)(({ theme }) => ({
   position: 'absolute', left: 0,
   width: ActiveDotSize, height: ActiveDotSize,
   borderRadius: ActiveDotSize / 2,
-  background: 'linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.8) 100%)',
+  background: `linear-gradient(135deg, 
+    rgba(${(theme.vars || theme).palette.primary.darkChannel} / 1) 0%, 
+    rgba(${(theme.vars || theme).palette.primary.darkChannel} / 0.8) 100%)`,
   boxShadow: '0 0 15px rgba(255, 255, 255, 0.5)',
   zIndex: 2,
 }));

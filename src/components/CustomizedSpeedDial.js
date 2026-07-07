@@ -50,6 +50,7 @@ const SpeedDialContainer = styled(Box)(({ theme }) => ({
 
 const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
   position: 'absolute', inset: 0,
+  background: 'transparent',
   '& .MuiSpeedDial-fab': {
     width: '100%', height: '100%', minHeight: '100%',
     background: 'transparent',
@@ -168,7 +169,7 @@ const StyledCanvas = styled(Canvas)(({ theme }) => ({
   bottom: 0, left: 0,
   width: '100%', height: '500%', minHeight: '500%',
   transform: 'translateY(-80%)',
-  transformOrigin: 'bottom center', //background: 'red', opacity: 0.2,
+  transformOrigin: 'bottom center',
   contain: 'layout size',
   pointerEvents: 'none',
   backfaceVisibility: 'hidden',
@@ -261,8 +262,6 @@ const MarbleMaterial = shaderMaterial(
 
     vec4 color = texture2D(uTexture, distortedUv);
 
-    // 4. SOFT RIM GRADIENT (Fresnel Mask)
-    // Ensures the outer edge smoothly blends into the surrounding box space
     float rim = max(0.0, dot(vNormal, vec3(0.0, 0.0, 1.0)));
     float cloudGlow = smoothstep(0.0, 0.5, rim);
     color.a *= cloudGlow;
@@ -279,31 +278,6 @@ const MarbleMaterial = shaderMaterial(
 extend({ MarbleMaterial });
 
 const TARGET_FPS = 1 / 30;
-const outerSize = 1;
-const innerSize = 0.5;
-const connectorColor = [1.5, 4, 10];
-const cubeColors = {
-  outerEdge: [2, 10, 20], // Neon Blue
-  outerFace: "#0055ff",
-  innerEdge: [10, 2, 5],  // Neon Pink/Red
-  innerFace: "#ff0055",
-};
-
-const corners = [
-  [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],
-  [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1],
-];
-const connectorPositions = new Float32Array(corners.length * 6);
-for (let i = 0; i < corners.length; i++) {
-  const c = corners[i];
-  const i6 = i * 6;
-  connectorPositions[i6] = c[0] * (outerSize / 2);
-  connectorPositions[i6 + 1] = c[1] * (outerSize / 2);
-  connectorPositions[i6 + 2] = c[2] * (outerSize / 2);
-  connectorPositions[i6 + 3] = c[0] * (innerSize / 2);
-  connectorPositions[i6 + 4] = c[1] * (innerSize / 2);
-  connectorPositions[i6 + 5] = c[2] * (innerSize / 2);
-};
 
 const CanvasContent = memo(function CanvasContent({ isOpen }) {
   const groupRef = useRef();
@@ -315,7 +289,6 @@ const CanvasContent = memo(function CanvasContent({ isOpen }) {
   useEffect(() => {
     if (marbelTexture) {
       marbelTexture.anisotropy = 8;
-      marbelTexture.needsUpdate = true;
     }
   }, [marbelTexture]);
 
