@@ -229,7 +229,7 @@ const BokehParticles = memo(function BokehParticles({ isInView = false, entrance
                 materialRef.uHoveredTexture = null;
                 materialRef.blending = THREE.AdditiveBlending;
             }
-            else if (!lastHover && currentHover) {
+            else if (currentHover !== lastHover) {
                 const selectedIdx = Math.floor(Math.random() * BOKEH_COUNT);
                 materialRef.uSelectedIndex = selectedIdx;
 
