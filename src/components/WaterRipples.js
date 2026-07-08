@@ -77,7 +77,7 @@ const BokehDriftMaterial = shaderMaterial(
         uSelectedIndex: -1,
         uHoveredTexture: new THREE.Texture(),
         uHoverProgress: 0,
-        uColor: new THREE.Color("#ffffff"),
+        uColor: new THREE.Color("#ff0000"),
         uLifeDuration: BOKEH_DURATION,
         uLockedTime: 0,
         uLockedProgress: 0,
@@ -234,7 +234,7 @@ const BokehParticles = memo(function BokehParticles({ isInView = false, entrance
             }
             else if (currentHover !== lastHover) {
                 const selectedIdx = Math.floor(Math.random() * BOKEH_COUNT);
-                materialRef.uniforms.uSelectedIndex.value = selectedIdx;
+                materialRef.uSelectedIndex = selectedIdx;
 
                 const particleOffset = randomsArray[selectedIdx * 3 + 2];
                 const totalParticleTime = time + particleOffset * BOKEH_DURATION;
