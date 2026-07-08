@@ -1,5 +1,4 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect, memo } from 'react';
-import { useMotionValueEvent } from "framer-motion";
 import { useThree, useFrame, extend } from '@react-three/fiber';
 import { shaderMaterial, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
@@ -61,7 +60,6 @@ const WaterRipples = memo(function WaterRipples({ isInView = false }) {
 
 const HIGHTLIGHT_PATHS = Object.values(PROJECT_HIGHLIGHTS).flatMap(project => Object.values(project));
 const BOKEH_COUNT = HIGHTLIGHT_PATHS.length / 3;
-const BOKEH_DURATION = 24.0;
 
 const MESH_Z = -5;
 const CANVAS_SIZE = 256;
@@ -74,104 +72,87 @@ const BokehDriftMaterial = shaderMaterial(
         uTime: 0,
         uProgress: 0,
         uActiveImage: 0,
-        uSelectedIndex: -1,
-        uHoveredTexture: new THREE.Texture(),
-        uHoverProgress: 0,
         uColor: new THREE.Color("#ffffff"),
-        uLifeDuration: BOKEH_DURATION,
-        uLockedTime: 0,
-        uLockedProgress: 0,
     },
     // Vertex Shader
     `
     uniform float uTime;
-    uniform float uSelectedIndex;
-    uniform float uHoverProgress;
-    uniform float uLifeDuration;
-    uniform float uLockedTime;
-    uniform float uLockedProgress;
     
     attribute vec3 aRandoms; // x: angle, y: speed, z: startTime/offset
-    attribute float aIndex;
     
     varying float vAlpha;
     varying vec2 vUv;
-    varying float vIsSelected;
+    varying vec3 vDriftDir;
 
-    const float TWO_PI = 6.28318530718;
-
-    // High-precision pseudo-random generator
+    // A classic high-precision pseudo-random generator for GLSL
     float rand(vec2 co) {
         return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
     }
 
     void main() {
         vUv = uv;
-
-        vIsSelected = 1.0 - step(0.1, abs(aIndex - uSelectedIndex));
-
-        float normalTotalTime = uTime + aRandoms.z * uLifeDuration;
-        float normalProgress = mod(normalTotalTime, uLifeDuration) / uLifeDuration;
-
-        float evalTime = mix(uTime, uLockedTime, vIsSelected);
-        float evalProgress = mix(normalProgress, uLockedProgress, vIsSelected);
-
-
-        float totalTime = evalTime + aRandoms.z * uLifeDuration;
-        float loopCycle = floor(totalTime / uLifeDuration);
+        float lifeDuration = 24.0;
+        
+        float totalTime = uTime + aRandoms.z * lifeDuration;
+        float loopCycle = floor(totalTime / lifeDuration);
+        float progress = mod(totalTime, lifeDuration) / lifeDuration;
         
         float seedX = rand(vec2(aRandoms.x, loopCycle));
         float seedY = rand(vec2(loopCycle, aRandoms.y));
-        float seedScale = rand(vec2(seedX, seedY));
 
-        float baseScale = 0.1 + seedScale * 0.2;
-        float targetScaleMultiplier = mix(1.0, 10.5, uHoverProgress);
-        float dynamicScale = baseScale * mix(1.0, targetScaleMultiplier, vIsSelected);
+        float seedScale = rand(vec2(seedX, seedY));
+        float dynamicScale = 0.1 + seedScale * 0.2;
         
-        float spawnAngle = seedX * TWO_PI; 
-        float spawnRadius = 1.5 + seedY * 1.5; 
+        float innerRadius = 1.5;
+        float outerRadius = 3.0;
         
-        vec3 dynamicStartPos = vec3(cos(spawnAngle), sin(spawnAngle), 0.0) * spawnRadius;
+        float spawnAngle = seedX * 6.28318530718; 
+        float spawnRadius = innerRadius + seedY * (outerRadius - innerRadius);
+        
+        vec3 dynamicStartPos = vec3(cos(spawnAngle) * spawnRadius, sin(spawnAngle) * spawnRadius, 0.0);
+        
         vec3 driftDir = normalize(dynamicStartPos);
+        vDriftDir = driftDir;
+        
         float speed = aRandoms.y * 0.6;
         
-        vec3 driftOffset = dynamicStartPos + (driftDir * speed * evalProgress);
-        vec3 finalLocalPosition = (position * dynamicScale) + driftOffset;
+        vec3 driftOffset = dynamicStartPos + (driftDir * speed * progress);
+        vec3 scaledPosition = position * dynamicScale;
+        vec3 finalLocalPosition = scaledPosition + driftOffset;
         
-        vAlpha = smoothstep(0.0, 0.2, evalProgress) * smoothstep(1.0, 0.7, evalProgress);
+        vec4 mvPosition = modelViewMatrix * vec4(finalLocalPosition, 1.0);
         
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(finalLocalPosition, 1.0);
+        vAlpha = smoothstep(0.0, 0.2, progress) * smoothstep(1.0, 0.7, progress);
+        gl_Position = projectionMatrix * mvPosition;
     }
     `,
     // Fragment Shader
     `
     varying float vAlpha;
     varying vec2 vUv;
-    varying float vIsSelected;
+    varying vec3 vDriftDir;
 
     uniform float uProgress;
     uniform float uActiveImage;
-    uniform float uHoverProgress;
-    
-    uniform sampler2D uHoveredTexture;
     uniform vec3 uColor;
 
     void main() {
-        float dist = length(vUv - vec2(0.5));
+        vec2 aberrationOffset = normalize(vDriftDir.xy) * 0.10; 
+
+        float distR = length((vUv - aberrationOffset) - vec2(0.5));
+        float distG = length(vUv - vec2(0.5));
+        float distB = length((vUv + aberrationOffset) - vec2(0.5));
+
+        float circleR = smoothstep(0.5, 0.3, distR);
+        float circleG = smoothstep(0.5, 0.3, distG);
+        float circleB = smoothstep(0.5, 0.3, distB);
+
+        vec3 finalColor = uColor * vec3(circleR, circleG, circleB);
+
         float progressAlpha = smoothstep(0.0, 1.0, uProgress);
-        float globalFade = smoothstep(0.5, 0.3, dist) * progressAlpha * (1.0 - uActiveImage) * vAlpha;
-
-        vec4 textureColor = texture2D(uHoveredTexture, vUv);
-        vec3 bokehColor = mix(uColor, textureColor.rgb, vIsSelected);
-
-        float selectedAlpha = mix(0.2, 1.0, uHoverProgress);
-        float unselectedAlpha = 0.2;
+        float masterCircle = max(circleR, max(circleG, circleB));
         
-        float targetAlpha = mix(unselectedAlpha, selectedAlpha, vIsSelected);
-        float finalAlpha = targetAlpha * globalFade;
-
-        float glowIntensity = mix(5.5, 1.0, vIsSelected);
-        vec3 finalColor = bokehColor * glowIntensity;
+        float finalAlpha = masterCircle * vAlpha * 0.2 * progressAlpha * (1.0 - uActiveImage);
         
         gl_FragColor = vec4(finalColor, finalAlpha);
     }
@@ -180,18 +161,10 @@ const BokehDriftMaterial = shaderMaterial(
 extend({ BokehDriftMaterial });
 
 const BokehParticles = memo(function BokehParticles({ isInView = false, entranceProgress }) {
-    const { highlightImage, highlightHovered } = useStateContext();
+    const { highlightImage } = useStateContext();
 
     const meshRef = useRef();
-    const lastHoveredRef = useRef(null);
-    const hoverProgress = useRef(0);
     const accumulator = useRef(0);
-
-    const indicesArray = useMemo(() => {
-        const arr = new Float32Array(BOKEH_COUNT);
-        for (let i = 0; i < BOKEH_COUNT; i++) arr[i] = i;
-        return arr;
-    }, []);
 
     const randomsArray = useMemo(() => {
         const randoms = new Float32Array(BOKEH_COUNT * 3);
@@ -207,69 +180,20 @@ const BokehParticles = memo(function BokehParticles({ isInView = false, entrance
         return highlightImage ? 1.0 : 0.0;
     }, [highlightImage]);
 
-    const highlightTextures = useTexture(HIGHTLIGHT_PATHS);
-    useConfigureTextures(highlightTextures);
-
     useFrame((state, delta) => {
-    if (!isInView) return;
-    
-    accumulator.current += delta;
-    if (accumulator.current < TARGET_FPS) return;
-    accumulator.current %= TARGET_FPS;
+        if (!isInView) return;
+        accumulator.current += delta;
+        if (accumulator.current < TARGET_FPS) return;
+        accumulator.current %= TARGET_FPS;
 
-    const time = state.clock.getElapsedTime();
+        const time = state.clock.getElapsedTime();
 
-    if (meshRef.current && meshRef.current.material) {
-        const materialRef = meshRef.current.material;
-        
-        // Use standard Three.js uniforms object, but with safe string keys
-        // This is 100% minifier-proof on GitHub Pages
-        const uni = materialRef.uniforms;
-        if (!uni) return; 
-
-        uni['uTime'].value = time;
-        uni['uProgress'].value = entranceProgress.current;
-        uni['uActiveImage'].value = activeImage;
-
-        const currentHover = highlightHovered.current;
-        const lastHover = lastHoveredRef.current;
-
-        if (!currentHover) {
-            uni['uSelectedIndex'].value = -1;
-            uni['uHoveredTexture'].value = null;
+        if (meshRef.current && meshRef.current.material) {
+            meshRef.current.material.uTime = time;
+            meshRef.current.material.uProgress = entranceProgress.current;
+            meshRef.current.material.uActiveImage = activeImage;
         }
-        else if (currentHover !== lastHover) {
-            const selectedIdx = Math.floor(Math.random() * BOKEH_COUNT);
-            uni['uSelectedIndex'].value = selectedIdx;
-
-            const particleOffset = randomsArray[selectedIdx * 3 + 2];
-            const totalParticleTime = time + particleOffset * BOKEH_DURATION;
-            const currentProgress = (totalParticleTime % BOKEH_DURATION) / BOKEH_DURATION;
-
-            uni['uLockedTime'].value = time;
-            uni['uLockedProgress'].value = currentProgress;
-
-            const matchedTexture = highlightTextures.find(texture => {
-                const imgElement = texture.source?.data;
-                if (!imgElement || !imgElement.src) return false;
-
-                const cleanSrc = imgElement.src.toLowerCase();
-                return cleanSrc.includes(currentHover.toLowerCase());
-            });
-
-            if (matchedTexture) {
-                uni['uHoveredTexture'].value = matchedTexture;
-            }
-        }
-        lastHoveredRef.current = currentHover;
-
-        const target = currentHover ? 1.0 : 0.0;
-        const p = hoverProgress.current;
-        hoverProgress.current += (target - p) * 0.009;
-        
-        uni['uHoverProgress'].value = hoverProgress.current;
-    }
-});
+    });
 
     return (
         <instancedMesh
@@ -277,10 +201,6 @@ const BokehParticles = memo(function BokehParticles({ isInView = false, entrance
             args={[null, null, BOKEH_COUNT]}
         >
             <planeGeometry args={[1, 1]}>
-                <instancedBufferAttribute
-                    attach="attributes-aIndex"
-                    args={[indicesArray, 1]}
-                />
                 <instancedBufferAttribute
                     attach="attributes-aRandoms"
                     args={[randomsArray, 3]}
@@ -290,6 +210,7 @@ const BokehParticles = memo(function BokehParticles({ isInView = false, entrance
                 attach="material"
                 transparent
                 depthWrite={false}
+                blending={THREE.AdditiveBlending}
             />
         </instancedMesh>
     );
