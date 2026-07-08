@@ -234,7 +234,7 @@ const BokehParticles = memo(function BokehParticles({ isInView = false, entrance
             }
             else if (currentHover !== lastHover) {
                 const selectedIdx = Math.floor(Math.random() * BOKEH_COUNT);
-                materialRef.uSelectedIndex = selectedIdx;
+                materialRef.uniforms.uSelectedIndex.value = selectedIdx;
 
                 const particleOffset = randomsArray[selectedIdx * 3 + 2];
                 const totalParticleTime = time + particleOffset * BOKEH_DURATION;
