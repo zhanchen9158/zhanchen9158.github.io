@@ -158,18 +158,22 @@ const BokehDriftMaterial = shaderMaterial(
 
     void main() {
         float dist = length(vUv - vec2(0.5));
-        float circle = smoothstep(0.5, 0.3, dist);
+        float progressAlpha = smoothstep(0.0, 1.0, uProgress);
+        float globalFade = smoothstep(0.5, 0.3, dist) * progressAlpha * (1.0 - uActiveImage) * vAlpha;
 
         vec4 textureColor = texture2D(uHoveredTexture, vUv);
         vec3 bokehColor = mix(uColor, textureColor.rgb, vIsSelected);
 
-        float selectedAlpha = smoothstep(0.2, 1.0, uHoverProgress);
-        float baseAlpha = mix(0.2, selectedAlpha, vIsSelected);
-
-        float progressAlpha = smoothstep(0.0, 1.0, uProgress);
-        float finalAlpha = circle * vAlpha * baseAlpha * progressAlpha * (1.0 - uActiveImage);
+        float selectedAlpha = mix(0.2, 1.0, uHoverProgress);
+        float unselectedAlpha = 0.2;
         
-        gl_FragColor = vec4(bokehColor, finalAlpha);
+        float targetAlpha = mix(unselectedAlpha, selectedAlpha, vIsSelected);
+        float finalAlpha = targetAlpha * globalFade;
+
+        float glowIntensity = mix(5.5, 1.0, vIsSelected);
+        vec3 finalColor = bokehColor * glowIntensity;
+        
+        gl_FragColor = vec4(finalColor, finalAlpha);
     }
     `
 );
@@ -227,7 +231,6 @@ const BokehParticles = memo(function BokehParticles({ isInView = false, entrance
             if (!currentHover) {
                 materialRef.uSelectedIndex = -1;
                 materialRef.uHoveredTexture = null;
-                materialRef.blending = THREE.AdditiveBlending;
             }
             else if (currentHover !== lastHover) {
                 const selectedIdx = Math.floor(Math.random() * BOKEH_COUNT);
@@ -240,13 +243,18 @@ const BokehParticles = memo(function BokehParticles({ isInView = false, entrance
                 materialRef.uLockedTime = time;
                 materialRef.uLockedProgress = currentProgress;
 
-                const matchedTexture = highlightTextures.find(texture =>
-                    texture.image.src.endsWith(currentHover)
-                );
+                const matchedTexture = highlightTextures.find(texture => {
+                    const imgElement = texture.source?.data;
+                    if (!imgElement || !imgElement.src) return null;
+
+                    const cleanSrc = imgElement.src.toLowerCase();
+                    return cleanSrc.includes(currentHover.toLowerCase());
+                });
                 if (matchedTexture) {
                     materialRef.uHoveredTexture = matchedTexture;
+                    //console.log('hightlightHovered:', highlightHovered);
+                    //console.log('Matched texture for hovered image:', matchedTexture.source.data);
                 }
-                materialRef.blending = THREE.NormalBlending;
             }
             lastHoveredRef.current = currentHover;
 
