@@ -77,7 +77,7 @@ const BokehDriftMaterial = shaderMaterial(
         uSelectedIndex: -1,
         uHoveredTexture: new THREE.Texture(),
         uHoverProgress: 0,
-        uColor: new THREE.Color("#ff0000"),
+        uColor: new THREE.Color("#ffffff"),
         uLifeDuration: BOKEH_DURATION,
         uLockedTime: 0,
         uLockedProgress: 0,
@@ -211,60 +211,65 @@ const BokehParticles = memo(function BokehParticles({ isInView = false, entrance
     useConfigureTextures(highlightTextures);
 
     useFrame((state, delta) => {
-        if (!isInView) return;
-        accumulator.current += delta;
-        if (accumulator.current < TARGET_FPS) return;
-        accumulator.current %= TARGET_FPS;
+    if (!isInView) return;
+    
+    accumulator.current += delta;
+    if (accumulator.current < TARGET_FPS) return;
+    accumulator.current %= TARGET_FPS;
 
-        const time = state.clock.getElapsedTime();
+    const time = state.clock.getElapsedTime();
 
-        if (meshRef.current && meshRef.current.material) {
-            const materialRef = meshRef.current.material;
+    if (meshRef.current && meshRef.current.material) {
+        const materialRef = meshRef.current.material;
+        
+        // Use standard Three.js uniforms object, but with safe string keys
+        // This is 100% minifier-proof on GitHub Pages
+        const uni = materialRef.uniforms;
+        if (!uni) return; 
 
-            materialRef.uTime = time;
-            materialRef.uProgress = entranceProgress.current;
-            materialRef.uActiveImage = activeImage;
+        uni['uTime'].value = time;
+        uni['uProgress'].value = entranceProgress.current;
+        uni['uActiveImage'].value = activeImage;
 
-            const currentHover = highlightHovered.current;
-            const lastHover = lastHoveredRef.current;
+        const currentHover = highlightHovered.current;
+        const lastHover = lastHoveredRef.current;
 
-            if (!currentHover) {
-                materialRef.uSelectedIndex = -1;
-                materialRef.uHoveredTexture = null;
-            }
-            else if (currentHover !== lastHover) {
-                const selectedIdx = Math.floor(Math.random() * BOKEH_COUNT);
-                materialRef.uSelectedIndex = selectedIdx;
-
-                const particleOffset = randomsArray[selectedIdx * 3 + 2];
-                const totalParticleTime = time + particleOffset * BOKEH_DURATION;
-                const currentProgress = (totalParticleTime % BOKEH_DURATION) / BOKEH_DURATION;
-
-                materialRef.uLockedTime = time;
-                materialRef.uLockedProgress = currentProgress;
-
-                const matchedTexture = highlightTextures.find(texture => {
-                    const imgElement = texture.source?.data;
-                    if (!imgElement || !imgElement.src) return null;
-
-                    const cleanSrc = imgElement.src.toLowerCase();
-                    return cleanSrc.includes(currentHover.toLowerCase());
-                });
-                if (matchedTexture) {
-                    materialRef.uHoveredTexture = matchedTexture;
-                    //console.log('hightlightHovered:', highlightHovered);
-                    //console.log('Matched texture for hovered image:', matchedTexture.source.data);
-                }
-            }
-            lastHoveredRef.current = currentHover;
-
-            const target = currentHover ? 1.0 : 0.0;
-            const p = hoverProgress.current;
-            hoverProgress.current += (target - p) * 0.009;
-            const isAnimating = Math.abs(target - p) > 0.001;
-            materialRef.uHoverProgress = p;
+        if (!currentHover) {
+            uni['uSelectedIndex'].value = -1;
+            uni['uHoveredTexture'].value = null;
         }
-    });
+        else if (currentHover !== lastHover) {
+            const selectedIdx = Math.floor(Math.random() * BOKEH_COUNT);
+            uni['uSelectedIndex'].value = selectedIdx;
+
+            const particleOffset = randomsArray[selectedIdx * 3 + 2];
+            const totalParticleTime = time + particleOffset * BOKEH_DURATION;
+            const currentProgress = (totalParticleTime % BOKEH_DURATION) / BOKEH_DURATION;
+
+            uni['uLockedTime'].value = time;
+            uni['uLockedProgress'].value = currentProgress;
+
+            const matchedTexture = highlightTextures.find(texture => {
+                const imgElement = texture.source?.data;
+                if (!imgElement || !imgElement.src) return false;
+
+                const cleanSrc = imgElement.src.toLowerCase();
+                return cleanSrc.includes(currentHover.toLowerCase());
+            });
+
+            if (matchedTexture) {
+                uni['uHoveredTexture'].value = matchedTexture;
+            }
+        }
+        lastHoveredRef.current = currentHover;
+
+        const target = currentHover ? 1.0 : 0.0;
+        const p = hoverProgress.current;
+        hoverProgress.current += (target - p) * 0.009;
+        
+        uni['uHoverProgress'].value = hoverProgress.current;
+    }
+});
 
     return (
         <instancedMesh
