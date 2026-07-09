@@ -58,6 +58,10 @@ const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
     '&:hover': {
       background: 'transparent',
     },
+    '&:active': {
+      background: 'transparent',
+      boxShadow: 'none',
+    },
   },
 }));
 
@@ -266,9 +270,7 @@ const MarbleMaterial = shaderMaterial(
     float cloudGlow = smoothstep(0.0, 0.5, rim);
     color.a *= cloudGlow;
 
-    if (color.a < 0.01) discard;
-
-    float brightness = 2.0; 
+    float brightness = 1.0; 
     color.rgb *= brightness;
 
     gl_FragColor = color;

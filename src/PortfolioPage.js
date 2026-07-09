@@ -201,7 +201,7 @@ const Subheader = styled(MotionBox)(({ theme }) => ({
   opacity: 0.7,
 }));
 
-const initDuration = 3;
+const initDuration = 4;
 
 const HeroEntrance = memo(function HeroEntrance({ }) {
   const [isMounted, setIsMounted] = useState(true);
