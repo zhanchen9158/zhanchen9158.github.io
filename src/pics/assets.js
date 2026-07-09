@@ -1,15 +1,15 @@
-import marketintelligence from './marketintelligence.webp';
-import marketintelligence1 from './marketintelligence1.webp';
-import marketintelligence2 from './marketintelligence2.webp';
-import marketintelligence3 from './marketintelligence3.webp';
-import mealplanner from './mealplanner.webp';
-import mealplanner1 from './mealplanner1.webp';
-import mealplanner2 from './mealplanner2.webp';
-import mealplanner3 from './mealplanner3.webp';
-import researchdigest from './researchdigest.webp';
-import researchdigest1 from './researchdigest1.webp';
-import researchdigest2 from './researchdigest2.webp';
-import researchdigest3 from './researchdigest3.webp';
+import marketintelligence from './marketintelligence.ktx2';
+import marketintelligence1 from './marketintelligence1.ktx2';
+import marketintelligence2 from './marketintelligence2.ktx2';
+import marketintelligence3 from './marketintelligence3.ktx2';
+import mealplanner from './mealplanner.ktx2';
+import mealplanner1 from './mealplanner1.ktx2';
+import mealplanner2 from './mealplanner2.ktx2';
+import mealplanner3 from './mealplanner3.ktx2';
+import researchdigest from './researchdigest.ktx2';
+import researchdigest1 from './researchdigest1.ktx2';
+import researchdigest2 from './researchdigest2.ktx2';
+import researchdigest3 from './researchdigest3.ktx2';
 
 
 export const PROJECT_HIGHLIGHTS = {

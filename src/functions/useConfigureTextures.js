@@ -5,6 +5,7 @@ function useConfigureTextures(textureMap, options = {}, format = 'ktx2') {
 
   const {
     anisotropy = 8,
+    colorSpace = THREE.SRGBColorSpace,
     minFilter = THREE.LinearMipmapLinearFilter,
     magFilter = THREE.LinearFilter,
     wrapS = THREE.RepeatWrapping,
@@ -29,13 +30,14 @@ function useConfigureTextures(textureMap, options = {}, format = 'ktx2') {
       if (!texture || !texture.isTexture) return;
 
       texture.anisotropy = anisotropy;
+      texture.colorSpace = colorSpace;
       texture.minFilter = minFilter;
       texture.magFilter = magFilter;
       texture.wrapS = wrapS;
       texture.wrapT = wrapT;
       texture.needsUpdate = true;
     });
-  }, [textureMap, anisotropy, minFilter, magFilter, wrapS, wrapT, isKTX2]);
+  }, [textureMap, anisotropy, colorSpace, minFilter, magFilter, wrapS, wrapT, isKTX2]);
 }
 
 export default useConfigureTextures;

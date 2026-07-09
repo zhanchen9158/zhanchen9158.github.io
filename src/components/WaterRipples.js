@@ -1,11 +1,11 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect, memo } from 'react';
 import { useThree, useFrame, extend } from '@react-three/fiber';
-import { shaderMaterial, useTexture } from '@react-three/drei';
+import { shaderMaterial, useTexture, useKTX2 } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAnimateContext } from './AnimateContext';
 import { useStateContext } from './StateContext';
-import canvas3bg from '../pics/bg2.webp';
-import canvas3bgentrance from '../pics/entrancebg2.webp';
+import canvas3bg from '../pics/bg2.ktx2';
+import canvas3bgentrance from '../pics/entrancebg2.ktx2';
 import useConfigureTextures from '../functions/useConfigureTextures';
 import { PROJECT_HIGHLIGHTS } from "../pics/assets";
 
@@ -251,9 +251,14 @@ const WaterRipplesBgEntranceMaterial = shaderMaterial(
         if (color.a < 0.1) discard;
 
         float invertedProgress = 1.0 - uProgress;
+
+        vec3 finalColor = color.rgb;
+
+        finalColor = pow(finalColor, vec3(1.0 / 2.2));
+
         float alpha = smoothstep(0.0, 1.0, invertedProgress);
 
-        gl_FragColor = vec4(color.rgb, alpha);
+        gl_FragColor = vec4(finalColor, alpha);
     }
     `
 );
@@ -354,8 +359,12 @@ const WaterRipplesBgMaterial = shaderMaterial(
         vec4 color = mix(texBg, texActive, uTransitionProgress);
         if (color.a < 0.1) discard; 
 
+        vec3 finalColor = color.rgb;
+
+        finalColor = pow(finalColor, vec3(1.0 / 2.2));
+
         float alpha = smoothstep(0.0, 1.0, uProgress);
-        gl_FragColor = vec4(color.rgb, alpha);
+        gl_FragColor = vec4(finalColor, alpha);
     }
     `
 );
@@ -379,17 +388,26 @@ const WaterRipplesBg = memo(function WaterRipplesBg({ isInView = false, wasInVie
     const [
         bgEntranceTexture,
         bgTexture
-    ] = useTexture(
+    ] = useKTX2(
         [canvas3bgentrance, canvas3bg]
     );
 
-    const highlightTextures = useTexture(HIGHTLIGHT_PATHS);
+    const highlightTextures = useKTX2(HIGHTLIGHT_PATHS);
     useConfigureTextures(highlightTextures);
 
     const activeTexture = useMemo(() => {
-        if (!highlightImage) return null;
-        return highlightTextures.find(texture => texture.image.src.endsWith(highlightImage.image)) || null;
-    }, [highlightImage, highlightTextures]);
+    if (!highlightImage) return null;
+
+    const imageIndex = HIGHTLIGHT_PATHS.findIndex(path => 
+        path.endsWith(highlightImage.image)
+    );
+
+    if (imageIndex !== -1 && highlightTextures[imageIndex]) {
+        return highlightTextures[imageIndex];
+    }
+
+    return null;
+}, [highlightImage, highlightTextures]);
 
     if (activeTexture) {
         lastActiveTextureRef.current = activeTexture;

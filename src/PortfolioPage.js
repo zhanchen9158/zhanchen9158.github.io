@@ -21,9 +21,7 @@ import entrancehero from './pics/entrancehero1.webp';
 import entrancehero2 from './pics/entrancehero2.webp';
 import entrancehero3 from './pics/entrancehero3.webp';
 import entrancebg1 from './pics/entrancebg1.webp';
-import entrancebg2 from './pics/entrancebg2.webp';
 import bg1 from './pics/bg1.webp';
-import bg2 from './pics/bg2.webp';
 import ionizationmask from './pics/ionizationmask.webp';
 import hyperstream from './pics/hyperstream.webp';
 import Preloader from './components/Preloader';
@@ -160,7 +158,6 @@ const IonizationLayer = styled(MotionBox)({
   backfaceVisibility: 'hidden',
   willChange: 'transform, opacity, mask-size',
   transform: 'translateZ(0)',
-
   maskImage: `url(${ionizationmask})`,
   maskRepeat: 'repeat',
   maskPosition: 'center',
@@ -204,7 +201,7 @@ const Subheader = styled(MotionBox)(({ theme }) => ({
   opacity: 0.7,
 }));
 
-const initDuration = 4;
+const initDuration = 3;
 
 const HeroEntrance = memo(function HeroEntrance({ }) {
   const [isMounted, setIsMounted] = useState(true);
