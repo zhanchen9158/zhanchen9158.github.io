@@ -38,10 +38,10 @@ const BgEntranceMaterial = shaderMaterial(
 
     void main() {
         vec4 color = texture2D(uTexture, vUv);
-        if (color.a < 0.1) discard;
 
-        float invertedProgress = 1.0 - uProgress;
-        float alpha = smoothstep(0.0, 1.0, invertedProgress);
+        float fadeIn = smoothstep(0.0, 0.25, uProgress);
+        float fadeOut = smoothstep(1.0, 0.25, uProgress);
+        float alpha = min(fadeIn, fadeOut);
 
         gl_FragColor = vec4(color.rgb, alpha);
     }
@@ -162,8 +162,10 @@ const BgOverlayMaterial = shaderMaterial(
     }
   `
 );
-
 extend({ BgOverlayMaterial });
+
+const MESH_Z = -5;
+const SCRATCH_VECTOR = new THREE.Vector3();
 
 const FloatingBg = memo(function FloatingBg({ isInView = false }) {
 
@@ -174,13 +176,7 @@ const FloatingBg = memo(function FloatingBg({ isInView = false }) {
 
     const entranceProgress = useRef(0);
 
-    const prevInViewRef = useRef(isInView);
-    const delayStartTimeRef = useRef(0);
-    const DELAY_MS = 2800;
-
     const { viewport, camera } = useThree();
-    const MESH_Z = -5;
-    const meshTargetPos = new THREE.Vector3();
 
     const [
         bgEntranceTexture,
@@ -189,38 +185,40 @@ const FloatingBg = memo(function FloatingBg({ isInView = false }) {
         [canvas3bgentrance, canvas3bg]
     );
 
+    SCRATCH_VECTOR.set(camera.position.x, camera.position.y, MESH_Z);
+    const { width, height } = viewport.getCurrentViewport(camera, SCRATCH_VECTOR);
+
+    useEffect(() => {
+        if (!isInView || !groupRef.current) return;
+
+        groupRef.current.position.x = camera.position.x;
+        groupRef.current.position.y = camera.position.y;
+        groupRef.current.position.z = MESH_Z;
+
+        const parallaxFactor = 0.5;
+        const finalWidth = THREE.MathUtils.lerp(width, width * 1.5, parallaxFactor * (10 - camera.position.z) / 8);
+        const finalHeight = THREE.MathUtils.lerp(height, height * 1.5, parallaxFactor * (10 - camera.position.z) / 8);
+
+        groupRef.current.scale.set(finalWidth, finalHeight, 1);
+
+    }, [isInView, camera, viewport]);
+
     useFrame((state, delta) => {
         if (!isInView) {
             entranceProgress.current = 0;
-            delayStartTimeRef.current = 0;
             return;
-        }
-
-        const turnedInView = isInView && !prevInViewRef.current;
-
-        if (turnedInView && groupRef.current) {
-            groupRef.current.position.x = state.camera.position.x;
-            groupRef.current.position.y = state.camera.position.y;
-            groupRef.current.position.z = MESH_Z;
-
-            meshTargetPos.set(state.camera.position.x, state.camera.position.y, MESH_Z);
-            const { width, height } = viewport.getCurrentViewport(state.camera, meshTargetPos);
-
-            const parallaxFactor = 0.5;
-            const finalWidth = THREE.MathUtils.lerp(width, width * 1.5, parallaxFactor * (10 - state.camera.position.z) / 8);
-            const finalHeight = THREE.MathUtils.lerp(height, height * 1.5, parallaxFactor * (10 - state.camera.position.z) / 8);
-
-            groupRef.current.scale.set(finalWidth, finalHeight, 1);
         }
 
         const time = state.clock.getElapsedTime();
 
-        const hasDelayPassed = (time - delayStartTimeRef.current) >= (DELAY_MS / 1000);
-        const target = (isInView) ? 1 : 0;
-        entranceProgress.current += (target - entranceProgress.current) * 0.009;
-
+        const target = isInView ? 1.0 : 0.0;
         const p = entranceProgress.current;
+        entranceProgress.current += (target - p) * 0.005;
         const isAnimating = Math.abs(target - p) > 0.001;
+
+        if (!isAnimating && entranceProgress.current !== target) {
+            entranceProgress.current = target;
+        }
 
         if (bgentranceMaterialRef.current && isAnimating) {
             bgentranceMaterialRef.current.uTime = time;

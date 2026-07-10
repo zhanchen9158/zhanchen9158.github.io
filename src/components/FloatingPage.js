@@ -106,7 +106,6 @@ const PageMaterial = shaderMaterial(
       vUv = uv;
       vec3 newPos = position;
 
-      // Adding (newPos.y * 0.5) inside the first sin makes the wave move diagonally
       float wave = sin(newPos.x * uFrequency + (newPos.y * 0.5) + uTime) * uAmplitude;
       wave += sin(newPos.y * (uFrequency * 2.0) + uTime * 1.5) * (uAmplitude * 0.4);
       
@@ -124,7 +123,6 @@ const PageMaterial = shaderMaterial(
 
     void main() {
       vec4 color = texture2D(uTexture, vUv);
-      if (color.a < 0.1) discard; // Optimization: don't render transparent pixels
       
       float noise = sin(vUv.x * 10.0 + uTime) * cos(vUv.y * 10.0 + uTime) * 0.02;
       float thickness = 0.04 + noise; 
@@ -141,8 +139,6 @@ const PageMaterial = shaderMaterial(
       vec3 finalRGB = mix(color.rgb, borderColor + (pulse * 0.2), borderMask * uHover);
 
       gl_FragColor = vec4(finalRGB, color.a);
-
-      //gl_FragColor = color;
     }
   `
 );

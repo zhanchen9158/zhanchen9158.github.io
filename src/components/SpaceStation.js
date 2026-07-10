@@ -268,7 +268,6 @@ const StrutMaterial = shaderMaterial(
         vec4 sideColor = texture2D(uSideTexture, repeatedUv);
         vec4 baseColor = mix(sideColor, hullColor, isHullFace);
 
-        if (baseColor.a < 0.01) discard;
 
         float emissiveMask = texture2D(uEmissiveMap, repeatedUv).r;
         float windowsMask = texture2D(uWindowsMap, repeatedUv).r;
@@ -373,7 +372,6 @@ const ExoSpireMaterial = shaderMaterial(
         float seamBlendFactor = smoothstep(0.45, 0.50, distFromCenter);
         vec4 baseColor = mix(colorA, colorB, seamBlendFactor * 0.5);
         
-        if (baseColor.a < 0.01) discard;
 
         float emissiveMask = texture2D(uEmissiveMap, repeatedUv).r;
         float windowsMask = texture2D(uWindowsMap, repeatedUv).r;
@@ -461,7 +459,6 @@ const ExoSpireCapMaterial = shaderMaterial(
 
     void main() {
         vec4 baseColor = texture2D(uTexture, vUv);
-        if (baseColor.a < 0.01) discard;
 
         vec2 center = vec2(0.5, 0.5);
         float dist = distance(vUv, center);
@@ -537,7 +534,6 @@ const ExoWallMaterial = shaderMaterial(
         float seamBlendFactor = smoothstep(0.45, 0.50, distFromCenter);
         vec4 baseColor = mix(colorA, colorB, seamBlendFactor * 0.5);
         
-        if (baseColor.a < 0.01) discard;
 
         float emissiveMask = texture2D(uEmissiveMap, repeatedUv).r;
         float windowsMask = texture2D(uWindowsMap, repeatedUv).r;
@@ -614,7 +610,6 @@ const ExoCapMaterial = shaderMaterial(
 
     void main() {         
         vec4 baseColor = texture2D(uTexture, vUv);
-        if (baseColor.a < 0.01) discard;
 
         float emissiveMask = texture2D(uEmissiveMap, vUv).r;
         float lightsMask = texture2D(uLightsMap, vUv).r;
@@ -1132,7 +1127,6 @@ const InnerRingOuterWallMaterial = shaderMaterial(
         float seamBlendFactor = smoothstep(0.45, 0.50, distFromCenterX);
         vec4 baseColor = mix(colorA, colorB, seamBlendFactor * 0.5);
         
-        if (baseColor.a < 0.01) discard;
 
         float randomValue = seededTileHash(tileId, uSeed);
         float layerIndex = clamp(floor(randomValue * uTextureCount), 0.0, uTextureCount - 1.0);
@@ -1213,7 +1207,6 @@ const InnerRingInnerWallMaterial = shaderMaterial(
         float seamBlendFactor = smoothstep(0.45, 0.50, distFromCenter);
         vec4 baseColor = mix(colorA, colorB, seamBlendFactor * 0.5);
         
-        if (baseColor.a < 0.01) discard;
 
         float emissiveMask = texture2D(uEmissiveMap, repeatedUv).r;
 
@@ -1279,7 +1272,6 @@ const InnerRingFaceMaterial = shaderMaterial(
 
     void main() {
         vec4 baseColor = texture2D(uTexture, vUv);
-        if (baseColor.a < 0.01) discard;
 
         float emissiveMask = texture2D(uEmissiveMap, vUv).r;
         float windowsMask = texture2D(uWindowsMap, vUv).r;
@@ -1527,7 +1519,6 @@ const OuterRingOuterWallMaterial = shaderMaterial(
         float seamBlendFactor = smoothstep(0.45, 0.50, distFromCenter);
         vec4 baseColor = mix(colorA, colorB, seamBlendFactor * 0.5);
         
-        if (baseColor.a < 0.01) discard;
 
         vec2 gridCoords = floor(repeatedUv * uGridSize);
         float sectorRandom = hash(gridCoords);
@@ -1623,7 +1614,6 @@ const OuterRingInnerWallMaterial = shaderMaterial(
     void main() {
         vec2 repeatedUv = vec2(fract(vUv.x * uRepeat), vUv.y);
         vec4 baseColor = texture2D(uTexture, repeatedUv);
-        if (baseColor.a < 0.01) discard;
 
         vec2 globalGridSize = vec2(uGridSize.x * uRepeat, uGridSize.y);
         vec2 gridCoords = floor(vUv * globalGridSize);
@@ -1772,7 +1762,6 @@ const OuterRingFaceMaterial = shaderMaterial(
 
     void main() {
         vec4 baseColor = texture2D(uTexture, vUv);
-        if (baseColor.a < 0.01) discard;
 
         float emissiveMask = texture2D(uEmissiveMap, vUv).r;
         float windowsMask  = texture2D(uWindowsMap, vUv).r;

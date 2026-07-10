@@ -46,12 +46,10 @@ const CubeFaceMaterial = shaderMaterial(
       vUv = uv;
       vec3 pos = position;
 
-      // 1. Calculate dynamic angles
       float angleX = uRotX.x + uTime * uRotX.y;
       float angleY = uRotY.x + uTime * uRotY.y;
       float angleZ = uRotZ.x + uTime * uRotZ.y;
 
-      // 2. Apply Rotations (Order: XYZ)
       pos = rotationMatrix(vec3(1, 0, 0), angleX) * pos;
       pos = rotationMatrix(vec3(0, 1, 0), angleY) * pos;
       pos = rotationMatrix(vec3(0, 0, 1), angleZ) * pos;
@@ -69,7 +67,6 @@ const CubeFaceMaterial = shaderMaterial(
 
     void main() {
       vec4 color = texture2D(uTexture, vUv);
-      if (color.a < 0.1) discard;
       gl_FragColor = color;
     }
   `

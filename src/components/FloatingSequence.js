@@ -41,17 +41,14 @@ const SequenceMaterial = shaderMaterial(
         vUv = uv;
         vec3 pos = position;
 
-        // 1. Calculate dynamic angles
         float angleX = uRotX.x + (cos(uTime * uYTravel.x) * uRotX.y);
         float angleY = uRotY.x + (sin(uTime * 0.15) * uRotY.y);
         float angleZ = uRotZ.x + (sin(uTime * 0.15) * uRotZ.y);
 
-        // 2. Apply Rotations (Order: XYZ)
         pos = rotationMatrix(vec3(1, 0, 0), angleX) * pos;
         pos = rotationMatrix(vec3(0, 1, 0), angleY) * pos;
         pos = rotationMatrix(vec3(0, 0, 1), angleZ) * pos;
 
-        // 3. Apply Vertical Float
         pos.y += sin(uTime * uYTravel.x) * uYTravel.y;
 
         gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);      

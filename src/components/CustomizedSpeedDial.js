@@ -71,7 +71,7 @@ const StyledSpeedDialAction = styled(SpeedDialAction)(({ theme }) => ({
     minHeight: 48,
     background: 'transparent',
     boxShadow: 'none',
-    color: (theme.vars || theme).palette.grey[500],
+    color: (theme.vars || theme).palette.grey[100],
     '&:hover': {
       color: 'var(--hover-color)',
     },

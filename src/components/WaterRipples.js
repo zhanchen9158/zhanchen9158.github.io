@@ -248,15 +248,12 @@ const WaterRipplesBgEntranceMaterial = shaderMaterial(
 
     void main() {
         vec4 color = texture2D(uTexture, vUv);
-        if (color.a < 0.1) discard;
 
-        float invertedProgress = 1.0 - uProgress;
+        float fadeIn = smoothstep(0.0, 0.25, uProgress);
+        float fadeOut = smoothstep(1.0, 0.25, uProgress);
+        float alpha = min(fadeIn, fadeOut);
 
-        vec3 finalColor = color.rgb;
-
-        finalColor = pow(finalColor, vec3(1.0 / 2.2));
-
-        float alpha = smoothstep(0.0, 1.0, invertedProgress);
+        vec3 finalColor = pow(color.rgb, vec3(1.0 / 2.2));
 
         gl_FragColor = vec4(finalColor, alpha);
     }
@@ -357,7 +354,6 @@ const WaterRipplesBgMaterial = shaderMaterial(
         vec4 texActive = texture2D(uActiveTexture, distortedUv);
 
         vec4 color = mix(texBg, texActive, uTransitionProgress);
-        if (color.a < 0.1) discard; 
 
         vec3 finalColor = color.rgb;
 
@@ -396,18 +392,18 @@ const WaterRipplesBg = memo(function WaterRipplesBg({ isInView = false, wasInVie
     useConfigureTextures(highlightTextures);
 
     const activeTexture = useMemo(() => {
-    if (!highlightImage) return null;
+        if (!highlightImage) return null;
 
-    const imageIndex = HIGHTLIGHT_PATHS.findIndex(path => 
-        path.endsWith(highlightImage.image)
-    );
+        const imageIndex = HIGHTLIGHT_PATHS.findIndex(path =>
+            path.endsWith(highlightImage.image)
+        );
 
-    if (imageIndex !== -1 && highlightTextures[imageIndex]) {
-        return highlightTextures[imageIndex];
-    }
+        if (imageIndex !== -1 && highlightTextures[imageIndex]) {
+            return highlightTextures[imageIndex];
+        }
 
-    return null;
-}, [highlightImage, highlightTextures]);
+        return null;
+    }, [highlightImage, highlightTextures]);
 
     if (activeTexture) {
         lastActiveTextureRef.current = activeTexture;
@@ -456,9 +452,6 @@ const WaterRipplesBg = memo(function WaterRipplesBg({ isInView = false, wasInVie
             wasInView.current = false;
             return;
         }
-        accumulator.current += delta;
-        if (accumulator.current < TARGET_FPS) return;
-        accumulator.current %= TARGET_FPS;
 
         const time = state.clock.getElapsedTime();
         const matRef = bgMaterialRef.current;

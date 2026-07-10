@@ -43,49 +43,34 @@ const NebulaMaterial = shaderMaterial(
     }
 
     void main() {
-        // 1. Center the UVs from [0, 1] to [-0.5, 0.5] so the galaxy spins from the middle
         vec2 uv = vUv - 0.5;
         
-        // Optional: Simulating the aspect ratio tilt of the reference image
-        // Squeezing the Y axis slightly elongates it into a 3D perspective disc
         uv.y *= 1.4; 
 
-        // 2. Convert to Polar Coordinates
-        float r = length(uv);        // Distance from center (radius)
-        float angle = atan(uv.y, uv.x); // Rotation angle around center
+        float r = length(uv);
+        float angle = atan(uv.y, uv.x);
 
-        // 3. Create the Spiral Distortion Math
-        // The twist Factor multiplies the radius, forcing the texture to wrap tighter 
-        // the further away it gets from the center.
         float twistFactor = 5.0; 
         float spiralAngle = angle + (r * twistFactor) - (uTime * 0.2);
 
-        // 4. Sample smoke noise along the curved spiral space
-        // We map the polar coordinates back into a 2D sample space for the noise function
+
         vec2 spiralUv = vec2(cos(spiralAngle), sin(spiralAngle)) * 3.0;
         
         float n1 = smoothNoise(spiralUv + uTime * 0.05);
         float n2 = smoothNoise(spiralUv * 2.0 - uTime * 0.1);
         float smoke = (n1 * 0.6 + n2 * 0.4);
 
-        // 5. Create Core Glow and Edge Falloff Masks
-        // A galaxy needs to fade out into space at the edges, and brighten at the center core.
-        float coreGlow = smoothstep(0.4, 0.0, r) * 0.6; // Soft core bright center
-        float edgeFalloff = smoothstep(0.8, 0.3, r); // Clean falloff masking out the screen edges
+        float coreGlow = smoothstep(0.4, 0.0, r) * 0.6;
+        float edgeFalloff = smoothstep(0.8, 0.3, r);
 
-        // 6. Combine the noise structure with our masks
-        // Adding 2 arms using cosine wave tracking on our twisted angle space
-        float arms = max(0.0, cos(spiralAngle * 2.0)); // '2.0' defines a two-armed spiral galaxy
+        float arms = max(0.0, cos(spiralAngle * 2.0));
         
-        // Final composite intensity shape
         float galaxyIntensity = (smoke * 0.4 + arms * 0.4 + coreGlow) * edgeFalloff;
 
-        // 7. Dynamic Color (Bright blue core fading to ionized violet arms like your image)
-        vec3 coreColor = vec3(0.5, 0.8, 1.0);  // Bright turquoise/white core
-        vec3 armColor = vec3(0.1, 0.4, 0.9);   // Deep cosmic blue arms
+        vec3 coreColor = vec3(0.5, 0.8, 1.0);
+        vec3 armColor = vec3(0.1, 0.4, 0.9);
         vec3 finalColor = mix(armColor, coreColor, coreGlow);
 
-        // Final alpha opacity balance
         float alpha = clamp(galaxyIntensity * 0.5, 0.0, 1.0);
 
         gl_FragColor = vec4(finalColor, alpha);
@@ -134,7 +119,6 @@ const NebulaCoreMaterial = shaderMaterial(
 
     void main() {
       vec4 color = texture2D(uTexture, vUv);
-      if (color.a < 0.1) discard;
       gl_FragColor = color;
     }
     `
@@ -223,7 +207,6 @@ const FloatingSandMaterial = shaderMaterial(
     in float vOpacity;
 
     void main() {
-        // Premultiplied alpha logic for Additive Blending
         gl_FragColor = vec4(vFinalColor * vOpacity, vOpacity);
     }
     `
@@ -287,7 +270,6 @@ const HourglassMaterial = shaderMaterial(
 
     void main() {
       vec4 color = texture2D(uTexture, vUv);
-      if (color.a < 0.1) discard;
       gl_FragColor = color;
     }
     `
@@ -363,7 +345,6 @@ const SandStreamMaterial = shaderMaterial(
         }
 
         vec4 finalColor = color * opacity;
-        if (finalColor.a < 0.1) discard;
         gl_FragColor = finalColor;
     }
     `
